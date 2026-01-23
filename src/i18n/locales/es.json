@@ -1,0 +1,28 @@
+{
+  "wifi": {
+    "title": "Wi-Fi",
+    "network": "Red",
+    "password": "Contraseña",
+    "connectAuto": "Conectar automáticamente"
+  },
+  "checkIn": "Check-in",
+  "checkOut": "Check-out",
+  "timings": "Horarios",
+  "howToGetBack": "Cómo volver",
+  "emergency": "Emergencias",
+  "houseRules": "Reglas de la Casa",
+  "discover": "Descubre",
+  "categories": {
+    "all": "Todo",
+    "restaurants": "Comer y Beber",
+    "shopping": "Compras",
+    "kids": "Niños",
+    "outdoor": "Aire Libre",
+    "services": "Servicios"
+  },
+  "actions": {
+    "directions": "Cómo llegar",
+    "call": "Llamar",
+    "website": "Sitio web"
+  }
+}

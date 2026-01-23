@@ -1,5 +1,6 @@
-import { Plus, Search, MoreHorizontal } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import Link from "next/link";
+import { PropertyActionsMenu } from "@/components/admin/property-actions-menu";
 
 const MOCK_PROPERTIES = [
   {
@@ -60,7 +61,7 @@ export default function PropertiesPage() {
         </select>
       </div>
 
-      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 dark:bg-neutral-800/50 text-gray-500 font-medium">
             <tr>
@@ -97,9 +98,7 @@ export default function PropertiesPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                    <MoreHorizontal className="w-5 h-5" />
-                  </button>
+                  <PropertyActionsMenu propertyId={prop.id} slug={prop.slug} />
                 </td>
               </tr>
             ))}

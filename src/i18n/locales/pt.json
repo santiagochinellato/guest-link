@@ -1,0 +1,28 @@
+{
+  "wifi": {
+    "title": "Wi-Fi",
+    "network": "Rede",
+    "password": "Senha",
+    "connectAuto": "Conectar Automaticamente"
+  },
+  "checkIn": "Check-in",
+  "checkOut": "Check-out",
+  "timings": "Horários",
+  "howToGetBack": "Como voltar",
+  "emergency": "Emergência",
+  "houseRules": "Regras da Casa",
+  "discover": "Descubra",
+  "categories": {
+    "all": "Tudo",
+    "restaurants": "Comer e Beber",
+    "shopping": "Compras",
+    "kids": "Crianças",
+    "outdoor": "Ao Ar Livre",
+    "services": "Serviços"
+  },
+  "actions": {
+    "directions": "Como chegar",
+    "call": "Ligar",
+    "website": "Site"
+  }
+}

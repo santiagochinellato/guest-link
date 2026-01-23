@@ -12,7 +12,7 @@ export default function AdminLayout({
       <aside className="w-64 border-r border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hidden md:flex flex-col">
         <div className="p-6 border-b border-gray-100 dark:border-neutral-800">
           <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            GuestLink
+            INFOHOUSE
           </h1>
         </div>
 

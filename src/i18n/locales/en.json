@@ -1,0 +1,28 @@
+{
+  "wifi": {
+    "title": "Wi-Fi",
+    "network": "Network",
+    "password": "Password",
+    "connectAuto": "Connect Automatically"
+  },
+  "checkIn": "Check-in",
+  "checkOut": "Check-out",
+  "timings": "Timings",
+  "howToGetBack": "Get Back Here",
+  "emergency": "Emergency",
+  "houseRules": "House Rules",
+  "discover": "Discover",
+  "categories": {
+    "all": "All",
+    "restaurants": "Eat & Drink",
+    "shopping": "Shopping",
+    "kids": "Kids",
+    "outdoor": "Outdoor",
+    "services": "Services"
+  },
+  "actions": {
+    "directions": "Directions",
+    "call": "Call",
+    "website": "Website"
+  }
+}
