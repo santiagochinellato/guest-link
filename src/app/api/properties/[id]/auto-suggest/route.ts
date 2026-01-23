@@ -30,8 +30,7 @@ export async function POST(
      if (body.city) parts.push(body.city);
      if (body.address) parts.push(body.address);
      if (body.country) parts.push(body.country);
-     if (parts.length > 0) searchQuery = parts.join(", ");
-  } catch(e) {
+  } catch {
      // ignore params if json invalid
   }
 

@@ -2,13 +2,11 @@
 
 import { db } from "@/db";
 import { properties, recommendations, emergencyContacts, transportInfo, categories } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
+import { PropertyFormSchema, PropertyFormData } from "@/lib/schemas"; // Import from new file
 
-// ... (schemas remain)
-
-// ... (create/update remain)
+// Schema definitions moved to @/lib/schemas.ts
 
 export async function deleteProperty(id: number) {
   try {
@@ -29,68 +27,11 @@ export async function deleteProperty(id: number) {
 
     revalidatePath("/dashboard/properties");
     return { success: true };
-  } catch (error: any) {
+  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("Delete Error:", error);
     return { success: false, error: error.message };
   }
 }
-
-// --- Zod Schemas ---
-
-const RecommendationSchema = z.object({
-  id: z.number().optional(), // If present, update; else insert
-  title: z.string().min(1, "Title is required"),
-  formattedAddress: z.string().optional(),
-  googleMapsLink: z.string().optional(),
-  categoryType: z.string().min(1, "Category is required"),
-  description: z.string().optional(),
-  // Add other fields as necessary based on schema
-});
-
-const EmergencyContactSchema = z.object({
-  id: z.number().optional(),
-  name: z.string().min(1, "Name is required"),
-  phone: z.string().min(1, "Phone is required"),
-  type: z.string().default("other"),
-});
-
-const TransportInfoSchema = z.object({
-  id: z.number().optional(),
-  name: z.string().min(1, "Provider name is required"),
-  type: z.string().min(1, "Type is required"),
-  description: z.string().optional(),
-  scheduleInfo: z.string().optional(),
-  priceInfo: z.string().optional(),
-});
-
-export const PropertyFormSchema = z.object({
-  // Basic
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  slug: z.string().min(3, "Slug must be at least 3 characters").regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with dashes"),
-  checkInTime: z.string().optional(),
-  checkOutTime: z.string().optional(),
-  coverImageUrl: z.string().optional(),
-  
-  // Location
-  address: z.string().min(5, "Address must be valid"),
-  city: z.string().min(2, "City is required"),
-  country: z.string().min(2, "Country is required"),
-  latitude: z.string().optional(),
-  longitude: z.string().optional(),
-  
-  // WiFi
-  wifiSsid: z.string().optional(),
-  wifiPassword: z.string().optional(),
-  wifiQrCode: z.string().optional(),
-  
-  // Associations
-  recommendations: z.array(RecommendationSchema).optional(),
-  emergencyContacts: z.array(EmergencyContactSchema).optional(),
-  transport: z.array(TransportInfoSchema).optional(),
-});
-
-export type PropertyFormData = z.infer<typeof PropertyFormSchema>;
-
 
 // --- Actions ---
 
@@ -172,7 +113,7 @@ export async function createProperty(data: PropertyFormData) {
             propertyId: propId,
             name: c.name,
             phone: c.phone,
-            type: c.type
+            type: c.type ?? "other"
           }))
         );
       }
@@ -183,7 +124,7 @@ export async function createProperty(data: PropertyFormData) {
             p.transport.map(t => ({
                 propertyId: propId,
                 name: t.name,
-                type: t.type,
+                type: t.type ?? "taxi",
                 description: t.description,
                 scheduleInfo: t.scheduleInfo,
                 priceInfo: t.priceInfo
@@ -196,7 +137,7 @@ export async function createProperty(data: PropertyFormData) {
 
     revalidatePath("/dashboard/properties");
     return { success: true, id: insertedId };
-  } catch (error: any) {
+  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("Create Property Error:", error);
     return { success: false, error: error.message };
   }
@@ -230,14 +171,38 @@ export async function updateProperty(id: number, data: PropertyFormData) {
         }).where(eq(properties.id, id));
 
         // Update relations: simplest approach is delete all and re-insert for this MVP 
-        // (Not efficient for huge data, but fine for small property metadata)
         
-        // RECS
-        // Warning: This wipes stats like 'isFavorite' if not preserved.
-        // For MVP refactor request, we usually prefer "Sync" logic but Delete-Reinsert is safer for consistency now.
-        // OR better: Upsert based on IDs.
-        
-        // Let's implement Delete-Reinsert for Emergency and Transport as they are simple lists.
+        // 1. Recommendations & Categories
+        await tx.delete(recommendations).where(eq(recommendations.propertyId, id));
+        await tx.delete(categories).where(eq(categories.propertyId, id)); // Delete categories associated with this property
+
+        if (p.recommendations && p.recommendations.length > 0) {
+           for (const rec of p.recommendations) {
+               // Find or create category for this property
+               let targetCat = await tx.query.categories.findFirst({
+                   where: eq(categories.type, rec.categoryType),
+               });
+
+               if (!targetCat) {
+                   [targetCat] = await tx.insert(categories).values({
+                       name: rec.categoryType.charAt(0).toUpperCase() + rec.categoryType.slice(1),
+                       type: rec.categoryType,
+                       propertyId: id,
+                   }).returning();
+               }
+
+               await tx.insert(recommendations).values({
+                   title: rec.title,
+                   formattedAddress: rec.formattedAddress,
+                   googleMapsLink: rec.googleMapsLink,
+                   description: rec.description,
+                   propertyId: id,
+                   categoryId: targetCat.id
+               });
+           } 
+        }
+
+        // 2. Emergency
         await tx.delete(emergencyContacts).where(eq(emergencyContacts.propertyId, id));
         if (p.emergencyContacts && p.emergencyContacts.length > 0) {
              await tx.insert(emergencyContacts).values(
@@ -245,39 +210,111 @@ export async function updateProperty(id: number, data: PropertyFormData) {
                     propertyId: id,
                     name: c.name,
                     phone: c.phone,
-                    type: c.type
+                    type: c.type ?? "other"
                 }))
             );
         }
 
+        // 3. Transport
         await tx.delete(transportInfo).where(eq(transportInfo.propertyId, id));
         if (p.transport && p.transport.length > 0) {
              await tx.insert(transportInfo).values(
                 p.transport.map(t => ({
                     propertyId: id,
                     name: t.name,
-                    type: t.type,
+                    type: t.type ?? "taxi",
                     description: t.description,
                     scheduleInfo: t.scheduleInfo,
                     priceInfo: t.priceInfo
                 }))
             );
         }
-        
-        // Recommendations is trickier due to Categories.
-        // For now, let's just update the Property fields.
-        // The user complained about "Select a category".
-        // We will solve that in the Form logic, storing it locally, then sending here.
-        // For now I'm leaving Recs update commented out to avoid breaking FKs until I see Category logic.
      });
 
      revalidatePath(`/dashboard/properties`);
      revalidatePath(`/dashboard/properties/${id}/edit`);
      return { success: true };
-  } catch (err: any) {
-      console.error("Update Error:", err);
-      return { success: false, error: err.message };
+  } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+       console.error("Update Error:", err);
+       return { success: false, error: err.message };
+  }
+}
+export async function getProperties() {
+  try {
+    const list = await db.select({
+       id: properties.id,
+       name: properties.name,
+       address: properties.address,
+       slug: properties.slug,
+       // active: properties.active // Schema doesn't have active, ignoring for now or mapping
+    })
+    .from(properties)
+    .orderBy(properties.createdAt);
+
+    return { success: true, data: list };
+  } catch (error: any) {
+    console.error("Fetch Properties Error:", error);
+    return { success: false, error: error.message };
   }
 }
 
+export async function getProperty(id: number) {
+  try {
+     const prop = await db.query.properties.findFirst({
+       where: eq(properties.id, id),
+       with: {
+          recommendations: {
+             with: {
+                category: true
+             }
+          },
+          emergencyContacts: true,
+          transportInfo: true,
+       }
+     });
 
+     if (!prop) return { success: false, error: "Property not found" };
+
+     // Transform to Form Data structure if needed
+     const formData: PropertyFormData = {
+        name: prop.name,
+        slug: prop.slug,
+        address: prop.address || "",
+        city: prop.city || "",
+        country: prop.country || "",
+        latitude: prop.latitude || "",
+        longitude: prop.longitude || "",
+        wifiSsid: prop.wifiSsid || "",
+        wifiPassword: prop.wifiPassword || "",
+        wifiQrCode: prop.wifiQrCode || "",
+        coverImageUrl: prop.coverImageUrl || "",
+        checkInTime: prop.checkInTime || "",
+        checkOutTime: prop.checkOutTime || "",
+        recommendations: prop.recommendations.map(r => ({
+           title: r.title,
+           description: r.description || "",
+           formattedAddress: r.formattedAddress || "",
+           googleMapsLink: r.googleMapsLink || "",
+           categoryType: r.category?.type || "sights", // Fallback
+        })),
+        emergencyContacts: prop.emergencyContacts.map(c => ({
+           name: c.name || "",
+           phone: c.phone || "",
+           type: (c.type as any) || "other",
+        })),
+        transport: prop.transportInfo.map(t => ({
+           name: t.name,
+           type: (t.type as any) || "taxi",
+           description: t.description || "",
+           scheduleInfo: t.scheduleInfo || "",
+           priceInfo: t.priceInfo || "",
+        }))
+     };
+
+     return { success: true, data: { ...formData, id: prop.id } };
+
+  } catch (error: any) {
+    console.error("Fetch Property Error:", error);
+    return { success: false, error: error.message };
+  } 
+}

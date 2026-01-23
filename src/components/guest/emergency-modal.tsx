@@ -6,9 +6,14 @@ import { motion, AnimatePresence } from "framer-motion";
 interface EmergencyModalProps {
   isOpen: boolean;
   onClose: () => void;
+  labels: any;
 }
 
-export function EmergencyModal({ isOpen, onClose }: EmergencyModalProps) {
+export function EmergencyModal({
+  isOpen,
+  onClose,
+  labels,
+}: EmergencyModalProps) {
   // In real app, these come from DB (emergency_contacts)
   const CONTACTS = [
     { type: "Police", number: "911", label: "Emergency" },
@@ -16,7 +21,7 @@ export function EmergencyModal({ isOpen, onClose }: EmergencyModalProps) {
     {
       type: "Medical",
       number: "555-0999",
-      label: "City Hospital",
+      label: "Hospital",
       address: "Health Ave 42",
     },
     { type: "Fire", number: "100", label: "Fire Dept" },
@@ -44,7 +49,7 @@ export function EmergencyModal({ isOpen, onClose }: EmergencyModalProps) {
                 <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full text-red-600">
                   <AlertCircle className="w-6 h-6" />
                 </div>
-                <h2 className="text-xl font-bold">Emergency</h2>
+                <h2 className="text-xl font-bold">{labels.title}</h2>
               </div>
               <button
                 onClick={onClose}

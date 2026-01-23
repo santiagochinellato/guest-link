@@ -45,7 +45,7 @@ export function PropertyActionsMenu({
       if (!res.success) {
         alert(res.error || "Failed to delete property");
       }
-    } catch (e) {
+    } catch {
       alert("An error occurred while deleting");
     } finally {
       setIsDeleting(false);

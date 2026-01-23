@@ -16,28 +16,51 @@ import { motion, AnimatePresence } from "framer-motion";
 interface CategoriesSectionProps {
   // In real app, this would be data from DB
   recommendations: any[];
+  emptyText: string;
+  labels: {
+    all: string;
+    restaurant: string;
+    shopping: string;
+    kids: string;
+    outdoor: string;
+    services: string;
+  };
 }
 
 export function CategoriesSection({
   recommendations = [],
+  emptyText,
+  labels,
 }: CategoriesSectionProps) {
   const [activeCategory, setActiveCategory] = useState("all");
 
   const CATEGORIES = [
-    { id: "all", label: "All", icon: null },
+    { id: "all", label: labels?.all || "All", icon: null },
     {
       id: "restaurant",
-      label: "Eat & Drink",
+      label: labels?.restaurant || "Eat & Drink",
       icon: <Utensils className="w-4 h-4" />,
     },
     {
       id: "shopping",
-      label: "Shopping",
+      label: labels?.shopping || "Shopping",
       icon: <ShoppingBag className="w-4 h-4" />,
     },
-    { id: "kids", label: "Kids", icon: <Baby className="w-4 h-4" /> },
-    { id: "outdoor", label: "Outdoor", icon: <TreePine className="w-4 h-4" /> },
-    { id: "services", label: "Services", icon: <Pill className="w-4 h-4" /> },
+    {
+      id: "kids",
+      label: labels?.kids || "Kids",
+      icon: <Baby className="w-4 h-4" />,
+    },
+    {
+      id: "outdoor",
+      label: labels?.outdoor || "Outdoor",
+      icon: <TreePine className="w-4 h-4" />,
+    },
+    {
+      id: "services",
+      label: labels?.services || "Services",
+      icon: <Pill className="w-4 h-4" />,
+    },
   ];
 
   // Mock filtering
@@ -114,7 +137,7 @@ export function CategoriesSection({
         </AnimatePresence>
         {filtered.length === 0 && (
           <div className="text-center py-10 text-gray-500 text-sm">
-            No recommendations found in this category.
+            {emptyText}
           </div>
         )}
       </div>

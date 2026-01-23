@@ -1,38 +1,29 @@
-"use client";
-
 import { PropertyForm } from "@/components/admin/property-form";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { getProperty } from "@/lib/actions/properties";
+import { notFound } from "next/navigation";
 
-export default function EditPropertyPage() {
-  const params = useParams();
-  const id = params?.id;
-  const [loading, setLoading] = useState(true);
-  const [initialData, setInitialData] = useState(null);
+// Server Component (removed "use client")
+export default async function EditPropertyPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const propertyId = parseInt(id);
 
-  useEffect(() => {
-    // In real app, fetch from API /api/properties/[id]
-    // For now, mock data
-    setTimeout(() => {
-      setInitialData({
-        name: "Casa Azul - Ocean View",
-        slug: "casa-azul",
-        address: "Av. Del Mar 123",
-        city: "San Diego",
-        country: "USA",
-        latitude: "32.7157",
-        longitude: "-117.1611",
-        wifiSsid: "CasaAzul_Guest",
-        wifiPassword: "sunset-views-2024",
-        checkInTime: "15:00",
-        checkOutTime: "11:00",
-        houseRules: "No smoking inside. Quiet hours after 10 PM.",
-      } as any);
-      setLoading(false);
-    }, 500);
-  }, []);
+  if (isNaN(propertyId)) {
+    return notFound();
+  }
 
-  if (loading) return <div className="p-8">Loading property...</div>;
+  const result = await getProperty(propertyId);
 
-  return <PropertyForm initialData={initialData} isEditMode={true} />;
+  if (!result.success || !result.data) {
+    return (
+      <div className="p-8 text-center text-red-500">
+        Error loading property: {result.error || "Unknown error"}
+      </div>
+    );
+  }
+
+  return <PropertyForm initialData={result.data} isEditMode={true} />;
 }

@@ -1,32 +1,13 @@
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { PropertyActionsMenu } from "@/components/admin/property-actions-menu";
+import { getProperties } from "@/lib/actions/properties";
 
-const MOCK_PROPERTIES = [
-  {
-    id: 1,
-    name: "Casa Azul - Ocean View",
-    slug: "casa-azul",
-    address: "Av. Del Mar 123",
-    active: true,
-  },
-  {
-    id: 2,
-    name: "Mountain Cabin",
-    slug: "mountain-cabin",
-    address: "Camino al Bosque 55",
-    active: true,
-  },
-  {
-    id: 3,
-    name: "City Loft",
-    slug: "city-loft",
-    address: "Centro 882, Depto 4B",
-    active: false,
-  },
-];
+// Server Component
+export default async function PropertiesPage() {
+  const result = await getProperties();
+  const properties = result.success ? result.data : [];
 
-export default function PropertiesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -72,7 +53,7 @@ export default function PropertiesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
-            {MOCK_PROPERTIES.map((prop) => (
+            {properties?.map((prop: any) => (
               <tr
                 key={prop.id}
                 className="hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors"
@@ -91,10 +72,11 @@ export default function PropertiesPage() {
                   /{prop.slug}
                 </td>
                 <td className="px-6 py-4">
+                  {/* Mock status for now as DB doesn't have active column yet */}
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${prop.active ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-600"}`}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${true ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-600"}`}
                   >
-                    {prop.active ? "Active" : "Draft"}
+                    Active
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -102,6 +84,13 @@ export default function PropertiesPage() {
                 </td>
               </tr>
             ))}
+            {properties?.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center py-8 text-gray-500">
+                  No properties found. Create your first one!
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
