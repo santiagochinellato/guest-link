@@ -316,5 +316,58 @@ export async function getProperty(id: number) {
   } catch (error: any) {
     console.error("Fetch Property Error:", error);
     return { success: false, error: error.message };
+  }
+}
+
+export async function getPropertyBySlug(slug: string) {
+  try {
+     const prop = await db.query.properties.findFirst({
+       where: eq(properties.slug, slug),
+       with: {
+          recommendations: {
+             with: {
+                category: true
+             }
+          },
+          emergencyContacts: true,
+          transportInfo: true,
+       }
+     });
+
+     if (!prop) return { success: false, error: "Property not found" };
+
+     // Reuse similar return structure but maybe simpler for guest view? 
+     // For now, returning same structure is fine or raw prop.
+     // Let's stick to a clean object for the guest view component.
+     
+     return {
+         success: true,
+         data: {
+             name: prop.name,
+             wifiSsid: prop.wifiSsid,
+             wifiPassword: prop.wifiPassword,
+             wifiQrCode: prop.wifiQrCode,
+             houseRules: prop.houseRules,
+             image: prop.coverImageUrl,
+             checkIn: prop.checkInTime,
+             checkOut: prop.checkOutTime,
+             latitude: prop.latitude,
+             longitude: prop.longitude,
+             recommendations: prop.recommendations.map(r => ({
+                 title: r.title,
+                 description: r.description,
+                 formattedAddress: r.formattedAddress,
+                 googleMapsLink: r.googleMapsLink,
+                 category: r.category?.name || "Other", // Use category name for display
+                 categoryType: r.category?.type // Keep type for filtering/icons
+             })),
+             emergencyContacts: prop.emergencyContacts,
+             transport: prop.transportInfo
+         }
+     };
+
+  } catch (error: any) {
+    console.error("Fetch Property By Slug Error:", error);
+    return { success: false, error: error.message };
   } 
 }

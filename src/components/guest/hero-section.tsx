@@ -5,9 +5,10 @@ import { motion } from "framer-motion";
 interface HeroSectionProps {
   image: string;
   name: string;
+  welcomeText: string;
 }
 
-export function HeroSection({ image, name }: HeroSectionProps) {
+export function HeroSection({ image, name, welcomeText }: HeroSectionProps) {
   return (
     <div className="relative h-64 md:h-80 w-full overflow-hidden">
       <motion.img
@@ -26,7 +27,7 @@ export function HeroSection({ image, name }: HeroSectionProps) {
           className="text-white"
         >
           <p className="text-sm font-medium opacity-90 uppercase tracking-wider mb-1">
-            Welcome to
+            {welcomeText}
           </p>
           <h1 className="text-3xl font-bold">{name}</h1>
         </motion.div>

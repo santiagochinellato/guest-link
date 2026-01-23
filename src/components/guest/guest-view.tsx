@@ -11,16 +11,19 @@ import { EmergencyModal } from "@/components/guest/emergency-modal";
 interface GuestViewProps {
   property: {
     name: string;
-    wifiSsid?: string;
-    wifiPassword?: string;
-    houseRules?: string;
-    image?: string;
-    checkIn?: string;
-    checkOut?: string;
-    latitude?: string;
-    longitude?: string;
+    wifiSsid?: string | null;
+    wifiPassword?: string | null;
+    houseRules?: string | null;
+    image?: string | null;
+    checkIn?: string | null;
+    checkOut?: string | null;
+    latitude?: string | null;
+    longitude?: string | null;
+    recommendations?: any[];
+    emergencyContacts?: any[];
+    transport?: any[];
   };
-  dict: any; // Using any for MVP speed, ideally fully typed from dictionary
+  dict: any;
 }
 
 export function GuestView({ property, dict }: GuestViewProps) {
@@ -29,7 +32,7 @@ export function GuestView({ property, dict }: GuestViewProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black pb-20">
       <HeroSection
-        image={property.image}
+        image={property.image || ""}
         name={property.name}
         welcomeText={dict.guest.welcome}
       />
@@ -42,14 +45,14 @@ export function GuestView({ property, dict }: GuestViewProps) {
         />
 
         <CheckInOutCard
-          checkIn={property.checkIn}
-          checkOut={property.checkOut}
+          checkIn={property.checkIn || ""}
+          checkOut={property.checkOut || ""}
           labels={dict.guest.checkInOut}
         />
 
         <QuickActions
-          propertyLat={property.latitude}
-          propertyLng={property.longitude}
+          propertyLat={property.latitude || undefined}
+          propertyLng={property.longitude || undefined}
           onEmergencyClick={() => setIsEmergencyOpen(true)}
           labels={dict.guest.actions}
         />
@@ -59,7 +62,7 @@ export function GuestView({ property, dict }: GuestViewProps) {
             {dict.guest.discover.title}
           </h3>
           <CategoriesSection
-            recommendations={[]}
+            recommendations={property.recommendations || []}
             emptyText={dict.guest.discover.empty}
             labels={dict.guest.discover.categories}
           />

@@ -21,7 +21,7 @@ export default async function LocaleLayout({
   const { lang } = await params;
   return (
     <html lang={lang || "es"}>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         {children}
         <Toaster />
       </body>

@@ -32,28 +32,28 @@ export default function AdminLayout({
                 className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-neutral-800 rounded-lg"
               >
                 <LayoutDashboard className="w-5 h-5" />
-                Dashboard
+                Panel Principal
               </Link>
               <Link
                 href="/dashboard/properties"
                 className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800 rounded-lg transition-colors"
               >
                 <Building className="w-5 h-5" />
-                Properties
+                Propiedades
               </Link>
               <Link
                 href="/dashboard/qr-builder"
                 className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800 rounded-lg transition-colors"
               >
                 <QrCode className="w-5 h-5" />
-                QR Builder
+                Crear QR
               </Link>
               <Link
                 href="/dashboard/settings"
                 className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800 rounded-lg transition-colors"
               >
                 <Settings className="w-5 h-5" />
-                Settings
+                Configuración
               </Link>
             </nav>
 
