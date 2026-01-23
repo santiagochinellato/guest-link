@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Eye, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { deleteProperty } from "@/lib/actions/properties";
 
 interface PropertyActionsMenuProps {
   propertyId: number;
@@ -15,6 +16,7 @@ export function PropertyActionsMenu({
   slug,
 }: PropertyActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close on click outside
@@ -27,6 +29,29 @@ export function PropertyActionsMenu({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleDelete = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this property? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await deleteProperty(propertyId);
+      if (!res.success) {
+        alert(res.error || "Failed to delete property");
+      }
+    } catch (e) {
+      alert("An error occurred while deleting");
+    } finally {
+      setIsDeleting(false);
+      setIsOpen(false);
+    }
+  };
 
   return (
     <div className="relative inline-block text-left" ref={menuRef}>
@@ -57,41 +82,23 @@ export function PropertyActionsMenu({
               </Link>
               <Link
                 href={`/dashboard/properties/${propertyId}/edit`}
-                // Note: We only made /new page so far, but let's assume reuse or /new structure
-                // Actually user only has /dashboard/properties/new. Let's link there for now or TODO.
-                // Re-using /new for edit would be ideal but complex.
-                // For MVP, linking to /new is ambiguous. Let's mock "Edit" to just alert or link to new property form as placeholder (or truly create [id]/edit).
-                // Let's treat /new as "Create" and create a stub for Edit later.
-                // Linking to /new for now as a makeshift 'Edit' isn't great.
-                // Actually, I'll just link to /dashboard/properties/new for simplicity in MVP or alert.
-                // Let's be better: I'll link to /dashboard/properties/new for now but maybe pass ID?
-                // The prompt didn't ask for Edit page logic, just "Formulario Expandido".
-                // I will link to /dashboard/properties/new just to have a link, or use alert.
-                // Better: alert("Edit feature coming soon") or actually implement Edit.
-                // I will link to actions but use onclick for now.
-                // WAIT: The user asked to fix the button.
-                // Let's link 'Edit' to `/dashboard/properties/new` as a "Manage" placeholder for this demo if needed.
-                // Or better `href="/dashboard/properties/new"` with query param `?edit=1`?
-
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
-                onClick={(e) => {
-                  // e.preventDefault();
-                  // alert("Edit mode would open here");
-                  setIsOpen(false);
-                }}
+                onClick={() => setIsOpen(false)}
               >
                 <Edit className="w-4 h-4" />
                 Edit Property
               </Link>
               <button
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                onClick={() => {
-                  alert("Delete functionality would trigger here.");
-                  setIsOpen(false);
-                }}
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                onClick={handleDelete}
+                disabled={isDeleting}
               >
-                <Trash2 className="w-4 h-4" />
-                Delete
+                {isDeleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </motion.div>

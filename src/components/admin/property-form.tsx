@@ -1,7 +1,4 @@
-"use client";
-
-import { useState } from "react";
-import Link from "next/link";
+// ... imports
 import {
   ArrowLeft,
   Save,
@@ -13,11 +10,37 @@ import {
   AlertCircle,
   Car,
   Star,
+  Plus,
+  Trash2,
+  Loader2,
+  CheckCircle,
 } from "lucide-react";
+// Removed unused imports: format, Controller
+
+// ...
+
+// Fix resolver type mismatch by ensuring strict compatibility or suppression if it's a known Zod/RHF quirk with strictNullChecks
+// The key is ensuring PropertyFormData matches expected FieldValues.
+
+  const { fields: recFields, append: appendRec, remove: removeRec } = useFieldArray({
+    control,
+    name: "recommendations",
+  });
+
+// ...
+
+// Fix 'any' in filter
+{recFields.filter((f) => (f as any).categoryType === activeCategory?.toLowerCase()).length === 0 && (
+// ...
 import { cn } from "@/lib/utils";
+import { PropertyFormSchema, PropertyFormData } from "@/lib/actions/properties";
+import { createProperty, updateProperty } from "@/lib/actions/properties";
+import { useJsApiLoader, Autocomplete } from "@react-google-maps/api";
+
+const LIBRARIES: "places"[] = ["places"];
 
 interface PropertyFormProps {
-  initialData?: any; // Replace 'any' with Property type in real app
+  initialData?: any;
   isEditMode?: boolean;
 }
 
@@ -25,156 +48,187 @@ export function PropertyForm({
   initialData = {},
   isEditMode = false,
 }: PropertyFormProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("basic");
-  const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(
+    "Restaurants",
+  );
 
-  // Form State
-  const [formData, setFormData] = useState({
-    name: initialData.name || "",
-    slug: initialData.slug || "",
-    // Location
-    address: initialData.address || "",
-    city: initialData.city || "",
-    country: initialData.country || "",
-    latitude: initialData.latitude || "",
-    longitude: initialData.longitude || "",
-    // Time
-    checkInTime: initialData.checkInTime || "14:00",
-    checkOutTime: initialData.checkOutTime || "11:00",
-    // Wifi
-    wifiSsid: initialData.wifiSsid || "",
-    wifiPassword: initialData.wifiPassword || "",
-    wifiQrCode: initialData.wifiQrCode || "",
-    // Content
-    houseRules: initialData.houseRules || "",
-    coverImageUrl: initialData.coverImageUrl || "",
+  // Google Maps
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+    libraries: LIBRARIES,
   });
 
-  // Recommendations State
-  const [recommendationsList, setRecommendationsList] = useState<any[]>(
-    initialData.recommendations || [],
+  const [autocomplete, setAutocomplete] =
+    useState<google.maps.places.Autocomplete | null>(null);
+
+  // Form Setup
+  const form = useForm<PropertyFormData>({
+    resolver: zodResolver(PropertyFormSchema),
+    defaultValues: {
+      name: initialData.name || "",
+      slug: initialData.slug || "",
+      address: initialData.address || "",
+      city: initialData.city || "",
+      country: initialData.country || "",
+      latitude: initialData.latitude || "",
+      longitude: initialData.longitude || "",
+      checkInTime: initialData.checkInTime || "15:00",
+      checkOutTime: initialData.checkOutTime || "11:00",
+      wifiSsid: initialData.wifiSsid || "",
+      wifiPassword: initialData.wifiPassword || "",
+      wifiQrCode: initialData.wifiQrCode || "",
+      coverImageUrl: initialData.coverImageUrl || "",
+      recommendations: initialData.recommendations || [],
+      emergencyContacts: initialData.emergencyContacts || [],
+      transport: initialData.transport || [],
+    },
+  });
+
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    register,
+    formState: { errors },
+  } = form;
+
+  // Field Arrays
+  const {
+    fields: recFields,
+    append: appendRec,
+    remove: removeRec,
+  } = useFieldArray({
+    control,
+    name: "recommendations",
+  });
+
+  const {
+    fields: contactFields,
+    append: appendContact,
+    remove: removeContact,
+  } = useFieldArray({
+    control,
+    name: "emergencyContacts",
+  });
+
+  const {
+    fields: transportFields,
+    append: appendTransport,
+    remove: removeTransport,
+  } = useFieldArray({
+    control,
+    name: "transport",
+  });
+
+  // Derived state
+  const watchName = watch("name");
+
+  // Slug generator
+  useEffect(() => {
+    if (!isEditMode && watchName) {
+      const slug = watchName
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      setValue("slug", slug);
+    }
+  }, [watchName, isEditMode, setValue]);
+
+  // Handlers
+  const onLoad = useCallback(
+    (autocomplete: google.maps.places.Autocomplete) => {
+      setAutocomplete(autocomplete);
+    },
+    [],
   );
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [isAutoSuggesting, setIsAutoSuggesting] = useState(false);
 
-  // --- Handlers ---
+  const onPlaceChanged = () => {
+    if (autocomplete) {
+      const place = autocomplete.getPlace();
+      if (place.formatted_address) {
+        setValue("address", place.formatted_address);
+      }
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
-  };
+      let city = "";
+      let country = "";
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const name = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      name,
-      slug:
-        !isEditMode && (prev.slug || generateSlug(name))
-          ? generateSlug(name)
-          : prev.slug,
-    }));
-  };
-
-  const generateWifiQr = () => {
-    setIsGeneratingQr(true);
-    const qrString = `WIFI:T:WPA;S:${formData.wifiSsid};P:${formData.wifiPassword};;`;
-    setFormData((prev) => ({ ...prev, wifiQrCode: qrString }));
-    setTimeout(() => setIsGeneratingQr(false), 500);
-  };
-
-  const getRecsByCategory = (cat: string) =>
-    recommendationsList.filter((r) => r.categoryType === cat.toLowerCase());
-
-  const handleAutoSuggest = async () => {
-    // We send whatever data is currently in the form to allow auto-suggest on new/unsaved properties
-    // or properties where we just changed the address.
-    const propertyId = initialData.id || 1;
-    setIsAutoSuggesting(true);
-
-    try {
-      const res = await fetch(`/api/properties/${propertyId}/auto-suggest`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          latitude: formData.latitude,
-          longitude: formData.longitude,
-          city: formData.city,
-          address: formData.address,
-          country: formData.country, // useful context
-        }),
+      place.address_components?.forEach((comp) => {
+        if (comp.types.includes("locality")) city = comp.long_name;
+        if (comp.types.includes("country")) country = comp.long_name;
       });
-      const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to fetch");
-      }
+      if (city) setValue("city", city);
+      if (country) setValue("country", country);
 
-      if (data.suggestions) {
-        setRecommendationsList((prev) => [...prev, ...data.suggestions]);
+      if (place.geometry?.location) {
+        setValue("latitude", String(place.geometry.location.lat()));
+        setValue("longitude", String(place.geometry.location.lng()));
       }
-    } catch (e: any) {
-      console.error("Auto suggest failed", e);
-      alert(
-        e.message ||
-          "Failed to generate suggestions. Please ensure a location is set.",
-      );
-    } finally {
-      setIsAutoSuggesting(false);
     }
   };
 
-  const handleAddManualPlace = () => {
-    if (!activeCategory) return;
-    const newPlace = {
-      title: "New Place",
-      formattedAddress: "",
-      description: "",
-      categoryType: activeCategory.toLowerCase(),
-      id: Date.now(),
-    };
-    setRecommendationsList((prev) => [...prev, newPlace]);
+  const onSubmit = async (data: PropertyFormData) => {
+    setIsSaving(true);
+    try {
+      let res;
+      if (isEditMode && initialData.id) {
+        res = await updateProperty(initialData.id, data);
+      } else {
+        res = await createProperty(data);
+      }
+
+      if (res.success) {
+        setShowSuccessModal(true);
+      } else {
+        alert(`Error: ${res.error}`);
+      }
+    } catch (e: any) {
+      alert("An error occurred: " + e.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSave = () => {
-    console.log("Saving Property Payload:", {
-      ...formData,
-      recommendations: recommendationsList,
-      timestamp: new Date().toISOString(),
-    });
-    alert(`Property ${isEditMode ? "updated" : "created"}! Check console.`);
+  const handleFinish = () => {
+    setShowSuccessModal(false);
+    router.push("/dashboard/properties");
   };
+
+  const generateWifiQr = () => {
+    const ssid = watch("wifiSsid");
+    const pass = watch("wifiPassword");
+    if (ssid) {
+      setValue("wifiQrCode", `WIFI:T:WPA;S:${ssid};P:${pass};;`);
+    }
+  };
+
+  // -- Sub-Components for cleanliness --
 
   const TABS = [
-    { id: "basic", label: "Basic Info", icon: <Star className="w-4 h-4" /> },
-    { id: "location", label: "Location", icon: <MapPin className="w-4 h-4" /> },
-    { id: "wifi", label: "WiFi & Access", icon: <Wifi className="w-4 h-4" /> },
-    {
-      id: "recommendations",
-      label: "Recommendations",
-      icon: <Sparkles className="w-4 h-4" />,
-    },
-    { id: "transport", label: "Transport", icon: <Car className="w-4 h-4" /> },
-    {
-      id: "emergency",
-      label: "Emergency",
-      icon: <AlertCircle className="w-4 h-4" />,
-    },
+    { id: "basic", label: "Basic Info", icon: Star },
+    { id: "location", label: "Location", icon: MapPin },
+    { id: "wifi", label: "WiFi & Access", icon: Wifi },
+    { id: "recommendations", label: "Recommendations", icon: Sparkles },
+    { id: "transport", label: "Transport", icon: Car },
+    { id: "emergency", label: "Emergency", icon: AlertCircle },
   ];
 
   return (
     <div className="max-w-6xl mx-auto pb-20 px-4">
+      {/* Header */}
       <div className="flex items-center gap-4 mb-8 pt-4">
-        <Link
-          href="/dashboard/properties"
-          className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+        <div
+          onClick={() => router.back()}
+          className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-        </Link>
+        </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             {isEditMode ? "Edit Property" : "New Property"}
@@ -188,7 +242,7 @@ export function PropertyForm({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Sidebar Tabs - Sticky */}
+        {/* Sidebar Navigation */}
         <div className="lg:col-span-3">
           <div className="sticky top-6 flex flex-col gap-2">
             <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
@@ -202,548 +256,566 @@ export function PropertyForm({
                   "group w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all text-left",
                   activeTab === tab.id
                     ? "bg-white dark:bg-neutral-800 text-blue-600 dark:text-blue-400 shadow-sm border border-gray-100 dark:border-neutral-700 font-semibold"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800 hover:text-gray-900 dark:hover:text-gray-200",
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800",
                 )}
               >
-                <div
+                <tab.icon
                   className={cn(
-                    "p-1.5 rounded-lg transition-colors group-hover:bg-white dark:group-hover:bg-neutral-700",
-                    activeTab === tab.id
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600"
-                      : "bg-gray-100 dark:bg-neutral-800 text-gray-500",
+                    "w-4 h-4",
+                    activeTab === tab.id ? "text-blue-600" : "text-gray-500",
                   )}
-                >
-                  {tab.icon}
-                </div>
+                />
                 {tab.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Form Content */}
+        {/* Form Area */}
         <div className="lg:col-span-9">
-          <div className="bg-white dark:bg-neutral-900 p-8 rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-sm min-h-[600px] relative">
-            {/* BASIC INFO */}
-            {activeTab === "basic" && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
-                  <h3 className="text-xl font-semibold tracking-tight">
-                    Basic Information
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Main details of your property.
-                  </p>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="bg-white dark:bg-neutral-900 p-8 rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-sm min-h-[600px] relative"
+          >
+            {/* --- BASIC INFO --- */}
+            <div
+              className={cn(
+                activeTab === "basic" ? "block" : "hidden",
+                "space-y-6",
+              )}
+            >
+              <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
+                <h3 className="text-xl font-semibold">Basic Information</h3>
+                <p className="text-sm text-gray-500">
+                  Main details of your property.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Property Name
+                  </label>
+                  <input
+                    {...register("name")}
+                    className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent active:border-blue-500 outline-none"
+                    placeholder="San martin 460"
+                  />
+                  {errors.name && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.name.message}
+                    </p>
+                  )}
                 </div>
-                <div className="grid grid-cols-1 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Property Name
-                    </label>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Slug (URL)
+                  </label>
+                  <div className="relative mt-1">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-mono">
+                      guestlink.com/stay/
+                    </span>
                     <input
-                      type="text"
-                      placeholder="e.g. Casa Azul"
-                      value={formData.name}
-                      onChange={handleNameChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 focus:bg-white dark:focus:bg-black focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                      {...register("slug")}
+                      className="w-full pl-40 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none font-mono text-sm"
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Slug (URL)
-                    </label>
-                    <div className="relative group">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-mono group-focus-within:text-blue-500 transition-colors">
-                        guestlink.com/stay/
-                      </span>
-                      <input
-                        type="text"
-                        value={formData.slug}
-                        onChange={(e) =>
-                          setFormData({ ...formData, slug: e.target.value })
-                        }
-                        className="w-full pl-40 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 focus:bg-white dark:focus:bg-black focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono text-sm outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-blue-500" /> Check-in
-                        Time
-                      </label>
-                      <input
-                        type="time"
-                        value={formData.checkInTime}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            checkInTime: e.target.value,
-                          })
-                        }
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 outline-none focus:border-blue-500 transition-colors"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-orange-500" /> Check-out
-                        Time
-                      </label>
-                      <input
-                        type="time"
-                        value={formData.checkOutTime}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            checkOutTime: e.target.value,
-                          })
-                        }
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 outline-none focus:border-blue-500 transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 pt-4">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Cover Image
-                    </label>
-                    <div className="border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-2xl p-10 flex flex-col items-center justify-center text-gray-500 gap-4 hover:bg-gray-50 dark:hover:bg-neutral-800/50 hover:border-blue-500/50 transition-all cursor-pointer group">
-                      <div className="p-4 bg-gray-100 dark:bg-neutral-800 rounded-full group-hover:scale-110 transition-transform">
-                        <Upload className="w-6 h-6 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          Click to upload cover photo
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          SVG, PNG, JPG or GIF (max. 5MB)
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  {errors.slug && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.slug.message}
+                    </p>
+                  )}
                 </div>
-              </div>
-            )}
 
-            {/* LOCATION */}
-            {activeTab === "location" && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
-                  <h3 className="text-xl font-semibold tracking-tight">
-                    Location
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Help guests find your place.
-                  </p>
-                </div>
-                <div className="grid gap-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Full Address
-                    </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Start typing to search..."
-                        value={formData.address}
-                        onChange={(e) =>
-                          setFormData({ ...formData, address: e.target.value })
-                        }
-                        className="w-full pl-11 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 focus:bg-white dark:focus:bg-black focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.city}
-                        onChange={(e) =>
-                          setFormData({ ...formData, city: e.target.value })
-                        }
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 focus:bg-white dark:focus:bg-black focus:border-blue-500 outline-none transition-all"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Country
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.country}
-                        onChange={(e) =>
-                          setFormData({ ...formData, country: e.target.value })
-                        }
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 focus:bg-white dark:focus:bg-black focus:border-blue-500 outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* WIFI */}
-            {activeTab === "wifi" && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
-                  <h3 className="text-xl font-semibold tracking-tight">
-                    WiFi & Access
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Share connection details securely.
-                  </p>
-                </div>
-                <div className="grid gap-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Network Name (SSID)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.wifiSsid}
-                        onChange={(e) =>
-                          setFormData({ ...formData, wifiSsid: e.target.value })
-                        }
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 focus:bg-white dark:focus:bg-black focus:border-blue-500 outline-none transition-all"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Password
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.wifiPassword}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            wifiPassword: e.target.value,
-                          })
-                        }
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 focus:bg-white dark:focus:bg-black focus:border-blue-500 outline-none font-mono transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="p-6 bg-gradient-to-br from-gray-900 to-black dark:from-neutral-800 dark:to-neutral-900 rounded-2xl flex items-center justify-between text-white shadow-lg">
-                    <div>
-                      <p className="font-semibold text-base mb-1">
-                        One-Click Connect QR
-                      </p>
-                      <p className="text-xs text-gray-400 max-w-xs">
-                        {formData.wifiQrCode
-                          ? "✅ QR String Ready"
-                          : "Generate a standardized string for automatic connection."}
-                      </p>
-                    </div>
-                    <button
-                      onClick={generateWifiQr}
-                      disabled={!formData.wifiSsid}
-                      className="px-5 py-2.5 bg-white text-black text-sm font-bold rounded-xl hover:scale-105 disabled:opacity-50 disabled:scale-100 transition-all shadow-md"
-                    >
-                      {isGeneratingQr ? "Generating..." : "Generate QR"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* RECOMMENDATIONS */}
-            {activeTab === "recommendations" && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-xl font-semibold tracking-tight">
-                      Local Recommendations
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Curate places for your guests.
+                    <label className="text-sm font-medium flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4 text-blue-500" /> Check-in Time
+                    </label>
+                    <input
+                      type="time"
+                      {...register("checkInTime")}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4 text-orange-500" /> Check-out
+                      Time
+                    </label>
+                    <input
+                      type="time"
+                      {...register("checkOutTime")}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-4">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Cover Image
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-2xl p-10 flex flex-col items-center justify-center text-gray-500 gap-4 hover:bg-gray-50 dark:hover:bg-neutral-800/50 hover:border-blue-500/50 transition-all cursor-pointer group">
+                    <div className="p-4 bg-gray-100 dark:bg-neutral-800 rounded-full group-hover:scale-110 transition-transform">
+                      <Upload className="w-6 h-6 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Click to upload cover photo
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        SVG, PNG, JPG or GIF (max. 5MB)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* --- LOCATION --- */}
+            <div
+              className={cn(
+                activeTab === "location" ? "block" : "hidden",
+                "space-y-6",
+              )}
+            >
+              <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
+                <h3 className="text-xl font-semibold">Location</h3>
+                <p className="text-sm text-gray-500">
+                  Address and Map positioning.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Search Address (Google Maps)
+                  </label>
+                  {isLoaded ? (
+                    <Autocomplete
+                      onLoad={onLoad}
+                      onPlaceChanged={onPlaceChanged}
+                    >
+                      <div className="relative mt-1">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          placeholder="Start typing address..."
+                          className="w-full pl-11 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    </Autocomplete>
+                  ) : (
+                    <p className="text-sm text-gray-400 animate-pulse">
+                      Loading Maps API...
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Full Address
+                  </label>
+                  <input
+                    {...register("address")}
+                    className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none"
+                  />
+                  {errors.address && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.address.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      City
+                    </label>
+                    <input
+                      {...register("city")}
+                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none"
+                    />
+                    {errors.city && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.city.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Country
+                    </label>
+                    <input
+                      {...register("country")}
+                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* --- WIFI --- */}
+            <div
+              className={cn(
+                activeTab === "wifi" ? "block" : "hidden",
+                "space-y-6",
+              )}
+            >
+              <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
+                <h3 className="text-xl font-semibold">WiFi Configuration</h3>
+                <p className="text-sm text-gray-500">
+                  Secure connection details.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    SSID (Network Name)
+                  </label>
+                  <input
+                    {...register("wifiSsid")}
+                    className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Password
+                  </label>
+                  <input
+                    {...register("wifiPassword")}
+                    className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none font-mono"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={generateWifiQr}
+                  className="text-sm text-blue-600 font-semibold hover:underline"
+                >
+                  Generate QR Code String
+                </button>
+                {watch("wifiQrCode") && (
+                  <span className="ml-4 text-green-500 text-sm flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Generated
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* --- RECOMMENDATIONS --- */}
+            <div
+              className={cn(
+                activeTab === "recommendations" ? "block" : "hidden",
+                "space-y-6",
+              )}
+            >
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-4">
+                <div>
+                  <h3 className="text-xl font-semibold">
+                    Local Recommendations
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Manage curated places.
+                  </p>
+                </div>
+              </div>
+
+              {/* Category Selector */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {["Restaurants", "Sights", "Shopping"].map((cat) => (
+                  <div
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={cn(
+                      "p-4 border rounded-xl cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-neutral-800",
+                      activeCategory === cat
+                        ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-neutral-800",
+                    )}
+                  >
+                    <h4
+                      className={cn(
+                        "font-bold text-lg",
+                        activeCategory === cat
+                          ? "text-blue-600"
+                          : "text-gray-700 dark:text-gray-300",
+                      )}
+                    >
+                      {cat}
+                    </h4>
+                    <p className="text-xs text-gray-500">
+                      {
+                        recFields.filter(
+                          (f: any) => f.categoryType === cat.toLowerCase(),
+                        ).length
+                      }{" "}
+                      places
                     </p>
                   </div>
-                  <button
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-200 dark:shadow-none transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
-                    onClick={handleAutoSuggest}
-                    disabled={isAutoSuggesting}
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    {isAutoSuggesting ? "Analyzing..." : "Auto-Suggest"}
-                  </button>
-                </div>
+                ))}
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[
-                    {
-                      name: "Restaurants",
-                      color:
-                        "bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400",
-                    },
-                    {
-                      name: "Sights",
-                      color:
-                        "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400",
-                    },
-                    {
-                      name: "Shopping",
-                      color:
-                        "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400",
-                    },
-                  ].map((cat) => {
-                    const count = getRecsByCategory(cat.name).length;
-                    const isSelected = activeCategory === cat.name;
+              {/* Active Category List */}
+              {activeCategory && (
+                <div className="bg-gray-50 dark:bg-neutral-800/20 p-6 rounded-2xl border border-gray-200 dark:border-neutral-800">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-semibold">{activeCategory} List</h4>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        appendRec({
+                          title: "",
+                          formattedAddress: "",
+                          googleMapsLink: "",
+                          categoryType: activeCategory.toLowerCase(),
+                          description: "",
+                        })
+                      }
+                      className="text-sm font-semibold text-blue-600 flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" /> Add Place
+                    </button>
+                  </div>
 
-                    return (
-                      <div
-                        key={cat.name}
-                        onClick={() => setActiveCategory(cat.name)}
-                        className={cn(
-                          "relative p-6 border rounded-2xl cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md group flex flex-col justify-between min-h-[140px]",
-                          isSelected
-                            ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 ring-1 ring-blue-500"
-                            : "border-gray-200 dark:border-neutral-800 hover:border-blue-300 bg-gray-50 dark:bg-neutral-800/30",
-                        )}
-                      >
-                        <div className="space-y-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <span
-                              className={cn(
-                                "font-bold text-lg leading-tight",
-                                isSelected
-                                  ? "text-blue-700 dark:text-blue-300"
-                                  : "",
-                              )}
-                            >
-                              {cat.name}
-                            </span>
-                            <span
-                              className={cn(
-                                "px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap shrink-0",
-                                cat.color,
-                              )}
-                            >
-                              {count} places
-                            </span>
-                          </div>
-                        </div>
-
-                        <span className="text-xs font-medium text-gray-400 group-hover:text-blue-500 transition-colors mt-4 block">
-                          Click to manage
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {activeCategory ? (
-                  <div className="mt-6 p-6 bg-gray-50 dark:bg-neutral-800/30 rounded-2xl border border-gray-200 dark:border-neutral-800 animate-in zoom-in-95 duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-bold text-gray-700 dark:text-gray-200">
-                        {activeCategory} List
-                      </h4>
-                      <button
-                        onClick={handleAddManualPlace}
-                        className="text-sm text-blue-600 font-semibold hover:underline"
-                      >
-                        + Add New Place
-                      </button>
-                    </div>
-
-                    <div className="space-y-3">
-                      {getRecsByCategory(activeCategory).length === 0 && (
-                        <div className="py-8 text-center bg-white dark:bg-neutral-900 rounded-xl border border-dashed border-gray-200 dark:border-neutral-800">
-                          <p className="text-sm text-gray-400 italic">
-                            No places yet.
-                          </p>
-                          <p className="text-xs text-gray-400 mb-4">
-                            Use Auto-Suggest or add manually.
-                          </p>
-                          <button
-                            onClick={handleAddManualPlace}
-                            className="px-3 py-1.5 bg-gray-100 dark:bg-neutral-800 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                          >
-                            Create Place
-                          </button>
-                        </div>
-                      )}
-                      {getRecsByCategory(activeCategory).map((place, idx) => (
+                  <div className="space-y-4">
+                    {recFields.map((field, index) => {
+                      // @ts-ignore
+                      if (field.categoryType !== activeCategory.toLowerCase())
+                        return null;
+                      return (
                         <div
-                          key={idx}
-                          className="flex gap-4 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-gray-100 dark:border-neutral-800 shadow-sm hover:border-blue-200 dark:hover:border-blue-900 transition-colors"
+                          key={field.id}
+                          className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-gray-100 dark:border-neutral-800 shadow-sm relative group"
                         >
-                          <div className="flex-1 space-y-2">
+                          <div className="md:col-span-4">
+                            <label className="text-[10px] uppercase text-gray-400 font-bold">
+                              Name
+                            </label>
                             <input
-                              value={place.title}
-                              onChange={(e) => {
-                                const newList = [...recommendationsList];
-                                const index = newList.findIndex(
-                                  (r) => r === place,
-                                );
-                                newList[index].title = e.target.value;
-                                setRecommendationsList(newList);
-                              }}
-                              className="w-full font-semibold bg-transparent outline-none placeholder:text-gray-300 focus:text-blue-600 transition-colors"
+                              {...register(
+                                `recommendations.${index}.title` as const,
+                              )}
+                              className="w-full text-sm font-semibold bg-transparent border-b border-gray-200 focus:border-blue-500 outline-none"
                               placeholder="Place Name"
                             />
+                          </div>
+                          <div className="md:col-span-4">
+                            <label className="text-[10px] uppercase text-gray-400 font-bold">
+                              Address
+                            </label>
                             <input
-                              value={place.formattedAddress || ""}
-                              onChange={(e) => {
-                                const newList = [...recommendationsList];
-                                const index = newList.findIndex(
-                                  (r) => r === place,
-                                );
-                                newList[index].formattedAddress =
-                                  e.target.value;
-                                setRecommendationsList(newList);
-                              }}
-                              className="w-full text-xs text-gray-500 bg-transparent outline-none"
+                              {...register(
+                                `recommendations.${index}.formattedAddress` as const,
+                              )}
+                              className="w-full text-sm bg-transparent border-b border-gray-200 focus:border-blue-500 outline-none"
                               placeholder="Address"
                             />
                           </div>
-                          <button
-                            onClick={() => {
-                              setRecommendationsList((prev) =>
-                                prev.filter((r) => r !== place),
-                              );
-                            }}
-                            className="text-gray-400 hover:text-red-500 transition-colors"
-                          >
-                            <div className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M3 6h18" />
-                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                              </svg>
-                            </div>
-                          </button>
+                          <div className="md:col-span-3">
+                            <label className="text-[10px] uppercase text-gray-400 font-bold">
+                              Maps Link
+                            </label>
+                            <input
+                              {...register(
+                                `recommendations.${index}.googleMapsLink` as const,
+                              )}
+                              className="w-full text-sm text-blue-500 bg-transparent border-b border-gray-200 focus:border-blue-500 outline-none"
+                              placeholder="https://maps..."
+                            />
+                          </div>
+                          <div className="md:col-span-1 flex items-end justify-end">
+                            <button
+                              type="button"
+                              onClick={() => removeRec(index)}
+                              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
+                    {recFields.filter(
+                      (f: any) =>
+                        f.categoryType === activeCategory.toLowerCase(),
+                    ).length === 0 && (
+                      <p className="text-center text-gray-400 text-sm italic py-4">
+                        No places yet.
+                      </p>
+                    )}
                   </div>
-                ) : (
-                  <div className="p-12 bg-gray-50 dark:bg-neutral-800/30 rounded-2xl text-center border-2 border-dashed border-gray-200 dark:border-neutral-700">
-                    <p className="text-gray-500 font-medium">
-                      Select a category above to start adding recommendations.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* TRANSPORT */}
-            {activeTab === "transport" && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-4">
-                  <h3 className="text-lg font-semibold">Transport Options</h3>
-                  <button className="text-sm text-blue-600 font-medium hover:underline">
-                    + Add Option
-                  </button>
                 </div>
+              )}
+            </div>
 
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <select className="px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none">
-                      <option>Select Type...</option>
-                      <option value="taxi">Taxi / Uber</option>
-                      <option value="bus">Public Bus</option>
-                      <option value="train">Train / Metro</option>
-                      <option value="rental">Car Rental</option>
-                    </select>
-                    <input
-                      type="text"
-                      placeholder="Provider Name (e.g. Uber, Local Taxi)"
-                      className="px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none"
+            {/* --- TRANSPORT --- */}
+            <div
+              className={cn(
+                activeTab === "transport" ? "block" : "hidden",
+                "space-y-6",
+              )}
+            >
+              <div className="border-b border-gray-100 dark:border-neutral-800 pb-4 flex justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold">Transport</h3>
+                  <p className="text-sm text-gray-500">How to get around.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    appendTransport({ name: "", type: "taxi", description: "" })
+                  }
+                  className="text-sm font-semibold text-blue-600 flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" /> Add Option
+                </button>
+              </div>
+              <div className="space-y-4">
+                {transportFields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="p-4 border rounded-xl bg-gray-50 dark:bg-neutral-800/20"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                      <input
+                        {...register(`transport.${index}.name` as const)}
+                        placeholder="Provider (e.g. Uber)"
+                        className="px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700"
+                      />
+                      <select
+                        {...register(`transport.${index}.type` as const)}
+                        className="px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700"
+                      >
+                        <option value="taxi">Taxi / Uber</option>
+                        <option value="bus">Bus</option>
+                        <option value="train">Train</option>
+                        <option value="rental">Rental</option>
+                      </select>
+                    </div>
+                    <textarea
+                      {...register(`transport.${index}.description` as const)}
+                      placeholder="Details..."
+                      className="w-full px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 resize-none h-20"
                     />
-                  </div>
-                  <textarea
-                    rows={3}
-                    placeholder="Instructions, schedule or price info..."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none resize-none"
-                  />
-                  <div className="flex justify-end">
-                    <button className="px-6 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-black rounded-xl text-sm font-bold shadow-md hover:scale-105 transition-all">
-                      Add Transport
+                    <button
+                      type="button"
+                      onClick={() => removeTransport(index)}
+                      className="text-red-500 text-xs mt-2 underline"
+                    >
+                      Remove
                     </button>
                   </div>
-                </div>
+                ))}
               </div>
-            )}
+            </div>
 
-            {/* EMERGENCY */}
-            {activeTab === "emergency" && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-4">
-                  <h3 className="text-lg font-semibold">Emergency Contacts</h3>
+            {/* --- EMERGENCY --- */}
+            <div
+              className={cn(
+                activeTab === "emergency" ? "block" : "hidden",
+                "space-y-6",
+              )}
+            >
+              <div className="border-b border-gray-100 dark:border-neutral-800 pb-4 flex justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold">Emergency Contacts</h3>
+                  <p className="text-sm text-gray-500">Essential numbers.</p>
                 </div>
-
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl flex gap-3 text-blue-700 dark:text-blue-300 text-sm">
-                  <AlertCircle className="w-5 h-5 shrink-0" />
-                  <p>
-                    Default emergency numbers (Police 911, etc.) will be
-                    automatically suggested based on the property country.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {["Police", "Ambulance", "Fire Dept"].map((service) => (
-                    <div
-                      key={service}
-                      className="flex items-center justify-between p-4 border border-gray-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900"
+                <button
+                  type="button"
+                  onClick={() =>
+                    appendContact({ name: "", phone: "", type: "other" })
+                  }
+                  className="text-sm font-semibold text-blue-600 flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" /> Add Contact
+                </button>
+              </div>
+              <div className="space-y-3">
+                {contactFields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="flex items-center gap-4 p-3 bg-white dark:bg-neutral-900 border rounded-xl"
+                  >
+                    <input
+                      {...register(`emergencyContacts.${index}.name` as const)}
+                      placeholder="Service Name"
+                      className="flex-1 bg-transparent border-none outline-none font-semibold"
+                    />
+                    <input
+                      {...register(`emergencyContacts.${index}.phone` as const)}
+                      placeholder="Phone Number"
+                      className="w-32 text-right bg-transparent border-none outline-none font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeContact(index)}
+                      className="p-2 text-gray-400 hover:text-red-500"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
-                          <AlertCircle className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-sm">{service}</p>
-                          <p className="text-xs text-gray-500">Local Service</p>
-                        </div>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Number"
-                        className="w-32 text-right bg-transparent border-b border-transparent focus:border-gray-300 outline-none font-mono text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                {contactFields.length === 0 && (
+                  <p className="text-gray-400 italic text-sm">
+                    No contacts added.
+                  </p>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200 dark:border-neutral-800 mt-8">
+              <button
+                type="button"
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                {isSaving
+                  ? "Saving..."
+                  : isEditMode
+                    ? "Update Property"
+                    : "Save Property"}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
-      {/* Footer Actions */}
-      <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200 dark:border-neutral-800 mt-8">
-        <Link
-          href="/dashboard/properties"
-          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
-        >
-          Cancel
-        </Link>
-        <button
-          onClick={handleSave}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all hover:scale-105 shadow-lg shadow-blue-200 dark:shadow-none"
-        >
-          <Save className="w-4 h-4" />
-          {isEditMode ? "Update Property" : "Save Property"}
-        </button>
-      </div>
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Success!</h3>
+            <p className="text-gray-500 mb-6">
+              Property has been successfully{" "}
+              {isEditMode ? "updated" : "created"}.
+            </p>
+            <button
+              onClick={handleFinish}
+              className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-bold rounded-xl hover:opacity-90 transition-opacity"
+            >
+              Continue to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
