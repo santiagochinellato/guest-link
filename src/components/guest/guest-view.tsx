@@ -41,10 +41,7 @@ export function GuestView({ property, dict }: GuestViewProps) {
   const [activeCategory, setActiveCategory] = useState<string>("restaurants");
   const { Canvas } = useQRCode();
 
-  // Mock Host Data
-  const HOST_NAME = "Santiago";
-  const HOST_IMAGE =
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuBHGn-Dk297_8nrQ51QgTv8N_HmiAUvd1ypqFyc4MKUrpjipcpbFRSL6mM5RIgHy7GfXRlI7gX0RxUJ0Ye92aULIrGVd7JhQ2DkM7RUkkUMqbxjrqD_zIV7o017xcO6kqLXl1ACa679wKuY_ZXuyAHukWFP3xWw5RrGO1h3TCdQk6_h7KWCau5h1-12yj-9Du_YrUBzJt6hZcy3bxI4qoVdJPmOZDJM1hg94Jy6IGN8UXBphhqhi4_G47bSvTYX9mkIXhD6kfwaDSo";
+  // Mock Host Data Removed - using property.hostName etc.
 
   // Actions Navigation
   const ACTIONS = [
@@ -142,26 +139,26 @@ export function GuestView({ property, dict }: GuestViewProps) {
         <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-24 relative scroll-smooth">
           {/* HOME VIEW (Merged WiFi + Info + Rules) */}
           {activeView === "home" && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className=" duration-300">
               {/* 1. Hero Section */}
               <div className="relative w-full h-[380px] group">
                 <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700"
                   style={{
                     backgroundImage: `url(${property.image || "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2942&auto=format&fit=crop"})`,
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#f6f8f8] dark:from-[#112120] via-black/40 to-black/30" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
                 <div className="absolute bottom-10 left-0 w-full p-6 flex flex-col gap-4">
                   <div>
                     <span className="inline-block px-3 py-1 mb-2 text-xs font-medium tracking-wider text-white uppercase bg-[#0f756d]/90 backdrop-blur-sm rounded-full shadow-lg">
                       Premium Stay
                     </span>
-                    <h1 className="text-white text-4xl font-bold leading-tight shadow-sm">
+                    <h1 className="text-white text-4xl font-bold leading-tight drop-shadow-lg">
                       {property.name} <br />
-                      <span className="text-white/90 font-normal text-2xl">
-                        Ocean View
+                      <span className="text-white/95 font-normal text-2xl drop-shadow-md">
+                        {property.address || property.city || "Premium Stay"}
                       </span>
                     </h1>
                   </div>
@@ -171,7 +168,12 @@ export function GuestView({ property, dict }: GuestViewProps) {
                     <div className="size-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white/50">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={HOST_IMAGE}
+                        src={
+                          property.hostImage ||
+                          "https://ui-avatars.com/api/?name=" +
+                            (property.hostName || "Host") +
+                            "&background=random"
+                        }
                         alt="Host"
                         className="w-full h-full object-cover"
                       />
@@ -181,7 +183,7 @@ export function GuestView({ property, dict }: GuestViewProps) {
                         Hosted by
                       </span>
                       <span className="text-white text-sm font-bold leading-none">
-                        {HOST_NAME}
+                        {property.hostName || "Anfitrión"}
                       </span>
                     </div>
                   </div>
@@ -313,6 +315,19 @@ export function GuestView({ property, dict }: GuestViewProps) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white dark:bg-neutral-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-neutral-700 flex flex-col gap-3">
+                      <div className="size-10 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center">
+                        <Clock className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase font-bold tracking-wider">
+                          Check-in
+                        </p>
+                        <p className="text-neutral-900 dark:text-white font-bold text-xl">
+                          {property.checkIn || "11:00 AM"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-neutral-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-neutral-700 flex flex-col gap-3">
                       <div className="size-10 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center">
                         <Clock className="w-5 h-5" />
                       </div>
@@ -322,19 +337,6 @@ export function GuestView({ property, dict }: GuestViewProps) {
                         </p>
                         <p className="text-neutral-900 dark:text-white font-bold text-xl">
                           {property.checkOut || "11:00 AM"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-white dark:bg-neutral-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-neutral-700 flex flex-col gap-3">
-                      <div className="size-10 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center">
-                        <Sun className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase font-bold tracking-wider">
-                          Hoy
-                        </p>
-                        <p className="text-neutral-900 dark:text-white font-bold text-xl">
-                          28° Soleado
                         </p>
                       </div>
                     </div>
@@ -371,7 +373,7 @@ export function GuestView({ property, dict }: GuestViewProps) {
                             <div className="absolute top-0 left-0 text-[#0f756d]/10 text-6xl font-serif -translate-x-2 -translate-y-4">
                               “
                             </div>
-                            <div className="prose dark:prose-invert prose-sm pl-6 relative z-10 prose-p:text-neutral-600 dark:prose-p:text-neutral-300 prose-p:leading-relaxed">
+                            <div className="prose dark:prose-invert prose-sm  relative z-10 prose-p:text-neutral-600 dark:prose-p:text-neutral-300 prose-p:leading-relaxed">
                               {rules.text ? (
                                 <p className="whitespace-pre-wrap font-medium">
                                   {rules.text}
@@ -387,7 +389,7 @@ export function GuestView({ property, dict }: GuestViewProps) {
 
                           {/* Allowed List */}
                           {rules.allowed && rules.allowed.length > 0 && (
-                            <div className="space-y-3 pl-6">
+                            <div className="space-y-3 ">
                               <h4 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                                 <CheckCircle className="w-4 h-4 text-green-500" />
                                 Se Permite / Info
@@ -411,7 +413,7 @@ export function GuestView({ property, dict }: GuestViewProps) {
 
                           {/* Prohibited List */}
                           {rules.prohibited && rules.prohibited.length > 0 && (
-                            <div className="space-y-3 pl-6">
+                            <div className="space-y-3">
                               <h4 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                                 <XCircle className="w-4 h-4 text-red-500" />
                                 Prohibido
@@ -620,6 +622,42 @@ export function GuestView({ property, dict }: GuestViewProps) {
                     <h4 className="text-sm font-bold text-neutral-400 uppercase tracking-widest px-2">
                       Contactos Directos
                     </h4>
+
+                    {/* Host Contact Card (Dynamic) */}
+                    {property.hostPhone && (
+                      <div className="flex items-center justify-between p-5 bg-[#0f756d]/5 dark:bg-[#0f756d]/10 rounded-2xl shadow-sm border border-[#0f756d]/20 group hover:border-[#0f756d]/50 transition-all">
+                        <div className="flex items-center gap-4 min-w-0 flex-1">
+                          <div className="size-12 rounded-full bg-[#0f756d]/10 flex items-center justify-center text-[#0f756d] transition-colors flex-shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={
+                                property.hostImage ||
+                                "https://ui-avatars.com/api/?name=" +
+                                  (property.hostName || "Host")
+                              }
+                              alt="Host"
+                              className="w-full h-full object-cover rounded-full"
+                            />
+                          </div>
+                          <div className="flex flex-col min-w-0 pr-2">
+                            <span className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white leading-tight break-words">
+                              Contactar a {property.hostName || "Anfitrión"}
+                            </span>
+                            <span className="text-xs text-[#0f756d] font-bold uppercase tracking-wider mt-0.5">
+                              WhatsApp / Llamada
+                            </span>
+                          </div>
+                        </div>
+                        <a
+                          href={`https://wa.me/${property.hostPhone.replace(/[^0-9]/g, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="size-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:bg-[#20bd5a] hover:scale-110 transition-all active:scale-95 flex-shrink-0"
+                        >
+                          <MessageCircle className="w-6 h-6 fill-white" />
+                        </a>
+                      </div>
+                    )}
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {property.emergencyContacts?.map(
                       (contact: any, i: number) => (
@@ -627,22 +665,22 @@ export function GuestView({ property, dict }: GuestViewProps) {
                           key={i}
                           className="flex items-center justify-between p-5 bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-gray-100 dark:border-neutral-700 group hover:border-[#0f756d]/30 transition-all"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="size-12 rounded-full bg-gray-50 dark:bg-neutral-800 group-hover:bg-[#0f756d]/10 flex items-center justify-center text-gray-400 group-hover:text-[#0f756d] transition-colors">
+                          <div className="flex items-center gap-4 min-w-0 flex-1">
+                            <div className="size-12 rounded-full bg-gray-50 dark:bg-neutral-800 group-hover:bg-[#0f756d]/10 flex items-center justify-center text-gray-400 group-hover:text-[#0f756d] transition-colors flex-shrink-0">
                               <User className="w-6 h-6" />
                             </div>
-                            <div className="flex flex-col">
-                              <span className="text-lg font-bold text-neutral-900 dark:text-white">
+                            <div className="flex flex-col min-w-0 pr-2">
+                              <span className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white leading-tight break-words">
                                 {contact.name}
                               </span>
-                              <span className="text-xs text-neutral-400 font-medium uppercase tracking-wider">
+                              <span className="text-xs text-neutral-400 font-medium uppercase tracking-wider mt-0.5">
                                 {contact.type}
                               </span>
                             </div>
                           </div>
                           <a
                             href={`tel:${contact.phone}`}
-                            className="size-12 rounded-full bg-[#0f756d] text-white flex items-center justify-center shadow-lg shadow-[#0f756d]/30 hover:bg-[#0d6059] hover:scale-110 transition-all active:scale-95"
+                            className="size-12 rounded-full bg-[#0f756d] text-white flex items-center justify-center shadow-lg shadow-[#0f756d]/30 hover:bg-[#0d6059] hover:scale-110 transition-all active:scale-95 flex-shrink-0"
                           >
                             <Phone className="w-5 h-5 fill-current" />
                           </a>
@@ -655,7 +693,7 @@ export function GuestView({ property, dict }: GuestViewProps) {
                       <p className="text-[10px] text-white/50 uppercase tracking-widest mb-1 relative z-10">
                         Servicios Públicos
                       </p>
-                      <p className="text-3xl font-black text-white relative z-10 tracking-tight">
+                      <p className="text-4xl font-black text-white relative z-10 tracking-tight my-2">
                         911
                       </p>
                       <p className="text-sm font-medium text-white/70 relative z-10">

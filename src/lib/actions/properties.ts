@@ -60,16 +60,20 @@ export async function createProperty(data: PropertyFormData) {
         coverImageUrl: p.coverImageUrl,
         checkInTime: p.checkInTime,
         checkOutTime: p.checkOutTime,
-        checkInTime: p.checkInTime,
-        checkOutTime: p.checkOutTime,
-        // Serialize House Rules if lists exist
-        houseRules: (p.rulesAllowed?.length || p.rulesProhibited?.length) 
-          ? JSON.stringify({
+
+        // Host Info
+        // Host Info - Stored in House Rules JSON to avoid migration
+        // Serialize House Rules including Host Info
+        houseRules: JSON.stringify({
               text: p.houseRules || "",
               allowed: p.rulesAllowed?.map(r => r.value) || [],
-              prohibited: p.rulesProhibited?.map(r => r.value) || []
-            })
-          : p.houseRules,
+              prohibited: p.rulesProhibited?.map(r => r.value) || [],
+              host: {
+                 name: p.hostName,
+                 image: p.hostImage,
+                 phone: p.hostPhone
+              }
+            }),
       }).returning({ id: properties.id });
 
       const propId = newProp.id;
@@ -177,16 +181,18 @@ export async function updateProperty(id: number, data: PropertyFormData) {
             coverImageUrl: p.coverImageUrl,
             checkInTime: p.checkInTime,
             checkOutTime: p.checkOutTime,
-            checkInTime: p.checkInTime,
-            checkOutTime: p.checkOutTime,
-            // Serialize House Rules if lists exist
-            houseRules: (p.rulesAllowed?.length || p.rulesProhibited?.length) 
-              ? JSON.stringify({
+
+            // Serialize House Rules including Host Info
+            houseRules: JSON.stringify({
                   text: p.houseRules || "",
                   allowed: p.rulesAllowed?.map(r => r.value) || [],
-                  prohibited: p.rulesProhibited?.map(r => r.value) || []
-                })
-              : p.houseRules,
+                  prohibited: p.rulesProhibited?.map(r => r.value) || [],
+                  host: {
+                     name: p.hostName,
+                     image: p.hostImage,
+                     phone: p.hostPhone
+                  }
+                }),
             updatedAt: new Date()
         }).where(eq(properties.id, id));
 
@@ -253,6 +259,13 @@ export async function updateProperty(id: number, data: PropertyFormData) {
 
      revalidatePath(`/dashboard/properties`);
      revalidatePath(`/dashboard/properties/${id}/edit`);
+     // Revalidate Guest Views (Assuming es/en locales)
+     if (p.slug) {
+         revalidatePath(`/es/stay/${p.slug}`);
+         revalidatePath(`/en/stay/${p.slug}`);
+         // Try generic revalidation just in case
+         revalidatePath(`/[lang]/stay/${p.slug}`, 'page');
+     }
      return { success: true };
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
        console.error("Update Error:", err);
@@ -267,7 +280,6 @@ export async function getProperties() {
        address: properties.address,
        slug: properties.slug,
        views: properties.views,
-       qrScans: properties.qrScans,
     })
     .from(properties)
     .orderBy(properties.createdAt);
@@ -311,6 +323,42 @@ export async function getProperty(id: number) {
         coverImageUrl: prop.coverImageUrl || "",
         checkInTime: prop.checkInTime || "",
         checkOutTime: prop.checkOutTime || "",
+
+        hostName: (() => {
+             try { return JSON.parse(prop.houseRules || "").host?.name || ""; } catch { return ""; }
+        })(),
+        hostImage: (() => {
+             try { return JSON.parse(prop.houseRules || "").host?.image || ""; } catch { return ""; }
+        })(),
+        hostPhone: (() => {
+             try { return JSON.parse(prop.houseRules || "").host?.phone || ""; } catch { return ""; }
+        })(),
+        houseRules: (() => {
+             try {
+                 const parsed = JSON.parse(prop.houseRules || "");
+                 return parsed.text || prop.houseRules || "";
+             } catch {
+                 return prop.houseRules || "";
+             }
+        })(),
+        rulesAllowed: (() => {
+             try {
+                 const parsed = JSON.parse(prop.houseRules || "");
+                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 return (parsed.allowed || []).map((v: any) => ({ value: v }));
+             } catch {
+                 return [];
+             }
+        })(),
+        rulesProhibited: (() => {
+             try {
+                 const parsed = JSON.parse(prop.houseRules || "");
+                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 return (parsed.prohibited || []).map((v: any) => ({ value: v }));
+             } catch {
+                 return [];
+             }
+        })(),
         recommendations: prop.recommendations.map(r => ({
            title: r.title,
            description: r.description || "",
@@ -367,18 +415,28 @@ export async function getPropertyBySlug(slug: string) {
              name: prop.name,
              wifiSsid: prop.wifiSsid,
              wifiPassword: prop.wifiPassword,
-             wifiQrCode: prop.wifiQrCode,
+             wifiQrCode: prop.wifiQrCode || "",
+             // Handle House Rules parsing for Guest View (Object Structure)
              houseRules: (() => {
                  try {
                      const parsed = JSON.parse(prop.houseRules || "");
                      return { 
-                        text: parsed.text || prop.houseRules || "", 
+                        text: parsed.text || "", 
                         allowed: parsed.allowed || [], 
                         prohibited: parsed.prohibited || [] 
                      };
                  } catch {
                      return { text: prop.houseRules || "", allowed: [], prohibited: [] };
                  }
+             })(),
+             hostName: (() => {
+                    try { return JSON.parse(prop.houseRules || "").host?.name || ""; } catch { return ""; }
+             })(),
+             hostImage: (() => {
+                    try { return JSON.parse(prop.houseRules || "").host?.image || ""; } catch { return ""; }
+             })(),
+             hostPhone: (() => {
+                    try { return JSON.parse(prop.houseRules || "").host?.phone || ""; } catch { return ""; }
              })(),
              image: prop.coverImageUrl,
              checkIn: prop.checkInTime,

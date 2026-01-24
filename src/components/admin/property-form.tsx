@@ -21,6 +21,7 @@ import {
   Image as ImageIcon,
   X,
   QrCode,
+  User,
   Utensils,
   Camera,
   ShoppingBag,
@@ -190,24 +191,11 @@ export function PropertyForm({
       coverImageUrl: initialData.coverImageUrl || "",
       recommendations: initialData.recommendations || [],
       emergencyContacts: initialData.emergencyContacts || [],
-      recommendations: initialData.recommendations || [],
-      emergencyContacts: initialData.emergencyContacts || [],
+
       transport: initialData.transport || [],
-      // Handle legacy string vs new object structure from server
-      houseRules:
-        typeof initialData.houseRules === "object"
-          ? initialData.houseRules.text
-          : initialData.houseRules || "",
-      rulesAllowed:
-        typeof initialData.houseRules === "object"
-          ? initialData.houseRules.allowed?.map((v: string) => ({ value: v }))
-          : [],
-      rulesProhibited:
-        typeof initialData.houseRules === "object"
-          ? initialData.houseRules.prohibited?.map((v: string) => ({
-              value: v,
-            }))
-          : [],
+      houseRules: initialData.houseRules || "",
+      rulesAllowed: initialData.rulesAllowed || [],
+      rulesProhibited: initialData.rulesProhibited || [],
     },
   });
 
@@ -269,6 +257,7 @@ export function PropertyForm({
   // Watchers
   const watchName = watch("name");
   const watchCoverImage = watch("coverImageUrl");
+  const hostImageUrl = watch("hostImage");
 
   // Auto-generate slug
   useEffect(() => {
@@ -301,16 +290,22 @@ export function PropertyForm({
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setValue("coverImageUrl", reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const handleFileUpload =
+    (field: "coverImageUrl" | "hostImage") =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          alert("El archivo es demasiado grande (Máx 5MB)");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setValue(field, reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
 
   const generateWifiQr = () => {
     const ssid = watch("wifiSsid");
@@ -562,7 +557,7 @@ export function PropertyForm({
                                 type="file"
                                 className="hidden"
                                 accept="image/*"
-                                onChange={handleImageUpload}
+                                onChange={handleFileUpload("coverImageUrl")}
                               />
                               <p className="text-xs text-gray-400">
                                 PNG, JPG, GIF hasta 5MB
@@ -603,6 +598,90 @@ export function PropertyForm({
                             className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500"
                           />
                         </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-100 dark:border-neutral-800 pt-6">
+                    <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
+                      Información del Anfitrión
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Nombre del Anfitrión
+                        </label>
+                        <input
+                          {...register("hostName")}
+                          className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 transition-all"
+                          placeholder="Ej. Santiago"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Teléfono / WhatsApp (Opcional)
+                        </label>
+                        <input
+                          {...register("hostPhone")}
+                          className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 transition-all"
+                          placeholder="+54 9 11 ..."
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          Si se completa, aparecerá un botón de contacto directo
+                          en &quot;Ayuda&quot;.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Foto del Anfitrión
+                      </label>
+                      <div className="mt-1">
+                        {hostImageUrl ? (
+                          <div className="relative w-24 h-24 rounded-full overflow-hidden border border-gray-200 dark:border-neutral-700 group mx-auto md:mx-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={hostImageUrl}
+                              alt="Host"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setValue("hostImage", "")}
+                              className="absolute inset-0 bg-black/40 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-6 h-6" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col md:flex-row gap-4 items-start">
+                            <label className="border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-xl p-4 flex flex-col items-center justify-center text-gray-500 gap-2 hover:bg-gray-50 dark:hover:bg-neutral-800/50 hover:border-blue-500/50 transition-all text-center cursor-pointer w-full md:w-auto min-w-[120px]">
+                              <User className="w-6 h-6 text-gray-300" />
+                              <span className="text-xs text-blue-600 font-medium hover:underline">
+                                Subir foto
+                              </span>
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleFileUpload("hostImage")}
+                              />
+                            </label>
+                            <div className="flex-1 w-full">
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                O pegar URL
+                              </p>
+                              <input
+                                {...register("hostImage")}
+                                placeholder="https://..."
+                                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 text-sm"
+                              />
+                              <p className="text-xs text-gray-400 mt-1">
+                                Recomendado: Imagen cuadrada, rostro visible.
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
