@@ -53,6 +53,8 @@ export const PropertyFormSchema = z.object({
   
   // Content
   houseRules: z.string().optional(),
+  rulesAllowed: z.array(z.object({ value: z.string() })).optional(),
+  rulesProhibited: z.array(z.object({ value: z.string() })).optional(),
 });
 
 export type PropertyFormData = z.infer<typeof PropertyFormSchema>;

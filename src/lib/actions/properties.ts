@@ -60,6 +60,16 @@ export async function createProperty(data: PropertyFormData) {
         coverImageUrl: p.coverImageUrl,
         checkInTime: p.checkInTime,
         checkOutTime: p.checkOutTime,
+        checkInTime: p.checkInTime,
+        checkOutTime: p.checkOutTime,
+        // Serialize House Rules if lists exist
+        houseRules: (p.rulesAllowed?.length || p.rulesProhibited?.length) 
+          ? JSON.stringify({
+              text: p.houseRules || "",
+              allowed: p.rulesAllowed?.map(r => r.value) || [],
+              prohibited: p.rulesProhibited?.map(r => r.value) || []
+            })
+          : p.houseRules,
       }).returning({ id: properties.id });
 
       const propId = newProp.id;
@@ -167,6 +177,16 @@ export async function updateProperty(id: number, data: PropertyFormData) {
             coverImageUrl: p.coverImageUrl,
             checkInTime: p.checkInTime,
             checkOutTime: p.checkOutTime,
+            checkInTime: p.checkInTime,
+            checkOutTime: p.checkOutTime,
+            // Serialize House Rules if lists exist
+            houseRules: (p.rulesAllowed?.length || p.rulesProhibited?.length) 
+              ? JSON.stringify({
+                  text: p.houseRules || "",
+                  allowed: p.rulesAllowed?.map(r => r.value) || [],
+                  prohibited: p.rulesProhibited?.map(r => r.value) || []
+                })
+              : p.houseRules,
             updatedAt: new Date()
         }).where(eq(properties.id, id));
 
@@ -348,7 +368,18 @@ export async function getPropertyBySlug(slug: string) {
              wifiSsid: prop.wifiSsid,
              wifiPassword: prop.wifiPassword,
              wifiQrCode: prop.wifiQrCode,
-             houseRules: prop.houseRules,
+             houseRules: (() => {
+                 try {
+                     const parsed = JSON.parse(prop.houseRules || "");
+                     return { 
+                        text: parsed.text || prop.houseRules || "", 
+                        allowed: parsed.allowed || [], 
+                        prohibited: parsed.prohibited || [] 
+                     };
+                 } catch {
+                     return { text: prop.houseRules || "", allowed: [], prohibited: [] };
+                 }
+             })(),
              image: prop.coverImageUrl,
              checkIn: prop.checkInTime,
              checkOut: prop.checkOutTime,
