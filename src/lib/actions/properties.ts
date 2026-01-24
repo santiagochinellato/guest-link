@@ -413,6 +413,9 @@ export async function getPropertyBySlug(slug: string) {
          success: true,
          data: {
              name: prop.name,
+             address: prop.address || "",
+             city: prop.city || "",
+             country: prop.country || "",
              wifiSsid: prop.wifiSsid,
              wifiPassword: prop.wifiPassword,
              wifiQrCode: prop.wifiQrCode || "",
