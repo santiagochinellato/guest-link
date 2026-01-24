@@ -246,7 +246,8 @@ export async function getProperties() {
        name: properties.name,
        address: properties.address,
        slug: properties.slug,
-       // active: properties.active // Schema doesn't have active, ignoring for now or mapping
+       views: properties.views,
+       qrScans: properties.qrScans,
     })
     .from(properties)
     .orderBy(properties.createdAt);

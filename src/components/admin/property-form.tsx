@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Save,
-  Upload,
   MapPin,
   Clock,
   Wifi,
@@ -21,7 +20,9 @@ import {
   CheckCircle,
   Image as ImageIcon,
   X,
+  QrCode,
 } from "lucide-react";
+import { QrFlyerBuilder } from "@/components/admin/qr-flyer-builder";
 import { cn } from "@/lib/utils";
 import { PropertyFormSchema, PropertyFormData } from "@/lib/schemas";
 import { createProperty, updateProperty } from "@/lib/actions/properties";
@@ -236,6 +237,7 @@ export function PropertyForm({
     { id: "recommendations", label: "Recomendaciones", icon: Sparkles },
     { id: "transport", label: "Transporte", icon: Car },
     { id: "emergency", label: "Emergencia", icon: AlertCircle },
+    { id: "flyer", label: "Diseño QR Flyer", icon: QrCode },
   ];
 
   return (
@@ -295,7 +297,12 @@ export function PropertyForm({
         <div className="lg:col-span-9">
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="bg-white dark:bg-neutral-900 p-8 rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-sm min-h-[600px] max-h-[600px] overflow-y-auto pr-2 custom-scrollbar relative"
+            className={cn(
+              "bg-white dark:bg-neutral-900 p-8 rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-sm relative",
+              activeTab === "flyer"
+                ? ""
+                : "min-h-[600px] max-h-[600px] overflow-y-auto pr-2 custom-scrollbar",
+            )}
           >
             {/* --- BASIC INFO TAB --- */}
             {activeTab === "basic" && (
@@ -853,34 +860,47 @@ export function PropertyForm({
             )}
 
             {/* Footer */}
+            {activeTab === "flyer" && (
+              <div className="animate-in fade-in duration-300 h-full">
+                <div className="border-b border-gray-100 dark:border-neutral-800 pb-4 mb-6">
+                  <h3 className="text-xl font-semibold">Diseñador de Flyers</h3>
+                  <p className="text-sm text-gray-500">
+                    Crea y descarga posters listos para imprimir.
+                  </p>
+                </div>
+                <QrFlyerBuilder initialData={form.getValues()} />
+              </div>
+            )}
           </form>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200 dark:border-neutral-800 mt-8 absolute bottom-0 left-0 right-0 p-8 bg-white dark:bg-neutral-900 rounded-3xl relative">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 rounded-lg"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4" />
-          )}
-          {isSaving
-            ? "Saving..."
-            : isEditMode
-              ? "Update Property"
-              : "Save Property"}
-        </button>
-      </div>
+      {activeTab !== "flyer" && (
+        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200 dark:border-neutral-800 mt-8 absolute bottom-0 left-0 right-0 p-8 bg-white dark:bg-neutral-900 rounded-3xl relative">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 rounded-lg"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+          >
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {isSaving
+              ? "Saving..."
+              : isEditMode
+                ? "Update Property"
+                : "Save Property"}
+          </button>
+        </div>
+      )}
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">

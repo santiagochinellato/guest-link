@@ -10,6 +10,15 @@ export default async function DashboardPage() {
   // Take only last 5
   const recentProperties = properties ? properties.slice(0, 5) : [];
 
+  const totalViews = properties.reduce(
+    (acc, curr) => acc + (curr.views || 0),
+    0,
+  );
+  const totalScans = properties.reduce(
+    (acc, curr) => acc + (curr.qrScans || 0),
+    0,
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -31,7 +40,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm">
           <p className="text-sm font-medium text-gray-500">Vistas Totales</p>
-          <h3 className="text-3xl font-bold mt-2">258</h3>
+          <h3 className="text-3xl font-bold mt-2">{totalViews}</h3>
           <p className="text-xs text-green-600 mt-1">+12% mes anterior</p>
         </div>
         <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm">
@@ -42,7 +51,7 @@ export default async function DashboardPage() {
         </div>
         <div className="bg-white dark:bg-neutral-900 p-6 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm">
           <p className="text-sm font-medium text-gray-500">Escaneos QR</p>
-          <h3 className="text-3xl font-bold mt-2">142</h3>
+          <h3 className="text-3xl font-bold mt-2">{totalScans}</h3>
           <p className="text-xs text-green-600 mt-1">Alta participación</p>
         </div>
       </div>
@@ -52,7 +61,7 @@ export default async function DashboardPage() {
           <h3 className="font-semibold">Recent Properties</h3>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-neutral-800">
-          {recentProperties.map((prop: any) => (
+          {recentProperties.map((prop) => (
             <div
               key={prop.id}
               className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors"

@@ -26,6 +26,8 @@ export const properties = pgTable("properties", {
   coverImageUrl: text("cover_image_url"),
   checkInTime: text("check_in_time"),
   checkOutTime: text("check_out_time"),
+  views: integer("views").default(0).notNull(),
+  qrScans: integer("qr_scans").default(0).notNull(),
   ownerId: integer("owner_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

@@ -1,29 +1,31 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "../globals.css";
+import "@/app/globals.css";
+import { ThemeProvider } from "@/components/providers/theme-provider"; // Asegura que la ruta sea correcta
 import { Toaster } from "sonner";
-import { Locale } from "@/lib/i18n/config";
+import { Inter } from "next/font/google";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "GuestLink",
-  description: "Digital Guest Welcome Guide",
-};
-
-export default async function LocaleLayout({
+export default function AdminLayout({
   children,
-  params,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-  params: Promise<{ lang: string }>;
-}) {
-  const { lang } = await params;
+}>) {
   return (
-    <html lang={lang || "es"}>
-      <body className={inter.className} suppressHydrationWarning>
-        {children}
-        <Toaster />
+    <html lang="es" suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`}>
+        {/* Attribute="class" es CRÍTICO para que Tailwind funcione con .dark */}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="flex h-screen bg-gray-50 dark:bg-black">
+            {/* ... resto de tu layout (sidebar, main) ... */}
+            {children}
+          </div>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
