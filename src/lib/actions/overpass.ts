@@ -5,6 +5,7 @@ interface OverpassElement {
   id: number;
   lat: number;
   lon: number;
+  center?: { lat: number; lon: number };
   tags?: {
     name?: string;
     "addr:street"?: string;
@@ -16,6 +17,7 @@ interface OverpassElement {
     tourism?: string;
   };
 }
+
 
 interface PlaceSuggestion {
   title: string;
@@ -38,14 +40,32 @@ export async function fetchNearbyPlaces(
         queryTag = '["amenity"="restaurant"]';
         break;
       case "sights":
-        queryTag = '["tourism"~"museum|attraction|viewpoint"]';
+        queryTag = '["tourism"~"museum|attraction|viewpoint|artwork"]';
         break;
       case "shopping":
-        queryTag = '["shop"~"supermarket|mall|clothes"]';
+        queryTag = '["shop"]';
+        break;
+      case "trails":
+        queryTag = '["highway"~"path|footway|track"]["name"]'; // Only named trails
+        // Alternative: leisure=park, natural=beach
+        break;
+      case "kids":
+       queryTag = '["leisure"~"playground|water_park|park"]["name"]';
+       break;
+      case "bars":
+        queryTag = '["amenity"~"bar|pub|biergarten|nightclub"]';
         break;
       default:
-        queryTag = '["amenity"~"restaurant|cafe|bar"]';
+        // Try to guess or fallback to general tourism/amenities
+        // If it's a known english word we might luck out, otherwise fallback.
+        queryTag = '["tourism"]'; 
+        // We could try to make this smarter later.
     }
+
+    if (category.toLowerCase() === "generic" || !queryTag) {
+         queryTag = '["amenity"~"restaurant|cafe|bar|pub"]'; // Fallback
+    }
+
 
     // Overpass QL Query: Search within 1000m radius
     const query = `
@@ -78,8 +98,8 @@ export async function fetchNearbyPlaces(
         const address = street ? `${street} ${house}` : "Address not available";
         
         // Use center for ways, or lat/lon for nodes
-        const elLat = el.lat || (el as any).center?.lat;
-        const elLon = el.lon || (el as any).center?.lon;
+        const elLat = el.lat || el.center?.lat || 0;
+        const elLon = el.lon || el.center?.lon || 0;
 
         return {
           title: name,
@@ -91,8 +111,9 @@ export async function fetchNearbyPlaces(
       });
 
     return { success: true, data: suggestions };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Overpass Search Error:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 }
+

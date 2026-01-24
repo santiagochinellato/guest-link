@@ -21,6 +21,15 @@ import {
   Image as ImageIcon,
   X,
   QrCode,
+  Utensils,
+  Camera,
+  ShoppingBag,
+  Mountain,
+  Baby,
+  Beer,
+  Tag,
+  PlusCircle,
+  Scroll,
 } from "lucide-react";
 import { QrFlyerBuilder } from "@/components/admin/qr-flyer-builder";
 import { cn } from "@/lib/utils";
@@ -45,6 +54,122 @@ export function PropertyForm({
   const [isLoadingAuto, setIsLoadingAuto] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("restaurants");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+
+  // Default Categories Configuration
+  const defaultCategories = [
+    {
+      id: "restaurants",
+      label: "Restaurantes",
+      icon: Utensils,
+      color: "text-blue-600",
+      bg: "bg-blue-50/50",
+      border: "border-blue-500",
+    },
+    {
+      id: "sights",
+      label: "Turismo",
+      icon: Camera,
+      color: "text-purple-600",
+      bg: "bg-purple-50/50",
+      border: "border-purple-500",
+    },
+    {
+      id: "shopping",
+      label: "Compras",
+      icon: ShoppingBag,
+      color: "text-pink-600",
+      bg: "bg-pink-50/50",
+      border: "border-pink-500",
+    },
+    {
+      id: "trails",
+      label: "Senderos",
+      icon: Mountain,
+      color: "text-green-600",
+      bg: "bg-green-50/50",
+      border: "border-green-500",
+    },
+    {
+      id: "kids",
+      label: "Kids",
+      icon: Baby,
+      color: "text-yellow-600",
+      bg: "bg-yellow-50/50",
+      border: "border-yellow-500",
+    },
+    {
+      id: "bars",
+      label: "Bares",
+      icon: Beer,
+      color: "text-orange-600",
+      bg: "bg-orange-50/50",
+      border: "border-orange-500",
+    },
+  ];
+
+  const [categoriesList, setCategoriesList] = useState(defaultCategories);
+
+  // Initialize categories with custom ones found in data
+  useEffect(() => {
+    if (initialData.recommendations) {
+      const existingTypes = new Set(defaultCategories.map((c) => c.id));
+      const customFound = new Set<string>();
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      initialData.recommendations.forEach((rec: any) => {
+        if (rec.categoryType && !existingTypes.has(rec.categoryType)) {
+          customFound.add(rec.categoryType);
+        }
+      });
+
+      if (customFound.size > 0) {
+        const newCustomCats = Array.from(customFound).map((type) => ({
+          id: type,
+          label: type.charAt(0).toUpperCase() + type.slice(1),
+          icon: Tag,
+          color: "text-gray-600",
+          bg: "bg-gray-50",
+          border: "border-gray-500",
+        }));
+        setCategoriesList((prev) => {
+          // Avoid duplicates if effect runs twice
+          const currentIds = new Set(prev.map((p) => p.id));
+          const uniqueToAdd = newCustomCats.filter(
+            (c) => !currentIds.has(c.id),
+          );
+          return [...prev, ...uniqueToAdd];
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData.recommendations]);
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return;
+    const id = newCategoryName.toLowerCase().trim().replace(/\s+/g, "_");
+
+    // Check if exists
+    if (categoriesList.find((c) => c.id === id)) {
+      alert("Esta categoría ya existe.");
+      return;
+    }
+
+    const newCat = {
+      id,
+      label: newCategoryName,
+      icon: Tag,
+      color: "text-gray-600",
+      bg: "bg-gray-50",
+      border: "border-gray-500",
+    };
+
+    setCategoriesList([...categoriesList, newCat]);
+    setActiveCategory(id);
+    setNewCategoryName("");
+    setIsAddingCategory(false);
+  };
 
   // Form Setup
   const form = useForm<PropertyFormData>({
@@ -65,7 +190,10 @@ export function PropertyForm({
       coverImageUrl: initialData.coverImageUrl || "",
       recommendations: initialData.recommendations || [],
       emergencyContacts: initialData.emergencyContacts || [],
+      recommendations: initialData.recommendations || [],
+      emergencyContacts: initialData.emergencyContacts || [],
       transport: initialData.transport || [],
+      houseRules: initialData.houseRules || "",
     },
   });
 
@@ -217,8 +345,11 @@ export function PropertyForm({
       } else {
         alert(`Error: ${res.error}`);
       }
-    } catch (e: any) {
-      alert("Ocurrió un error: " + e.message);
+    } catch (e) {
+      alert(
+        "Ocurrió un error: " +
+          (e instanceof Error ? e.message : "Error desconocido"),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -236,61 +367,74 @@ export function PropertyForm({
     { id: "wifi", label: "WiFi y Acceso", icon: Wifi },
     { id: "recommendations", label: "Recomendaciones", icon: Sparkles },
     { id: "transport", label: "Transporte", icon: Car },
+    { id: "rules", label: "Reglas", icon: Scroll },
     { id: "emergency", label: "Emergencia", icon: AlertCircle },
     { id: "flyer", label: "Diseño QR Flyer", icon: QrCode },
   ];
 
   return (
-    <div className="max-w-6xl mx-auto pb-20 px-4">
+    <div className="max-w-7xl mx-auto pb-20 px-4">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8 pt-4">
-        <div
-          onClick={() => router.back()}
-          className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-4">
+        <div className="flex items-center gap-4">
+          <div
+            onClick={() => router.back()}
+            className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {isEditMode ? "Editar Propiedad" : "Nueva Propiedad"}
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              {isEditMode
+                ? "Administra tu guía existente."
+                : "Crea y configura tu guía de bienvenida."}
+            </p>
+          </div>
+        </div>
+
+        {/* Save Button (Header Action) */}
+        <button
+          onClick={handleSubmit(onSubmit)}
+          disabled={isSaving}
+          className="bg-[#0f756d] hover:bg-[#0a554f] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-[#0f756d]/20 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <ArrowLeft className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {isEditMode ? "Editar Propiedad" : "Nueva Propiedad"}
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
-            {isEditMode
-              ? "Administra tu guía existente."
-              : "Crea y configura tu guía de bienvenida."}
-          </p>
-        </div>
+          {isSaving ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <Save className="w-5 h-5" />
+          )}
+          {isSaving ? "Guardando..." : "Guardar Cambios"}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Sidebar Tabs */}
-        <div className="lg:col-span-3">
-          <div className="sticky top-6 flex flex-col gap-2">
-            <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Configuración
-            </h3>
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                type="button"
+      {/* Main Layout - Single Column with Horizontal Tabs */}
+      <div className="flex flex-col gap-6">
+        {/* Horizontal Scrollable Tabs */}
+        <div className="flex overflow-x-auto pb-2 -mx-4 px-4 gap-2 no-scrollbar border-b border-gray-100 dark:border-neutral-800 justify-center">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              type="button"
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap border dark:border-transparent",
+                activeTab === tab.id
+                  ? "bg-[#0f756d]/10 border-[#0f756d]/20 text-[#0f756d]"
+                  : "bg-white dark:bg-neutral-900 text-gray-600 dark:text-gray-400 border-gray-200 hover:bg-gray-50 dark:hover:bg-neutral-800",
+              )}
+            >
+              <tab.icon
                 className={cn(
-                  "group w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all text-left",
-                  activeTab === tab.id
-                    ? "bg-white dark:bg-neutral-800 text-blue-600 dark:text-blue-400 shadow-sm border border-gray-100 dark:border-neutral-700 font-semibold"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800",
+                  "w-4 h-4",
+                  activeTab === tab.id ? "text-[#0f756d]" : "text-gray-500",
                 )}
-              >
-                <tab.icon
-                  className={cn(
-                    "w-4 h-4",
-                    activeTab === tab.id ? "text-blue-600" : "text-gray-500",
-                  )}
-                />
-                {tab.label}
-              </button>
-            ))}
-          </div>
+              />
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Form Content */}
@@ -353,77 +497,81 @@ export function PropertyForm({
 
                   {/* Cover Image */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                      Imagen de Portada
-                    </label>
-
-                    {watchCoverImage ? (
-                      <div className="relative w-full h-64 rounded-xl overflow-hidden border border-gray-200 dark:border-neutral-700 group">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={watchCoverImage}
-                          alt="Cover"
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setValue("coverImageUrl", "")}
-                          className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-xl p-8 flex flex-col items-center justify-center text-gray-500 gap-2 hover:bg-gray-50 dark:hover:bg-neutral-800/50 hover:border-blue-500/50 transition-all text-center cursor-pointer">
-                          <ImageIcon className="w-8 h-8 text-gray-300" />
-                          <span className="text-sm text-blue-600 font-medium hover:underline">
-                            Subir archivo
-                          </span>
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                          />
-                          <p className="text-xs text-gray-400">
-                            PNG, JPG, GIF hasta 5MB
-                          </p>
+                    <div className="grid grid-cols-2 gap-8 w-full">
+                      <div className="w-full col-span-1">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                          Imagen de Portada
                         </label>
-                        <div className="flex flex-col justify-center gap-2">
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            O pegar URL
-                          </p>
+
+                        {watchCoverImage ? (
+                          <div className="relative w-full h-64 rounded-xl overflow-hidden border border-gray-200 dark:border-neutral-700 group">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={watchCoverImage}
+                              alt="Cover"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setValue("coverImageUrl", "")}
+                              className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label className="border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-xl p-8 flex flex-col items-center justify-center text-gray-500 gap-2 hover:bg-gray-50 dark:hover:bg-neutral-800/50 hover:border-blue-500/50 transition-all text-center cursor-pointer">
+                              <ImageIcon className="w-8 h-8 text-gray-300" />
+                              <span className="text-sm text-blue-600 font-medium hover:underline">
+                                Subir archivo
+                              </span>
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                              />
+                              <p className="text-xs text-gray-400">
+                                PNG, JPG, GIF hasta 5MB
+                              </p>
+                            </label>
+                            <div className="flex flex-col justify-center gap-2">
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                O pegar URL
+                              </p>
+                              <input
+                                {...register("coverImageUrl")}
+                                placeholder="https://..."
+                                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 text-sm"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-1">
+                            <Clock className="w-4 h-4 text-blue-500" /> Check-in
+                          </label>
                           <input
-                            {...register("coverImageUrl")}
-                            placeholder="https://..."
-                            className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 text-sm"
+                            type="time"
+                            {...register("checkInTime")}
+                            className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-1">
+                            <Clock className="w-4 h-4 text-orange-500" />{" "}
+                            Check-out
+                          </label>
+                          <input
+                            type="time"
+                            {...register("checkOutTime")}
+                            className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500"
                           />
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-1">
-                        <Clock className="w-4 h-4 text-blue-500" /> Check-in
-                      </label>
-                      <input
-                        type="time"
-                        {...register("checkInTime")}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-1">
-                        <Clock className="w-4 h-4 text-orange-500" /> Check-out
-                      </label>
-                      <input
-                        type="time"
-                        {...register("checkOutTime")}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500"
-                      />
                     </div>
                   </div>
                 </div>
@@ -569,86 +717,136 @@ export function PropertyForm({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  {["Restaurantes", "Turismo", "Compras"].map((cat) => (
+                  {categoriesList.map((cat) => (
                     <div
-                      key={cat}
-                      onClick={() => {
-                        // Map Spanish labels back to internal category types
-                        const map: Record<string, string> = {
-                          Restaurantes: "restaurants",
-                          Turismo: "sights",
-                          Compras: "shopping",
-                        };
-                        setActiveCategory(map[cat] || cat.toLowerCase());
-                      }}
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
                       className={cn(
-                        "p-4 border rounded-xl cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-neutral-800",
-                        activeCategory ===
-                          (cat === "Restaurantes"
-                            ? "restaurants"
-                            : cat === "Turismo"
-                              ? "sights"
-                              : "shopping")
-                          ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
+                        "p-4 border rounded-xl cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-neutral-800 flex items-center gap-3 relative overflow-hidden group",
+                        activeCategory === cat.id
+                          ? `${cat.border} ${cat.bg} dark:bg-opacity-10 dark:border-opacity-50`
                           : "border-gray-200 dark:border-neutral-800",
                       )}
                     >
-                      <h4
+                      <div
                         className={cn(
-                          "font-bold text-lg",
-                          activeCategory ===
-                            (cat === "Restaurantes"
-                              ? "restaurants"
-                              : cat === "Turismo"
-                                ? "sights"
-                                : "shopping")
-                            ? "text-blue-600"
-                            : "text-gray-700 dark:text-gray-300",
+                          "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                          activeCategory === cat.id
+                            ? "bg-white/80 dark:bg-neutral-900/50"
+                            : "bg-gray-100 dark:bg-neutral-800",
                         )}
                       >
-                        {cat}
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        {
-                          recFields.filter(
-                            (f: any) =>
-                              f.categoryType ===
-                              (cat === "Restaurantes"
-                                ? "restaurants"
-                                : cat === "Turismo"
-                                  ? "sights"
-                                  : "shopping"),
-                          ).length
-                        }{" "}
-                        lugares
-                      </p>
+                        <cat.icon
+                          className={cn(
+                            "w-5 h-5",
+                            activeCategory === cat.id
+                              ? cat.color
+                              : "text-gray-500",
+                          )}
+                        />
+                      </div>
+                      <div>
+                        <h4
+                          className={cn(
+                            "font-bold text-base",
+                            activeCategory === cat.id
+                              ? cat.color
+                              : "text-gray-700 dark:text-gray-300",
+                          )}
+                        >
+                          {cat.label}
+                        </h4>
+                        <p className="text-xs text-gray-500">
+                          {
+                            recFields.filter(
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              (f: any) => f.categoryType === cat.id,
+                            ).length
+                          }{" "}
+                          lugares
+                        </p>
+                      </div>
                     </div>
                   ))}
+
+                  {/* Add New Category Button */}
+                  {isAddingCategory ? (
+                    <div className="p-4 border border-dashed border-gray-300 dark:border-neutral-700 rounded-xl bg-gray-50 dark:bg-neutral-800/30 flex flex-col justify-center gap-2">
+                      <input
+                        autoFocus
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder="Nombre categoría..."
+                        className="w-full text-sm bg-white dark:bg-neutral-900 px-3 py-2 rounded-lg border border-gray-200 dark:border-neutral-700 outline-none focus:border-blue-500"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddCategory();
+                          }
+                        }}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleAddCategory}
+                          className="flex-1 bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-gray-800"
+                        >
+                          Crear
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingCategory(false)}
+                          className="px-3 bg-gray-200 text-gray-600 text-xs font-bold py-2 rounded-lg hover:bg-gray-300"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingCategory(true)}
+                      className="p-4 border border-dashed border-gray-300 dark:border-neutral-700 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-all gap-1 h-full min-h-[88px]"
+                    >
+                      <PlusCircle className="w-6 h-6" />
+                      <span className="text-xs font-semibold">
+                        Nueva Categoría
+                      </span>
+                    </button>
+                  )}
                 </div>
 
                 <div className="bg-gray-50 dark:bg-neutral-800/20 p-6 rounded-2xl border border-gray-200 dark:border-neutral-800">
                   <div className="flex justify-between items-center mb-4">
-                    <h4 className="font-semibold capitalize">
-                      Lista{" "}
-                      {activeCategory === "restaurants"
-                        ? "Restaurantes"
-                        : activeCategory === "sights"
-                          ? "Turismo"
-                          : "Compras"}
+                    <h4 className="font-semibold capitalize flex items-center gap-2">
+                      {/* Show active category icon and label */}
+                      {(() => {
+                        const cat = categoriesList.find(
+                          (c) => c.id === activeCategory,
+                        );
+                        if (!cat) return activeCategory;
+                        return (
+                          <>
+                            <cat.icon className={cn("w-5 h-5", cat.color)} />
+                            <span className={cat.color}>{cat.label}</span>
+                          </>
+                        );
+                      })()}
                     </h4>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={handleAutoFill}
                         disabled={isLoadingAuto}
-                        className="text-sm font-semibold text-purple-600 flex items-center gap-1 hover:underline disabled:opacity-50"
+                        className="group relative px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 flex items-center gap-2 overflow-hidden"
                       >
+                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                         {isLoadingAuto ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-3 h-3 animate-spin" />
                         ) : (
-                          <Sparkles className="w-4 h-4" />
+                          <Sparkles className="w-3 h-3" />
                         )}
-                        Relleno Automático IA (OSM)
+                        Autocompletar con IA
                       </button>
                       <button
                         type="button"
@@ -723,9 +921,8 @@ export function PropertyForm({
                         </div>
                       );
                     })}
-                    {recFields.filter(
-                      (f: any) => f.categoryType === activeCategory,
-                    ).length === 0 && (
+                    {recFields.filter((f) => f.categoryType === activeCategory)
+                      .length === 0 && (
                       <p className="text-center text-gray-400 text-sm italic py-4">
                         No hay lugares en esta categoría aún.
                       </p>
@@ -859,6 +1056,30 @@ export function PropertyForm({
               </div>
             )}
 
+            {activeTab === "rules" && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
+                  <h3 className="text-xl font-semibold">Reglas de la Casa</h3>
+                  <p className="text-sm text-gray-500">
+                    Establece expectativas y guías para tus huéspedes.
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Contenido de las Reglas
+                  </label>
+                  <textarea
+                    {...register("houseRules")}
+                    placeholder="Ej. No fumar, Horario de silencio, etc."
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 h-64 resize-none"
+                  />
+                  <p className="text-xs text-gray-400 mt-2">
+                    Tip: Usa un lenguaje amable y claro.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Footer */}
             {activeTab === "flyer" && (
               <div className="animate-in fade-in duration-300 h-full">
@@ -874,33 +1095,6 @@ export function PropertyForm({
           </form>
         </div>
       </div>
-      {activeTab !== "flyer" && (
-        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200 dark:border-neutral-800 mt-8 absolute bottom-0 left-0 right-0 p-8 bg-white dark:bg-neutral-900 rounded-3xl relative">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 rounded-lg"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            {isSaving
-              ? "Saving..."
-              : isEditMode
-                ? "Update Property"
-                : "Save Property"}
-          </button>
-        </div>
-      )}
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
@@ -908,16 +1102,16 @@ export function PropertyForm({
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold mb-2">Success!</h3>
+            <h3 className="text-xl font-bold mb-2">¡Éxito!</h3>
             <p className="text-gray-500 mb-6">
-              Property has been successfully{" "}
-              {isEditMode ? "updated" : "created"}.
+              La propiedad se ha {isEditMode ? "actualizado" : "creado"}{" "}
+              correctamente.
             </p>
             <button
               onClick={handleFinish}
               className="w-full py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-xl hover:opacity-90 transition-opacity"
             >
-              Continue
+              Continuar
             </button>
           </div>
         </div>

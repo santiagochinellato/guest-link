@@ -50,6 +50,9 @@ export const PropertyFormSchema = z.object({
   recommendations: z.array(RecommendationSchema).optional(),
   emergencyContacts: z.array(EmergencyContactSchema).optional(),
   transport: z.array(TransportInfoSchema).optional(),
+  
+  // Content
+  houseRules: z.string().optional(),
 });
 
 export type PropertyFormData = z.infer<typeof PropertyFormSchema>;

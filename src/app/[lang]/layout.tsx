@@ -16,11 +16,11 @@ export default function AdminLayout({
         {/* Attribute="class" es CRÍTICO para que Tailwind funcione con .dark */}
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          forcedTheme="light"
           disableTransitionOnChange
         >
-          <div className="flex h-screen bg-gray-50 dark:bg-black">
+          <div className="flex h-screen bg-gray-50 text-[#0e1b1a]">
             {/* ... resto de tu layout (sidebar, main) ... */}
             {children}
           </div>
