@@ -16,9 +16,14 @@ export function MobileTopBar() {
             priority
           />
         </div>
-        <span className="font-bold text-lg text-[#0e1b1a] dark:text-white">
-          GuestLink
-        </span>
+        <div className="flex flex-col">
+          <span className="font-bold text-lg text-[#0e1b1a] dark:text-white">
+            GUESTLINK
+          </span>
+          <p className="text-[10px] text-neutral-500 font-medium tracking-wide leading-none">
+            You stay, connected.
+          </p>
+        </div>
       </Link>
     </div>
   );

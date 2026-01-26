@@ -282,6 +282,9 @@ export async function getProperties() {
        slug: properties.slug,
        views: properties.views,
        status: properties.status,
+       coverImageUrl: properties.coverImageUrl,
+       wifiSsid: properties.wifiSsid,
+       houseRules: properties.houseRules,
     })
     .from(properties)
     .orderBy(properties.createdAt);

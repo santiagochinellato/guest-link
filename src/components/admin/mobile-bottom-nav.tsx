@@ -53,7 +53,7 @@ export function MobileBottomNav() {
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
                   <item.icon
-                    className={cn("w-6 h-6", isActive && "fill-current")}
+                    className={cn("w-6 h-6", isActive && "scale-110")}
                     strokeWidth={isActive ? 2.5 : 2}
                   />
                 </motion.div>
