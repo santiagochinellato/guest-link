@@ -8,12 +8,14 @@ import { cn } from "@/lib/utils";
 
 interface AutoFillButtonProps {
   propertyId: number;
+  categoryId?: string;
   className?: string;
   onComplete?: () => void;
 }
 
 export function AutoFillButton({
   propertyId,
+  categoryId,
   className,
   onComplete,
 }: AutoFillButtonProps) {
@@ -21,7 +23,7 @@ export function AutoFillButton({
 
   const handleAutoFill = () => {
     startTransition(async () => {
-      const res = await populateRecommendations(propertyId);
+      const res = await populateRecommendations(propertyId, categoryId);
 
       if (res.success) {
         toast.success(`Success! Added ${res.count || 0} new recommendations.`);

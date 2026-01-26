@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useForm, useFieldArray, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AutoFillButton } from "@/components/admin/auto-fill-button";
+import { TransitAutoButton } from "@/components/admin/transit-auto-button";
+import { KeywordModal } from "@/components/admin/keyword-modal";
+import { updateCategoryKeywords } from "@/lib/actions/categories";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -55,9 +58,17 @@ export function PropertyForm({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("basic");
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoadingAuto, setIsLoadingAuto] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("restaurants");
+  const [keywordModal, setKeywordModal] = useState<{
+    isOpen: boolean;
+    category: {
+      id: string;
+      name: string;
+      type: string;
+      searchKeywords?: string | null;
+    } | null;
+  }>({ isOpen: false, category: null });
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isAddingCategory, setIsAddingCategory] = useState(false);
 
@@ -316,48 +327,6 @@ export function PropertyForm({
     const pass = watch("wifiPassword");
     if (ssid) {
       setValue("wifiQrCode", `WIFI:T:WPA;S:${ssid};P:${pass};;`);
-    }
-  };
-
-  const handleAutoFill = async () => {
-    const lat = parseFloat(watch("latitude") || "0");
-    const lon = parseFloat(watch("longitude") || "0");
-
-    if (!lat || !lon) {
-      alert(
-        "Por favor configura la ubicación (en Información Básica) primero.",
-      );
-      return;
-    }
-
-    setIsLoadingAuto(true);
-    try {
-      const res = await fetchNearbyPlaces(lat, lon, activeCategory);
-      if (res.success && res.data) {
-        // Filter out duplicates (simple check by title)
-        const existingTitles = recFields
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .filter((f: any) => f.categoryType === activeCategory)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((f: any) => f.title);
-
-        const newPlaces = res.data.filter(
-          (p) => !existingTitles.includes(p.title),
-        );
-
-        if (newPlaces.length === 0) {
-          alert("No se encontraron lugares nuevos o todos son duplicados.");
-        } else {
-          newPlaces.forEach((p) => appendRec(p));
-        }
-      } else {
-        alert("Error buscando lugares: " + res.error);
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Error en autocompletado.");
-    } finally {
-      setIsLoadingAuto(false);
     }
   };
 
@@ -853,164 +822,182 @@ export function PropertyForm({
                       Gestiona lugares destacados.
                     </p>
                   </div>
+                  {initialData.id && (
+                    <AutoFillButton
+                      propertyId={initialData.id}
+                      onComplete={() => {
+                        window.location.reload();
+                      }}
+                    />
+                  )}
                 </div>
 
                 {/* --- MOBILE ACCORDION LIST --- */}
                 <div className="md:hidden space-y-3 mb-6">
-                  {categoriesList.map((cat) => (
-                    <div
-                      key={cat.id}
-                      className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm"
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setActiveCategory(
-                            activeCategory === cat.id ? "" : cat.id,
-                          )
-                        }
-                        className="w-full flex items-center justify-between p-4"
+                  {categoriesList
+                    .filter((cat) => cat.id !== "transit")
+                    .map((cat) => (
+                      <div
+                        key={cat.id}
+                        className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm"
                       >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={cn(
-                              "w-10 h-10 rounded-full flex items-center justify-center",
-                              activeCategory === cat.id
-                                ? `${cat.bg} text-white`
-                                : "bg-gray-100 dark:bg-neutral-800 text-gray-500",
-                            )}
-                          >
-                            <cat.icon className="w-5 h-5" />
-                          </div>
-                          <div className="text-left">
-                            <h4
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveCategory(
+                              activeCategory === cat.id ? "" : cat.id,
+                            )
+                          }
+                          className="w-full flex items-center justify-between p-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
                               className={cn(
-                                "font-bold text-sm",
+                                "w-10 h-10 rounded-full flex items-center justify-center",
                                 activeCategory === cat.id
-                                  ? "text-gray-900 dark:text-white"
-                                  : "text-gray-600 dark:text-gray-400",
+                                  ? `${cat.bg} text-white`
+                                  : "bg-gray-100 dark:bg-neutral-800 text-gray-500",
                               )}
                             >
-                              {cat.label}
-                            </h4>
-                            <p className="text-xs text-gray-400">
-                              {
-                                recFields.filter(
-                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                  (f: any) => f.categoryType === cat.id,
-                                ).length
-                              }{" "}
-                              lugares
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronDown
-                          className={cn(
-                            "w-5 h-5 text-gray-300 transition-transform duration-300",
-                            activeCategory === cat.id ? "rotate-180" : "",
-                          )}
-                        />
-                      </button>
-
-                      {/* Expanded Content */}
-                      {activeCategory === cat.id && (
-                        <div className="p-4 bg-gray-50 dark:bg-neutral-800/30 border-t border-gray-100 dark:border-neutral-800 animate-in slide-in-from-top-2 duration-200">
-                          {/* Actions */}
-                          <div className="flex flex-col gap-3 mb-4">
-                            <button
-                              type="button"
-                              onClick={handleAutoFill}
-                              disabled={isLoadingAuto}
-                              className="w-full relative px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 overflow-hidden"
-                            >
-                              {isLoadingAuto ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Sparkles className="w-4 h-4" />
-                              )}
-                              <span>Autocompletar con IA</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                appendRec({
-                                  title: "",
-                                  formattedAddress: "",
-                                  googleMapsLink: "",
-                                  categoryType: activeCategory,
-                                  description: "",
-                                })
-                              }
-                              className="w-full px-4 py-3 text-sm font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 rounded-xl flex items-center justify-center gap-2"
-                            >
-                              <Plus className="w-4 h-4" /> Agregar Lugar
-                            </button>
-                          </div>
-
-                          {/* List */}
-                          <div className="space-y-4">
-                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                            {recFields.map((field: any, index) => {
-                              if (field.categoryType !== activeCategory)
-                                return null;
-                              return (
-                                <div
-                                  key={field.id}
-                                  className="relative p-4 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-xl space-y-3"
-                                >
-                                  <div className="pr-6">
-                                    <input
-                                      {...register(
-                                        `recommendations.${index}.title` as const,
-                                      )}
-                                      className="w-full text-sm font-bold bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
-                                      placeholder="Nombre del Lugar"
-                                    />
-                                    <input
-                                      {...register(
-                                        `recommendations.${index}.description` as const,
-                                      )}
-                                      className="w-full text-xs text-gray-500 bg-transparent outline-none mt-2"
-                                      placeholder="Descripción breve..."
-                                    />
-                                  </div>
-                                  <input
-                                    {...register(
-                                      `recommendations.${index}.formattedAddress` as const,
-                                    )}
-                                    className="w-full text-xs bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
-                                    placeholder="Dirección o Zona"
-                                  />
-                                  <input
-                                    {...register(
-                                      `recommendations.${index}.googleMapsLink` as const,
-                                    )}
-                                    className="w-full text-xs text-blue-500 bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
-                                    placeholder="https://maps..."
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => removeRec(index)}
-                                    className="absolute top-3 right-3 text-gray-400 hover:text-red-500"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              );
-                            })}
-                            {recFields.filter(
-                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                              (f: any) => f.categoryType === activeCategory,
-                            ).length === 0 && (
-                              <p className="text-center text-gray-400 text-xs italic py-2">
-                                Sin lugares por ahora.
+                              <cat.icon className="w-5 h-5" />
+                            </div>
+                            <div className="text-left">
+                              <h4
+                                className={cn(
+                                  "font-bold text-sm",
+                                  activeCategory === cat.id
+                                    ? "text-gray-900 dark:text-white"
+                                    : "text-gray-600 dark:text-gray-400",
+                                )}
+                              >
+                                {cat.label}
+                              </h4>
+                              <p className="text-xs text-gray-400">
+                                {
+                                  recFields.filter(
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    (f: any) => f.categoryType === cat.id,
+                                  ).length
+                                }{" "}
+                                lugares
                               </p>
-                            )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                          <ChevronDown
+                            className={cn(
+                              "w-5 h-5 text-gray-300 transition-transform duration-300",
+                              activeCategory === cat.id ? "rotate-180" : "",
+                            )}
+                          />
+                        </button>
+
+                        {/* Expanded Content */}
+                        {activeCategory === cat.id && (
+                          <div className="p-4 bg-gray-50 dark:bg-neutral-800/30 border-t border-gray-100 dark:border-neutral-800 animate-in slide-in-from-top-2 duration-200">
+                            {/* Keyword Edit Button */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setKeywordModal({
+                                  isOpen: true,
+                                  category: {
+                                    id: cat.id,
+                                    name: cat.label,
+                                    type: cat.id,
+                                    searchKeywords: null,
+                                  },
+                                });
+                              }}
+                              className="w-full mb-3 px-3 py-2.5 text-xs font-medium text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors flex items-center justify-center gap-2 border border-teal-200 dark:border-teal-800"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              Editar Keywords de Búsqueda
+                            </button>
+
+                            {/* Actions */}
+                            <div className="flex flex-col gap-3 mb-4">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  appendRec({
+                                    title: "",
+                                    formattedAddress: "",
+                                    googleMapsLink: "",
+                                    categoryType: activeCategory,
+                                    description: "",
+                                  })
+                                }
+                                className="w-full px-4 py-3 text-sm font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 rounded-xl flex items-center justify-center gap-2"
+                              >
+                                <Plus className="w-4 h-4" /> Agregar Lugar
+                              </button>
+                            </div>
+
+                            {/* List */}
+                            <div className="space-y-4">
+                              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                              {recFields.map((field: any, index) => {
+                                if (field.categoryType !== activeCategory)
+                                  return null;
+                                return (
+                                  <div
+                                    key={field.id}
+                                    className="relative p-4 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-xl space-y-3"
+                                  >
+                                    <div className="pr-6">
+                                      <input
+                                        {...register(
+                                          `recommendations.${index}.title` as const,
+                                        )}
+                                        className="w-full text-sm font-bold bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
+                                        placeholder="Nombre del Lugar"
+                                      />
+                                      <input
+                                        {...register(
+                                          `recommendations.${index}.description` as const,
+                                        )}
+                                        className="w-full text-xs text-gray-500 bg-transparent outline-none mt-2"
+                                        placeholder="Descripción breve..."
+                                      />
+                                    </div>
+                                    <input
+                                      {...register(
+                                        `recommendations.${index}.formattedAddress` as const,
+                                      )}
+                                      className="w-full text-xs bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
+                                      placeholder="Dirección o Zona"
+                                    />
+                                    <input
+                                      {...register(
+                                        `recommendations.${index}.googleMapsLink` as const,
+                                      )}
+                                      className="w-full text-xs text-blue-500 bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
+                                      placeholder="https://maps..."
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => removeRec(index)}
+                                      className="absolute top-3 right-3 text-gray-400 hover:text-red-500"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                              {recFields.filter(
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                (f: any) => f.categoryType === activeCategory,
+                              ).length === 0 && (
+                                <p className="text-center text-gray-400 text-xs italic py-2">
+                                  Sin lugares por ahora.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   <button
                     type="button"
                     onClick={() => setIsAddingCategory(true)}
@@ -1021,57 +1008,83 @@ export function PropertyForm({
                 </div>
 
                 <div className="hidden md:grid md:grid-cols-3 gap-4 mb-6">
-                  {categoriesList.map((cat) => (
-                    <div
-                      key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
-                      className={cn(
-                        "p-4 border rounded-xl cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-neutral-800 flex items-center gap-3 relative overflow-hidden group",
-                        activeCategory === cat.id
-                          ? `${cat.border} ${cat.bg} dark:bg-opacity-10 dark:border-opacity-50`
-                          : "border-gray-200 dark:border-neutral-800",
-                      )}
-                    >
+                  {categoriesList
+                    .filter((cat) => cat.id !== "transit")
+                    .map((cat) => (
                       <div
+                        key={cat.id}
                         className={cn(
-                          "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                          "p-4 border rounded-xl transition-all hover:bg-gray-50 dark:hover:bg-neutral-800 flex items-center gap-3 relative overflow-hidden group",
                           activeCategory === cat.id
-                            ? "bg-white/80 dark:bg-neutral-900/50"
-                            : "bg-gray-100 dark:bg-neutral-800",
+                            ? `${cat.border} ${cat.bg} dark:bg-opacity-10 dark:border-opacity-50`
+                            : "border-gray-200 dark:border-neutral-800",
                         )}
                       >
-                        <cat.icon
-                          className={cn(
-                            "w-5 h-5",
-                            activeCategory === cat.id
-                              ? cat.color
-                              : "text-gray-500",
-                          )}
-                        />
-                      </div>
-                      <div>
-                        <h4
-                          className={cn(
-                            "font-bold text-base",
-                            activeCategory === cat.id
-                              ? cat.color
-                              : "text-gray-700 dark:text-gray-300",
-                          )}
+                        <div
+                          onClick={() => setActiveCategory(cat.id)}
+                          className="flex items-center gap-3 flex-1 cursor-pointer"
                         >
-                          {cat.label}
-                        </h4>
-                        <p className="text-xs text-gray-500">
-                          {
-                            recFields.filter(
-                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                              (f: any) => f.categoryType === cat.id,
-                            ).length
-                          }{" "}
-                          lugares
-                        </p>
+                          <div
+                            className={cn(
+                              "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                              activeCategory === cat.id
+                                ? "bg-white/80 dark:bg-neutral-900/50"
+                                : "bg-gray-100 dark:bg-neutral-800",
+                            )}
+                          >
+                            <cat.icon
+                              className={cn(
+                                "w-5 h-5",
+                                activeCategory === cat.id
+                                  ? cat.color
+                                  : "text-gray-500",
+                              )}
+                            />
+                          </div>
+                          <div>
+                            <h4
+                              className={cn(
+                                "font-bold text-base",
+                                activeCategory === cat.id
+                                  ? cat.color
+                                  : "text-gray-700 dark:text-gray-300",
+                              )}
+                            >
+                              {cat.label}
+                            </h4>
+                            <p className="text-xs text-gray-500">
+                              {
+                                recFields.filter(
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  (f: any) => f.categoryType === cat.id,
+                                ).length
+                              }{" "}
+                              lugares
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Keyword Edit Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setKeywordModal({
+                              isOpen: true,
+                              category: {
+                                id: cat.id,
+                                name: cat.label,
+                                type: cat.id,
+                                searchKeywords: null, // TODO: fetch from DB
+                              },
+                            });
+                          }}
+                          className="px-3 py-1.5 text-xs font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors"
+                        >
+                          + Add Keywords
+                        </button>
                       </div>
-                    </div>
-                  ))}
+                    ))}
 
                   {/* Add New Category Button */}
                   {isAddingCategory ? (
@@ -1138,20 +1151,16 @@ export function PropertyForm({
                       })()}
                     </h4>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                      <button
-                        type="button"
-                        onClick={handleAutoFill}
-                        disabled={isLoadingAuto}
-                        className="group relative px-4 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 overflow-hidden flex-shrink-0"
-                      >
-                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                        {isLoadingAuto ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Sparkles className="w-4 h-4" />
-                        )}
-                        <span>Autocompletar con IA</span>
-                      </button>
+                      {initialData.id && (
+                        <AutoFillButton
+                          propertyId={initialData.id}
+                          categoryId={activeCategory}
+                          onComplete={() => {
+                            window.location.reload();
+                          }}
+                          className="flex-shrink-0"
+                        />
+                      )}
                       <button
                         type="button"
                         onClick={() =>
@@ -1242,19 +1251,30 @@ export function PropertyForm({
                     <h3 className="text-xl font-semibold">Transporte</h3>
                     <p className="text-sm text-gray-500">Cómo moverse.</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      appendTransport({
-                        name: "",
-                        type: "taxi",
-                        description: "",
-                      })
-                    }
-                    className="text-sm font-semibold text-blue-600 flex items-center gap-1"
-                  >
-                    <Plus className="w-4 h-4" /> Agregar Opción
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    {initialData.id && (
+                      <TransitAutoButton
+                        propertyId={initialData.id}
+                        city={initialData.city || ""}
+                        onComplete={() => {
+                          window.location.reload();
+                        }}
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        appendTransport({
+                          name: "",
+                          type: "taxi",
+                          description: "",
+                        })
+                      }
+                      className="text-sm font-semibold text-blue-600 flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" /> Agregar Opción
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   {transportFields.map((field, index) => (
@@ -1534,6 +1554,24 @@ export function PropertyForm({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Keyword Modal */}
+      {keywordModal.isOpen && keywordModal.category && (
+        <KeywordModal
+          isOpen={keywordModal.isOpen}
+          onClose={() => setKeywordModal({ isOpen: false, category: null })}
+          category={keywordModal.category}
+          onSave={async (keywords) => {
+            const result = await updateCategoryKeywords(
+              Number(keywordModal.category?.id),
+              keywords,
+            );
+            if (result.success) {
+              console.log("Keywords updated successfully");
+            }
+          }}
+        />
       )}
     </div>
   );

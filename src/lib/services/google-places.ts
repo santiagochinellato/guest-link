@@ -1,4 +1,4 @@
-import { Client } from "@googlemaps/google-maps-services-js";
+import { Client, TravelMode, UnitSystem } from "@googlemaps/google-maps-services-js";
 
 const client = new Client({});
 
@@ -32,6 +32,7 @@ export async function findTopRatedPlaces(
         query: categoryKeyword,
         location: { lat, lng },
         radius: 10000, // 10km
+        // REMOVED: openNow filter - allows discovery of nightlife venues during daytime
         key: key,
       },
       timeout: 5000,
@@ -145,4 +146,56 @@ function mapKeywordToCategory(keyword: string): string {
     if (lower.includes("pharmacy")) return "pharmacy";
     
     return "other";
+}
+
+/**
+ * Find transit route from origin to destination
+ * Returns the transit line information (bus number, duration, etc.)
+ */
+export async function findTransitRoute(
+  originLat: number,
+  originLng: number,
+  destinationName: string
+) {
+  try {
+    const response = await client.directions({
+      params: {
+        origin: { lat: originLat, lng: originLng },
+        destination: destinationName,
+        mode: TravelMode.transit,
+        units: UnitSystem.metric,
+        key: process.env.GOOGLE_MAPS_API_KEY!,
+        language: 'es'
+      },
+    });
+
+    if (response.data.routes.length === 0 || response.data.routes[0].legs.length === 0) {
+      return null;
+    }
+
+    const leg = response.data.routes[0].legs[0];
+    const steps = leg.steps;
+    
+    // Find first TRANSIT step (the bus/transit)
+    const transitStep = steps.find(step => step.travel_mode === "TRANSIT");
+
+    if (!transitStep || !transitStep.transit_details) {
+      return null;
+    }
+
+    const line = transitStep.transit_details.line;
+    
+    return {
+      lineName: line.short_name || line.name,
+      vehicleType: line.vehicle?.name || "Bus",
+      destination: transitStep.transit_details.headsign || destinationName,
+      duration: leg.duration?.text || "N/A",
+      agency: line.agencies && line.agencies.length > 0 ? line.agencies[0].name : null,
+      description: `Lleva a ${destinationName} (${leg.duration?.text || 'N/A'})`
+    };
+
+  } catch (error: any) {
+    console.error(`Error finding route to ${destinationName}:`, error.message);
+    return null;
+  }
 }

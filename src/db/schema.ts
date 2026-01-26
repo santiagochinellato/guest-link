@@ -49,6 +49,7 @@ export const categories = pgTable("categories", {
   type: text("type"), // restaurant, outdoor, kids, pharmacy, bank, supermarket, transport
   displayOrder: integer("display_order").default(0),
   isSystemCategory: boolean("is_system_category").default(false),
+  searchKeywords: text("search_keywords"), // Comma-separated keywords for Google Places API
   propertyId: integer("property_id").references(() => properties.id),
 });
 

@@ -7,12 +7,25 @@ import { revalidatePath } from "next/cache";
 import { findTopRatedPlaces, findNearbyTransit } from "@/lib/services/google-places";
 import { fetchNearbyPlaces } from "@/lib/actions/overpass";
 
-// --- 1. Helper para Categorías (Optimizado) ---
-async function getOrCreateCategory(type: string, propertyId: string): Promise<string> {
-    // Normalizamos el type para evitar duplicados por casing
+// --- DEFAULT KEYWORD MAPPINGS ---
+// Used when category doesn't have custom searchKeywords defined
+const DEFAULT_KEYWORDS: Record<string, string[]> = {
+  gastronomy: ["restaurantes recomendados", "parrilla argentina", "comida regional"],
+  breakfast: ["café de especialidad", "pastelería artesanal", "brunch"],
+  nightlife: ["cervecería artesanal", "bar de tragos", "wine bar vinoteca"],
+  essentials: ["supermercado", "farmacia 24 horas"],
+  tourism: ["atracciones turísticas", "mirador panorámico", "museo"],
+  kids: ["actividades para niños", "parque infantil", "heladería artesanal"],
+  shopping: ["tienda de souvenirs", "productos regionales", "artesanías"],
+  transit: [], // Handled by findNearbyTransit
+  outdoors: [], // Handled by Overpass
+  other: ["lugares de interés"],
+};
+
+// --- HELPER: Get or Create Category ---
+async function getOrCreateCategory(type: string, propertyId: number): Promise<number> {
     const normalizedType = type.toLowerCase().trim();
     
-    // Mapeo de tipos técnicos a Nombres Amigables para la UI
     const displayNames: Record<string, string> = {
         "gastronomy": "Gastronomía & Sabores",
         "breakfast": "Desayuno & Cafetería",
@@ -50,12 +63,15 @@ async function getOrCreateCategory(type: string, propertyId: string): Promise<st
     return newCat.id;
 }
 
-// --- 2. Main Action ---
-export async function populateRecommendations(propertyId: string) {
+// --- MAIN ACTION: Smart Discovery 2.0 ---
+export async function populateRecommendations(propertyId: number) {
   try {
-    // A. Validación Inicial
+    // A. Fetch Property with Categories
     const property = await db.query.properties.findFirst({
         where: eq(properties.id, propertyId),
+        with: {
+            categories: true
+        }
     });
 
     if (!property || !property.latitude || !property.longitude) {
@@ -65,7 +81,7 @@ export async function populateRecommendations(propertyId: string) {
     const lat = parseFloat(property.latitude);
     const lng = parseFloat(property.longitude);
 
-    // B. Check de "Ya poblado" (Evitar gastos innecesarios de API)
+    // B. Check if already populated (avoid API spam)
     const existingAuto = await db.select().from(recommendations).where(
         and(
             eq(recommendations.propertyId, propertyId),
@@ -73,63 +89,125 @@ export async function populateRecommendations(propertyId: string) {
         )
     );
 
-    // Si ya tiene más de 5 recomendaciones de Google, asumimos que ya se corrió.
-    // Puedes comentar esto si quieres forzar la actualización.
-    if (existingAuto.length > 5) {
-        return { success: true, message: "La propiedad ya tiene recomendaciones automáticas.", count: 0 };
+    if (existingAuto.length > 10) {
+        return { 
+            success: true, 
+            message: "La propiedad ya tiene recomendaciones automáticas. Elimina algunas para actualizar.", 
+            count: 0 
+        };
     }
-    
-    // C. Estrategia de Keywords "Premium"
-    // Usamos términos bilingües para asegurar match con POIs locales y turistas.
-    const promises = [
-        // 1. GASTRONOMÍA (Dividido por momentos del día)
-        // Cena/Almuerzo fuerte (Parrillas, Local, Alta cocina)
-        findTopRatedPlaces(lat, lng, "best restaurants local cuisine parrilla steakhouse"),
-        // Desayuno/Merienda (Crucial para huéspedes)
-        findTopRatedPlaces(lat, lng, "specialty coffee bakery cafe brunch pastelería"),
-        // Opciones Veggie/Saludables (Muy buscado hoy)
-        findTopRatedPlaces(lat, lng, "vegetarian vegan healthy food organic"),
-        
-        // 2. ESENCIALES (Lo primero que busca un huésped)
-        findTopRatedPlaces(lat, lng, "supermarket grocery store mercado"),
-        findTopRatedPlaces(lat, lng, "pharmacy drugstore farmacia"),
-        
-        // 3. TURISMO & PASEOS
-        findTopRatedPlaces(lat, lng, "tourist attraction historical landmark viewpoint mirador"),
-        findTopRatedPlaces(lat, lng, "museum art gallery culture"),
-        
-        // 4. ENTRETENIMIENTO & FAMILIA
-        findTopRatedPlaces(lat, lng, "kids activities family entertainment playground"),
-        findTopRatedPlaces(lat, lng, "cinema movie theater ice cream heladería"),
-        
-        // 5. VIDA NOCTURNA
-        findTopRatedPlaces(lat, lng, "cocktail bar craft beer brewery cervecería artesanal"),
-        
-        // 6. COMPRAS (Filtrado para evitar kioscos)
-        findTopRatedPlaces(lat, lng, "shopping mall boutique gift shop regional products"),
 
-        // 7. SERVICIOS ESPECIALIZADOS
-        // Google Transit (Estaciones cercanas)
-        findNearbyTransit(lat, lng),
-        
-        // OpenStreetMap (Naturaleza pura)
-        fetchNearbyPlaces(lat, lng, "outdoors"),
-    ];
+    // C. Build Search Promises (Category-Driven)
+    const promises: Promise<any>[] = [];
+    const categoryMap = new Map<string, number>(); // categoryType -> categoryId
 
-    // D. Ejecución Resiliente (Promise.allSettled)
+    // If no categories exist, create default ones
+    if (!property.categories || property.categories.length === 0) {
+        console.log("No categories found, using defaults");
+        // Create default categories and use DEFAULT_KEYWORDS
+        for (const [type, keywords] of Object.entries(DEFAULT_KEYWORDS)) {
+            if (keywords.length === 0) continue; // Skip transit/outdoors
+            
+            const catId = await getOrCreateCategory(type, propertyId);
+            categoryMap.set(type, catId);
+            
+            for (const keyword of keywords) {
+                promises.push(
+                    findTopRatedPlaces(lat, lng, keyword).then(results => ({
+                        categoryId: catId,
+                        categoryType: type,
+                        results
+                    }))
+                );
+            }
+        }
+    } else {
+        // Use existing categories with custom or default keywords
+        for (const category of property.categories) {
+            if (!category.type) continue;
+            
+            categoryMap.set(category.type, category.id);
+            
+            let keywords: string[] = [];
+            
+            // Use custom keywords if defined
+            if (category.searchKeywords && category.searchKeywords.trim() !== "") {
+                keywords = category.searchKeywords.split(",").map(k => k.trim());
+            } 
+            // Fallback to defaults
+            else if (DEFAULT_KEYWORDS[category.type]) {
+                keywords = DEFAULT_KEYWORDS[category.type];
+            }
+            
+            // Execute searches for this category
+            for (const keyword of keywords) {
+                promises.push(
+                    findTopRatedPlaces(lat, lng, keyword).then(results => ({
+                        categoryId: category.id,
+                        categoryType: category.type,
+                        results
+                    }))
+                );
+            }
+        }
+    }
+
+    // Add Transit (always)
+    const transitCatId = await getOrCreateCategory("transit", propertyId);
+    promises.push(
+        findNearbyTransit(lat, lng).then(results => ({
+            categoryId: transitCatId,
+            categoryType: "transit",
+            results
+        }))
+    );
+
+    // Add Outdoors via Overpass (always)
+    const outdoorsCatId = await getOrCreateCategory("outdoors", propertyId);
+    promises.push(
+        fetchNearbyPlaces(lat, lng, "outdoors").then(result => ({
+            categoryId: outdoorsCatId,
+            categoryType: "outdoors",
+            results: result.data || []
+        }))
+    );
+
+    // D. Execute with Resilience
     const results = await Promise.allSettled(promises);
     
-    const allSuggestions: any[] = [];
+    let addedCount = 0;
     let failedServices = 0;
 
     for (const res of results) {
         if (res.status === "fulfilled") {
-            const val = res.value;
-            // Manejo flexible de respuestas (Google array vs Overpass object)
-            if (Array.isArray(val)) {
-                allSuggestions.push(...val);
-            } else if (val && typeof val === 'object' && "data" in val && Array.isArray((val as any).data)) {
-                 allSuggestions.push(...(val as any).data);
+            const { categoryId, results: items } = res.value;
+            
+            // Insert items (limit 3 per keyword to avoid spam)
+            for (const item of (items || []).slice(0, 3)) {
+                // Check for duplicates
+                if (item.googlePlaceId) {
+                    const existing = await db.select().from(recommendations).where(
+                        eq(recommendations.googlePlaceId, item.googlePlaceId)
+                    ).limit(1);
+                    if (existing.length > 0) continue;
+                }
+
+                await db.insert(recommendations).values({
+                    propertyId: propertyId,
+                    categoryId: categoryId,
+                    title: item.title,
+                    description: item.description || "Recomendado automáticamente",
+                    formattedAddress: item.formattedAddress,
+                    googleMapsLink: item.googleMapsLink,
+                    rating: item.rating ? Number(item.rating) : null,
+                    userRatingsTotal: item.userRatingsTotal ? Number(item.userRatingsTotal) : null,
+                    googlePlaceId: item.googlePlaceId,
+                    externalSource: item.externalSource || "google",
+                    geometry: item.geometry || null,
+                    isAutoSuggested: true
+                });
+                
+                addedCount++;
             }
         } else {
             failedServices++;
@@ -137,7 +215,7 @@ export async function populateRecommendations(propertyId: string) {
         }
     }
 
-    if (allSuggestions.length === 0) {
+    if (addedCount === 0) {
         return { 
             success: true, 
             message: failedServices > 0 
@@ -147,69 +225,12 @@ export async function populateRecommendations(propertyId: string) {
         };
     }
 
-    // E. Procesamiento y Mapeo Inteligente
-    let addedCount = 0;
-    const categoryMap = new Map<string, string>(); // Cache de IDs de categorías
-
-    // Mapeo inverso de keywords a "Tipos" internos para agrupar en DB
-    // Esto asegura que "cafe" vaya a "Breakfast" y no a "Gastronomy" genérico
-    const categorizeItem = (item: any): string => {
-        const text = (item.title + " " + (item.categoryType || "")).toLowerCase();
-        
-        if (text.includes("cafe") || text.includes("coffee") || text.includes("bakery") || text.includes("brunch")) return "breakfast";
-        if (text.includes("pharmacy") || text.includes("supermarket") || text.includes("grocery")) return "essentials";
-        if (text.includes("beer") || text.includes("bar") || text.includes("pub") || text.includes("wine")) return "nightlife";
-        if (text.includes("park") || text.includes("playground") || text.includes("kids") || text.includes("ice cream")) return "kids";
-        if (text.includes("transit") || text.includes("station") || text.includes("bus")) return "transit";
-        if (text.includes("hiking") || text.includes("trail") || text.includes("viewpoint")) return "outdoors";
-        if (text.includes("museum") || text.includes("gallery") || text.includes("attraction")) return "tourism";
-        
-        // Default fallbacks
-        if (item.categoryType === "restaurant") return "gastronomy";
-        return item.categoryType || "other";
-    };
-
-    for (const item of allSuggestions) {
-        const targetType = categorizeItem(item);
-        
-        // Obtener ID de categoría (con caché local para velocidad)
-        if (!categoryMap.has(targetType)) {
-            const catId = await getOrCreateCategory(targetType, propertyId);
-            categoryMap.set(targetType, catId);
-        }
-        
-        // Evitar duplicados por Google Place ID
-        if (item.googlePlaceId) {
-             const existing = await db.select().from(recommendations).where(
-                 eq(recommendations.googlePlaceId, item.googlePlaceId)
-             ).limit(1);
-             if (existing.length > 0) continue; 
-        }
-
-        await db.insert(recommendations).values({
-            propertyId: propertyId,
-            categoryId: categoryMap.get(targetType),
-            title: item.title,
-            description: item.description || `Recomendado en ${targetType}`, // Fallback description
-            formattedAddress: item.formattedAddress,
-            googleMapsLink: item.googleMapsLink,
-            rating: item.rating ? Number(item.rating) : null, 
-            userRatingsTotal: item.userRatingsTotal ? Number(item.userRatingsTotal) : null,
-            googlePlaceId: item.googlePlaceId,
-            externalSource: item.externalSource || "manual",
-            geometry: item.geometry || null,
-            isAutoSuggested: true
-        });
-        
-        addedCount++;
-    }
-
     revalidatePath(`/dashboard/properties`);
     
     return { 
         success: true, 
         count: addedCount, 
-        message: `Se agregaron ${addedCount} lugares nuevos (${failedServices} errores de API).` 
+        message: `Se agregaron ${addedCount} lugares nuevos${failedServices > 0 ? ` (${failedServices} errores de API)` : ""}.` 
     };
     
   } catch (error: any) {
