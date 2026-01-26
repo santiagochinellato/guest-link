@@ -14,7 +14,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
           <LayoutTemplate className="w-4 h-4" /> Layout
         </h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             {
               id: "minimal",

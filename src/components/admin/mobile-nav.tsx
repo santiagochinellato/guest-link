@@ -77,22 +77,22 @@ export function MobileNav() {
             <Building className="w-5 h-5" />
             Propiedades
           </Link>
-          <Link
+          {/* <Link
             href="/dashboard/qr-builder"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
             <QrCode className="w-5 h-5" />
             Crear QR
-          </Link>
-          <Link
+          </Link> */}
+          {/* <Link
             href="/dashboard/settings"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
             <Settings className="w-5 h-5" />
             Configuración
-          </Link>
+          </Link> */}
         </nav>
 
         <div className="p-4 border-t border-gray-100 dark:border-neutral-800">

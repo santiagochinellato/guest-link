@@ -103,15 +103,17 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
   };
 
   return (
-    <div className="flex bg-[#f6f8f8] dark:bg-[#112120] rounded-xl shadow border border-slate-200 dark:border-slate-800 h-[800px] overflow-hidden">
-      <Sidebar
-        config={config}
-        updateConfig={updateConfig}
-        onExport={handleExport}
-      />
+    <div className="flex flex-col md:flex-row bg-[#f6f8f8] dark:bg-[#112120] rounded-xl shadow border border-slate-200 dark:border-slate-800 h-auto md:h-[800px] overflow-hidden">
+      <div className="w-full md:w-auto border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 h-[400px] md:h-full overflow-y-auto shrink-0">
+        <Sidebar
+          config={config}
+          updateConfig={updateConfig}
+          onExport={handleExport}
+        />
+      </div>
 
       {/* Right Panel: Preview Stage */}
-      <main className="flex-1 bg-[#1e293b] relative overflow-hidden flex flex-col">
+      <main className="flex-1 bg-[#1e293b] relative overflow-hidden flex flex-col h-[500px] md:h-full">
         {/* Zoom Controls */}
         <div className="absolute top-6 right-6 z-30 flex gap-2 bg-white/10 backdrop-blur rounded-full p-1 ring-1 ring-white/20">
           <button
@@ -133,7 +135,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto flex items-center justify-center p-20 custom-scrollbar">
+        <div className="flex-1 overflow-auto flex items-center justify-center p-8 md:p-20 custom-scrollbar">
           <div
             style={{ transform: `scale(${scale})` }}
             className="transition-transform duration-300 origin-center"
