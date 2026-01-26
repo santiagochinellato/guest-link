@@ -185,7 +185,7 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
                 </div>
 
                 {/* Categories */}
-                <div className="flex gap-2 overflow-x-auto pb-4 -mx-6 px-6 no-scrollbar snap-x px-2">
+                <div className="flex gap-2 overflow-x-auto pb-4 -mx-6 px-6 no-scrollbar snap-x">
                   {categories.length > 0 ? (
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     categories.map((cat: any) => (
