@@ -32,9 +32,6 @@ export async function findTopRatedPlaces(
         query: categoryKeyword,
         location: { lat, lng },
         radius: 10000, // 10km
-        minprice: 0,
-        maxprice: 4,
-        opennow: true,
         key: key,
       },
       timeout: 5000,
@@ -110,9 +107,42 @@ export async function findNearbyTransit(
 }
 
 function mapKeywordToCategory(keyword: string): string {
-    if (keyword.includes("restaurant")) return "restaurants";
-    if (keyword.includes("supermarket")) return "supermarket";
-    if (keyword.includes("pharmacy")) return "pharmacy";
-    if (keyword.includes("tourist")) return "sights";
+    const lower = keyword.toLowerCase();
+    
+    // Restaurants
+    if (lower.includes("restaurant") || lower.includes("parrilla") || 
+        lower.includes("steakhouse") || lower.includes("grill") || 
+        lower.includes("comida") || lower.includes("food")) return "restaurants";
+    
+    // Tourism/Sights
+    if (lower.includes("tourist") || lower.includes("attraction") || 
+        lower.includes("museum") || lower.includes("cinema") || 
+        lower.includes("movie") || lower.includes("theater") ||
+        lower.includes("bowling") || lower.includes("escape") ||
+        lower.includes("entertainment")) return "sights";
+    
+    // Shopping
+    if (lower.includes("clothing") || lower.includes("fashion") || 
+        lower.includes("boutique") || lower.includes("souvenir") || 
+        lower.includes("gift") || lower.includes("shoe") || 
+        lower.includes("footwear") || lower.includes("store")) return "shopping";
+    
+    // Supermarket
+    if (lower.includes("supermarket") || lower.includes("grocery")) return "supermarket";
+    
+    // Kids
+    if (lower.includes("kids") || lower.includes("children") || 
+        lower.includes("family") || lower.includes("playground") || 
+        lower.includes("park")) return "kids";
+    
+    // Bars
+    if (lower.includes("bar") || lower.includes("pub") || 
+        lower.includes("nightlife") || lower.includes("brewery") || 
+        lower.includes("beer") || lower.includes("cervecería") ||
+        lower.includes("wine") || lower.includes("vinoteca")) return "bars";
+    
+    // Pharmacy
+    if (lower.includes("pharmacy")) return "pharmacy";
+    
     return "other";
 }

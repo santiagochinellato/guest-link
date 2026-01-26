@@ -51,8 +51,8 @@ export async function fetchNearbyPlaces(
         break;
       case "trails":
       case "outdoors":
-        // 15km radius for outdoors
-        radius = 15000;
+        // 5km radius for outdoors (optimized for public API stability)
+        radius = 5000;
         // Queries for hiking, huts, peaks
         queryTag = '["highway"~"path|footway|track"]["name"],["route"="hiking"],["tourism"~"alpine_hut|wilderness_hut"],["natural"="peak"]'; 
         break;
@@ -107,7 +107,7 @@ export async function fetchNearbyPlaces(
     }
 
     const query = `
-      [out:json][timeout:25];
+      [out:json][timeout:90];
       ${queryBody}
       out center 10;
     `;
@@ -149,8 +149,9 @@ export async function fetchNearbyPlaces(
 
     return { success: true, data: suggestions };
   } catch (error) {
-    console.error("Overpass Search Error:", error);
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    // Defensive: Log error but return empty array to prevent cascading failures
+    console.error("Overpass Search Error (gracefully degraded):", error);
+    return { success: true, data: [] }; // Changed from success: false to allow partial results
   }
 }
 
