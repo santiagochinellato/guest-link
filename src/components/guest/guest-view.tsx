@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import {
   Map as MapIcon,
   AlertCircle,
   BookOpen,
   MessageCircle,
-  Router,
+  TramFront,
   User,
   ArrowRight,
   Star,
   ExternalLink,
   Phone,
+  MapPinned,
 } from "lucide-react";
+import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 import { GuestHero } from "@/components/features/guest/components/GuestHero";
@@ -21,6 +22,7 @@ import { GuestInfoGrid } from "@/components/features/guest/components/GuestInfoG
 import { GuestRulesList } from "@/components/features/guest/components/GuestRulesList";
 import { GuestTabNavigation } from "@/components/features/guest/components/GuestTabNavigation";
 import { useGuestView } from "@/components/features/guest/hooks/useGuestView";
+import { Button } from "../ui/button";
 
 interface GuestViewProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,49 +31,10 @@ interface GuestViewProps {
   dict: any;
 }
 
-export function GuestView({ property, dict }: GuestViewProps) {
+export function GuestView({ property, dict: _dict }: GuestViewProps) {
   // We keep state for views
-  const {
-    activeView,
-    setActiveView,
-    activeCategory,
-    setActiveCategory,
-    scrollToRules,
-  } = useGuestView();
-
-  // Mock Host Data Removed - using property.hostName etc.
-
-  // Actions Navigation
-  const ACTIONS = [
-    {
-      label: "Recomendaciones",
-      icon: BookOpen,
-      onClick: () => setActiveView("recommendations"),
-      color:
-        "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-gray-100 dark:border-neutral-700",
-    },
-    {
-      label: "Reglas",
-      icon: MessageCircle,
-      onClick: scrollToRules,
-      color:
-        "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-gray-100 dark:border-neutral-700",
-    },
-    {
-      label: "Bus & Taxi",
-      icon: Router,
-      onClick: () => setActiveView("transport"),
-      color:
-        "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-gray-100 dark:border-neutral-700",
-    },
-    {
-      label: "Ayuda",
-      icon: AlertCircle,
-      onClick: () => setActiveView("emergency"),
-      color:
-        "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-gray-100 dark:border-neutral-700 hover:text-red-500 hover:border-red-200",
-    },
-  ];
+  const { activeView, setActiveView, activeCategory, setActiveCategory } =
+    useGuestView();
 
   // Helper to extract unique categories
   const categories = property.recommendations
@@ -81,118 +44,130 @@ export function GuestView({ property, dict }: GuestViewProps) {
       )
     : [];
 
+  const renderHeaderTitle = () => {
+    switch (activeView) {
+      case "rules":
+        return "Reglas de la Casa";
+      case "recommendations":
+        return "Guía Local";
+      case "wifi":
+        return "Conexión WiFi";
+      case "transport":
+        return "Moverse";
+      case "help":
+        return "Ayuda & Emergencia";
+      default:
+        return "GUESTHUB";
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 w-full bg-[#f1f5f9] dark:bg-[#000000] flex justify-center md:items-center overflow-hidden font-sans text-[#0e1b1a] dark:text-white">
       {/* App Container */}
       <div className="w-full md:max-w-[480px] h-full md:h-[95vh] md:max-h-[850px] md:rounded-[2rem] bg-[#f6f8f8] dark:bg-[#112120] relative shadow-2xl flex flex-col overflow-hidden border-gray-200 dark:border-gray-800 md:border-[8px]">
         {/* Top Navigation / Header */}
         <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-black/20 backdrop-blur-md z-20 border-b border-gray-100 dark:border-white/5 absolute top-0 w-full">
-          <div className="flex items-center gap-3 text-[#0f756d]">
-            {activeView === "home" ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+          <div className="flex items-center justify-between gap-3 text-[#0f756d] w-full">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/guestHubLogo.png"
+                alt="GuestHub"
+                width={32}
+                height={32}
+                className="w-8 h-8 object-contain"
+              />
+              <div className="flex flex-col">
+                <h2 className="text-neutral-900 dark:text-white text-lg font-bold tracking-tight leading-none font-sans">
+                  GUESTHUB
+                </h2>
+                <p
+                  className="text-[10px] text-neutral-500 font-medium tracking-wide leading-none mt-1"
+                  style={{ fontFamily: "var(--font-inter)" }}
+                >
+                  You stay, connected.
+                </p>
+              </div>
+            </div>
+            {/* Host Chip */}
+            <div className="flex items-center gap-3 bg-neutral-100/50 dark:bg-white/10 backdrop-blur-md border border-neutral-200/50 dark:border-white/20 p-2 pr-4 rounded-xl w-fit hover:bg-neutral-200/50 dark:hover:bg-white/20 transition-colors cursor-pointer">
+              {/* <div className="size-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white/50">
                 <img
-                  src="/guestHubLogo.png"
-                  alt="GuestHub"
-                  className="w-8 h-8 object-contain"
+                  src={
+                    property.hostImage ||
+                    "https://ui-avatars.com/api/?name=" +
+                      (property.hostName || "Host") +
+                      "&background=random"
+                  }
+                  alt="Host"
+                  className="w-full h-full object-cover"
                 />
-                <div className="flex flex-col">
-                  <h2 className="text-neutral-900 dark:text-white text-lg font-bold tracking-tight leading-none font-sans">
-                    GUESTHUB
-                  </h2>
-                  <p
-                    className="text-[10px] text-neutral-500 font-medium tracking-wide leading-none mt-1"
-                    style={{ fontFamily: "var(--font-inter)" }}
-                  >
-                    You stay, connected.
-                  </p>
-                </div>
-              </>
-            ) : (
-              <button
-                onClick={() => setActiveView("home")}
-                className="flex items-center gap-2 text-neutral-800 dark:text-white hover:opacity-70 transition-opacity"
-              >
-                <div className="p-1 rounded-full bg-neutral-100 dark:bg-neutral-800">
-                  <ArrowRight className="w-5 h-5 rotate-180" />
-                </div>
-                <span className="font-bold text-lg capitalize">
-                  {activeView === "emergency"
-                    ? "Ayuda"
-                    : activeView === "transport"
-                      ? "Transporte"
-                      : "Recomendaciones"}
+              </div> */}
+              <div className="flex flex-col">
+                <span className="text-neutral-500 dark:text-white/70 text-[10px] font-bold uppercase tracking-wide">
+                  Anfitrión
                 </span>
-              </button>
-            )}
+                <span className="text-neutral-900 dark:text-white text-sm font-bold leading-none">
+                  {property.hostName || "Anfitrión"}
+                </span>
+              </div>
+            </div>
           </div>
         </header>
 
         {/* Main Scrolling Content Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-24 relative scroll-smooth">
-          {/* HOME VIEW (Merged WiFi + Info + Rules) */}
-          {activeView === "home" && (
-            <div className=" duration-300">
-              {/* 1. Hero Section */}
-              <GuestHero
-                image={property.image}
-                name={property.name}
-                address={property.address || property.city || "Premium Stay"}
-                hostName={property.hostName}
-                hostImage={property.hostImage}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-32 relative scroll-smooth">
+          <GuestHero
+            image={property.image}
+            name={property.name}
+            address={property.address || property.city || "Premium Stay"}
+            hostName={property.hostName}
+            hostImage={property.hostImage}
+          />
+
+          <div className="px-6 flex flex-col gap-6 -mt-6 relative z-10 min-h-[500px]">
+            {/* HOME VIEW (Hero + InfoGrid) */}
+
+            <div className="animate-in fade-in duration-300 flex flex-col gap-6 justify-center items-center">
+              <GuestInfoGrid
+                checkIn={property.checkIn}
+                checkOut={property.checkOut}
               />
-
-              <div className="px-6 flex flex-col gap-8 -mt-6 relative z-10">
-                {/* 2. Actions Grid */}
-                {/* <div className="bg-white dark:bg-neutral-800 p-4 rounded-2xl shadow-xl shadow-black/5 border border-gray-100 dark:border-neutral-700">
-                  <h3 className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-3 ml-1">
-                    Acceso Rápido
-                  </h3>
-                  <div className="grid grid-cols-4 gap-2">
-                    {ACTIONS.map((action, idx) => (
-                      <button
-                        key={idx}
-                        onClick={action.onClick}
-                        className="flex flex-col items-center gap-2 group p-2 hover:bg-gray-50 dark:hover:bg-neutral-700/50 rounded-xl transition-all active:scale-95"
-                      >
-                        <div
-                          className={cn(
-                            "size-12 rounded-xl flex items-center justify-center shadow-sm border transition-all group-hover:scale-105 group-hover:shadow-md",
-                            action.color,
-                          )}
-                        >
-                          <action.icon className="w-5 h-5" />
-                        </div>
-                        <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 text-center leading-tight">
-                          {action.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div> */}
-
-                {/* 3. WiFi Card & Info */}
-                <div className="space-y-4">
-                  <GuestWiFiCard
-                    ssid={property.wifiSsid}
-                    password={property.wifiPassword}
-                  />
-
-                  <GuestInfoGrid
-                    checkIn={property.checkIn}
-                    checkOut={property.checkOut}
-                  />
-                </div>
-                {/* 4. Rules Section (Merged into Home) */}
-                <div id="rules-section" className="space-y-6 scroll-mt-24">
-                  <GuestRulesList rules={property.houseRules} />
-                </div>
-              </div>
+              <Button
+                className="rounded-xl w-fit flex items-center gap-2"
+                onClick={() => {
+                  const query =
+                    property.latitude && property.longitude
+                      ? `${property.latitude},${property.longitude}`
+                      : `${property.address || property.name}, ${property.city || ""}`;
+                  window.open(
+                    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      query,
+                    )}`,
+                    "_blank",
+                  );
+                }}
+              >
+                <MapPinned />
+                Ir al alojamiento
+              </Button>
             </div>
-          )}
+            {/* WIFI VIEW (Now Home) */}
+            {activeView === "home" && (
+              <div className="animate-in slide-in-from-bottom duration-300">
+                <GuestWiFiCard
+                  ssid={property.wifiSsid}
+                  password={property.wifiPassword}
+                />
+              </div>
+            )}
 
-          {/* OTHER VIEWS (Replacing Home) */}
-          <div className="px-6 pt-24 pb-12">
+            {/* RULES VIEW */}
+            {activeView === "rules" && (
+              <div className="animate-in slide-in-from-right duration-300">
+                <GuestRulesList rules={property.houseRules} />
+              </div>
+            )}
+
             {/* RECOMMENDATIONS VIEW */}
             {activeView === "recommendations" && (
               <div className="space-y-6 animate-in slide-in-from-right duration-300">
@@ -205,13 +180,12 @@ export function GuestView({ property, dict }: GuestViewProps) {
                   </h3>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
                     Descubre nuestros lugares favoritos. Desde la gastronomía
-                    local hasta los rincones secretos que solo los locales
-                    conocen.
+                    local hasta los rincones secretos.
                   </p>
                 </div>
 
                 {/* Categories */}
-                <div className="flex gap-2 overflow-x-auto pb-4 -mx-6 px-6 no-scrollbar snap-x">
+                <div className="flex gap-2 overflow-x-auto pb-4 -mx-6 px-6 no-scrollbar snap-x px-2">
                   {categories.length > 0 ? (
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     categories.map((cat: any) => (
@@ -300,13 +274,12 @@ export function GuestView({ property, dict }: GuestViewProps) {
                 <div className="space-y-2">
                   <h3 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-3">
                     <span className="p-2 bg-blue-500/10 rounded-xl text-blue-600">
-                      <Router className="w-6 h-6" />
+                      <TramFront className="w-6 h-6" />
                     </span>
                     Transporte
                   </h3>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                    Muévete por la ciudad con facilidad. Aquí tienes las mejores
-                    opciones para llegar a donde necesites.
+                    Opciones para moverte por la ciudad.
                   </p>
                 </div>
 
@@ -319,7 +292,7 @@ export function GuestView({ property, dict }: GuestViewProps) {
                     >
                       <div className="flex items-start gap-4">
                         <div className="size-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform">
-                          <Router className="w-7 h-7" />
+                          <TramFront className="w-7 h-7" />
                         </div>
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center justify-between">
@@ -341,9 +314,9 @@ export function GuestView({ property, dict }: GuestViewProps) {
               </div>
             )}
 
-            {/* EMERGENCY VIEW */}
-            {activeView === "emergency" && (
-              <div className="animate-in slide-in-from-right duration-300 pb-12">
+            {/* HELP (EMERGENCY) VIEW */}
+            {activeView === "help" && (
+              <div className="animate-in slide-in-from-right duration-300">
                 <div className="bg-white dark:bg-neutral-800 rounded-[2.5rem] p-6 shadow-sm border border-gray-100 dark:border-neutral-700">
                   <div className="bg-red-50 dark:bg-red-900/10 rounded-[2rem] p-6 border border-red-100 dark:border-red-900/20 mb-8">
                     <div className="flex items-center gap-4 mb-2">
@@ -453,11 +426,13 @@ export function GuestView({ property, dict }: GuestViewProps) {
               </div>
             )}
           </div>
-          <GuestTabNavigation
-            activeView={activeView}
-            onNavigate={setActiveView}
-          />
         </div>
+
+        {/* Navigation Bar */}
+        <GuestTabNavigation
+          activeView={activeView}
+          onNavigate={setActiveView}
+        />
       </div>
     </div>
   );

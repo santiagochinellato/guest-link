@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export type GuestViewMode = "home" | "recommendations" | "transport" | "emergency";
+export type GuestViewMode = "home" | "rules" | "recommendations" | "wifi" | "transport" | "help";
 
 export function useGuestView() {
   const [activeView, setActiveView] = useState<GuestViewMode>("home");

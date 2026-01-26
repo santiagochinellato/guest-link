@@ -1,66 +1,110 @@
-import { Home, BookOpen, Router, AlertCircle } from "lucide-react";
+import {
+  BookOpen,
+  Router,
+  MessageCircle,
+  Wifi,
+  FileText,
+  CableCar,
+  TramFront,
+  Info,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { GuestViewMode } from "@/components/features/guest/hooks/useGuestView";
 
 interface GuestTabNavigationProps {
-  activeView: string;
-  onNavigate: (
-    view: "home" | "recommendations" | "transport" | "emergency",
-  ) => void;
+  activeView: GuestViewMode;
+  onNavigate: (view: GuestViewMode) => void;
 }
 
 export function GuestTabNavigation({
   activeView,
   onNavigate,
 }: GuestTabNavigationProps) {
-  const tabs = [
+  const tabs: {
+    id: GuestViewMode;
+    label: string;
+    icon: React.ElementType;
+    isCenter?: boolean;
+  }[] = [
     {
-      id: "home",
-      label: "Home",
-      icon: Home,
+      id: "rules",
+      label: "Reglas",
+      icon: FileText,
     },
     {
       id: "recommendations",
       label: "Guía",
-      icon: BookOpen,
+      icon: CableCar,
+    },
+    {
+      id: "home",
+      label: "WiFi",
+      icon: Wifi,
+      isCenter: true,
     },
     {
       id: "transport",
       label: "Moverse",
-      icon: Router,
+      icon: TramFront,
     },
     {
-      id: "emergency",
+      id: "help",
       label: "Ayuda",
-      icon: AlertCircle,
+      icon: Info,
     },
-  ] as const;
+  ];
 
   return (
-    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-white/20 dark:border-white/10 p-2 rounded-full shadow-2xl z-50 flex items-center gap-1">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-black/90 backdrop-blur-2xl border border-white/20 dark:border-white/10 p-1.5 rounded-3xl shadow-2xl z-50 flex items-center justify-center gap-1 sm:gap-2 ring-1 ring-black/5 w-[95%]">
       {tabs.map((tab) => {
         const isActive = activeView === tab.id;
+
+        if (tab.isCenter) {
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onNavigate(tab.id)}
+              className={cn(
+                "relative -mt-8 mx-1 w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xl",
+                isActive
+                  ? "bg-[#0f756d] text-white shadow-[#0f756d]/40 scale-110"
+                  : "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:scale-105",
+              )}
+            >
+              <tab.icon className="w-6 h-6" />
+              {isActive && (
+                <span className="absolute -bottom-6 text-[10px] font-bold text-[#0f756d] bg-white/90 dark:bg-black/90 px-2 py-0.5 rounded-full shadow-sm">
+                  WiFi
+                </span>
+              )}
+            </button>
+          );
+        }
+
         return (
           <button
             key={tab.id}
             onClick={() => onNavigate(tab.id)}
             className={cn(
-              "relative px-6 py-3 rounded-full transition-all duration-300 flex items-center gap-2 group",
+              "relative px-3 sm:px-4 py-3 rounded-2xl transition-all duration-300 flex flex-col items-center gap-1 group min-w-[60px]",
               isActive
-                ? "bg-[#0f756d] text-white shadow-lg shadow-[#0f756d]/25"
-                : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10",
+                ? "bg-neutral-100 dark:bg-white/10 text-[#0f756d] dark:text-white"
+                : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5",
             )}
           >
             <tab.icon
               className={cn(
                 "w-5 h-5 transition-transform duration-300",
-                isActive ? "scale-110" : "group-hover:scale-110",
+                isActive ? "scale-100" : "group-hover:scale-110",
               )}
             />
-            {isActive && (
-              <span className="text-sm font-bold animate-in fade-in slide-in-from-right-4 duration-300 hidden sm:block">
-                {tab.label}
-              </span>
-            )}
+            <span
+              className={cn(
+                "text-[9px] font-bold transition-all duration-300 opacity-100 translate-y-0",
+              )}
+            >
+              {tab.label}
+            </span>
           </button>
         );
       })}
