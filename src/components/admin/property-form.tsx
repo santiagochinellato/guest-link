@@ -7,7 +7,7 @@ import { AutoFillButton } from "@/components/admin/auto-fill-button";
 import { TransitAutoButton } from "@/components/admin/transit-auto-button";
 import { KeywordModal } from "@/components/admin/keyword-modal";
 import { updateCategoryKeywords } from "@/lib/actions/categories";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Save,
@@ -56,10 +56,13 @@ export function PropertyForm({
   isEditMode = false,
 }: PropertyFormProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("basic");
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("tab") || "basic",
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string>("restaurants");
+  const [activeCategory, setActiveCategory] = useState<string>("gastronomy");
   const [keywordModal, setKeywordModal] = useState<{
     isOpen: boolean;
     category: {
@@ -75,7 +78,7 @@ export function PropertyForm({
   // Default Categories Configuration
   const defaultCategories = [
     {
-      id: "restaurants",
+      id: "gastronomy",
       label: "Restaurantes",
       icon: Utensils,
       color: "text-blue-600",
@@ -122,6 +125,14 @@ export function PropertyForm({
       bg: "bg-orange-50/50",
       border: "border-orange-500",
     },
+    {
+      id: "outdoors",
+      label: "Outdoors",
+      icon: Mountain,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50/50",
+      border: "border-emerald-500",
+    },
   ];
 
   const [categoriesList, setCategoriesList] = useState(defaultCategories);
@@ -160,6 +171,14 @@ export function PropertyForm({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData.recommendations]);
+
+  // Handle tab change with URL update
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", newTab);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) return;
@@ -438,7 +457,7 @@ export function PropertyForm({
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               type="button"
               className={cn(
                 "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap border dark:border-transparent flex-shrink-0",
@@ -823,12 +842,7 @@ export function PropertyForm({
                     </p>
                   </div>
                   {initialData.id && (
-                    <AutoFillButton
-                      propertyId={initialData.id}
-                      onComplete={() => {
-                        window.location.reload();
-                      }}
-                    />
+                    <AutoFillButton propertyId={initialData.id} />
                   )}
                 </div>
 
@@ -1155,9 +1169,6 @@ export function PropertyForm({
                         <AutoFillButton
                           propertyId={initialData.id}
                           categoryId={activeCategory}
-                          onComplete={() => {
-                            window.location.reload();
-                          }}
                           className="flex-shrink-0"
                         />
                       )}
@@ -1256,9 +1267,6 @@ export function PropertyForm({
                       <TransitAutoButton
                         propertyId={initialData.id}
                         city={initialData.city || ""}
-                        onComplete={() => {
-                          window.location.reload();
-                        }}
                       />
                     )}
                     <button

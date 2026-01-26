@@ -22,14 +22,33 @@ export function AutoFillButton({
   const [isPending, startTransition] = useTransition();
 
   const handleAutoFill = () => {
+    console.log("🚀 AutoFillButton clicked!", { propertyId, categoryId });
     startTransition(async () => {
-      const res = await populateRecommendations(propertyId, categoryId);
+      try {
+        console.log("📞 Calling populateRecommendations...");
+        const res = await populateRecommendations(propertyId, categoryId);
+        console.log("📥 Response:", res);
 
-      if (res.success) {
-        toast.success(`Success! Added ${res.count || 0} new recommendations.`);
-        if (onComplete) onComplete();
-      } else {
-        toast.error(res.error || "Failed to auto-populate recommendations.");
+        if (res.success) {
+          toast.success(
+            `Success! Added ${res.count || 0} new recommendations.`,
+          );
+
+          // Reload page to show new recommendations
+          if (res.count && res.count > 0) {
+            setTimeout(() => {
+              // Preserve current URL (including tab parameter)
+              window.location.href = window.location.href;
+            }, 1000); // Wait 1 second for toast to show
+          }
+
+          if (onComplete) onComplete();
+        } else {
+          toast.error(res.error || "Failed to auto-populate recommendations.");
+        }
+      } catch (error) {
+        console.error("💥 AutoFill error:", error);
+        toast.error("Unexpected error occurred");
       }
     });
   };

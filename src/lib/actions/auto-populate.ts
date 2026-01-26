@@ -10,15 +10,33 @@ import { fetchNearbyPlaces } from "@/lib/actions/overpass";
 // --- DEFAULT KEYWORD MAPPINGS ---
 // Used when category doesn't have custom searchKeywords defined
 const DEFAULT_KEYWORDS: Record<string, string[]> = {
+  // Restaurantes (gastronomy in DB)
   gastronomy: ["restaurantes recomendados", "parrilla argentina", "comida regional"],
+  
+  // Turismo (sights in DB)
+  sights: ["atracciones turísticas", "mirador panorámico", "museo", "puntos de interés"],
+  
+  // Compras (shopping in DB)
+  shopping: ["tienda de souvenirs", "productos regionales", "artesanías", "centro comercial"],
+  
+  // Senderos (trails in DB)
+  trails: ["senderos", "trekking", "caminatas", "rutas de montaña"],
+  
+  // Kids
+  kids: ["actividades para niños", "parque infantil", "heladería artesanal", "juegos"],
+  
+  // Bares (bars in DB)
+  bars: ["cervecería artesanal", "bar de tragos", "wine bar vinoteca", "pub"],
+  
+  // Outdoors
+  outdoors: [], // Handled by Overpass API
+  
+  // Legacy/Other categories
   breakfast: ["café de especialidad", "pastelería artesanal", "brunch"],
   nightlife: ["cervecería artesanal", "bar de tragos", "wine bar vinoteca"],
   essentials: ["supermercado", "farmacia 24 horas"],
   tourism: ["atracciones turísticas", "mirador panorámico", "museo"],
-  kids: ["actividades para niños", "parque infantil", "heladería artesanal"],
-  shopping: ["tienda de souvenirs", "productos regionales", "artesanías"],
-  transit: [], // Handled by findNearbyTransit
-  outdoors: [], // Handled by Overpass
+  transit: [], // Handled by Smart Transit
   other: ["lugares de interés"],
 };
 
@@ -27,15 +45,19 @@ async function getOrCreateCategory(type: string, propertyId: number): Promise<nu
     const normalizedType = type.toLowerCase().trim();
     
     const displayNames: Record<string, string> = {
-        "gastronomy": "Gastronomía & Sabores",
+        "gastronomy": "Restaurantes",
+        "sights": "Turismo",
+        "shopping": "Compras",
+        "trails": "Senderos",
+        "kids": "Kids",
+        "bars": "Bares",
+        "outdoors": "Outdoors",
+        // Legacy
         "breakfast": "Desayuno & Cafetería",
         "tourism": "Atracciones & Cultura",
-        "shopping": "Compras & Regalos",
         "essentials": "Supermercados & Farmacias",
-        "kids": "Niños & Familia",
         "nightlife": "Vida Nocturna",
         "transit": "Transporte Público",
-        "outdoors": "Naturaleza & Trekking",
         "other": "Otros"
     };
 
@@ -64,9 +86,16 @@ async function getOrCreateCategory(type: string, propertyId: number): Promise<nu
 }
 
 // --- MAIN ACTION: Smart Discovery 2.0 ---
-export async function populateRecommendations(propertyId: number) {
+export async function populateRecommendations(
+  propertyId: number,
+  categoryFilter?: string
+) {
+  console.log("\n🎬 === POPULATE RECOMMENDATIONS STARTED ===");
+  console.log("📋 Parameters:", { propertyId, categoryFilter });
+  
   try {
     // A. Fetch Property with Categories
+    console.log("🔍 Fetching property...");
     const property = await db.query.properties.findFirst({
         where: eq(properties.id, propertyId),
         with: {
@@ -81,39 +110,61 @@ export async function populateRecommendations(propertyId: number) {
     const lat = parseFloat(property.latitude);
     const lng = parseFloat(property.longitude);
 
-    // B. Check if already populated (avoid API spam)
+    // B. Check existing auto-generated recommendations (for logging only)
     const existingAuto = await db.select().from(recommendations).where(
         and(
             eq(recommendations.propertyId, propertyId),
             eq(recommendations.externalSource, "google")
         )
     );
+    
+    console.log(`📊 Existing auto-generated recommendations: ${existingAuto.length}`);
 
-    if (existingAuto.length > 10) {
-        return { 
-            success: true, 
-            message: "La propiedad ya tiene recomendaciones automáticas. Elimina algunas para actualizar.", 
-            count: 0 
-        };
+    // Note: Removed the blocking validation to allow continuous discovery
+    // Users can manually delete recommendations if needed
+
+    // C. Determine which categories to process
+    let categoriesToProcess: string[];
+    
+    if (categoryFilter) {
+      // Single category mode (from Auto-Discovery button)
+      console.log(`🎯 Single category mode: ${categoryFilter}`);
+      categoriesToProcess = [categoryFilter];
+    } else {
+      // All categories mode (from global Auto-Discovery)
+      categoriesToProcess = Object.keys(DEFAULT_KEYWORDS);
+      console.log(`🌐 All categories mode: ${categoriesToProcess.length} categories`);
     }
 
-    // C. Build Search Promises (Category-Driven)
+    // D. Build Search Promises (Category-Driven)
     const promises: Promise<any>[] = [];
     const categoryMap = new Map<string, number>(); // categoryType -> categoryId
 
     // If no categories exist, create default ones
     if (!property.categories || property.categories.length === 0) {
-        console.log("No categories found, using defaults");
+        console.log("⚠️ No categories found, using defaults");
         // Create default categories and use DEFAULT_KEYWORDS
         for (const [type, keywords] of Object.entries(DEFAULT_KEYWORDS)) {
-            if (keywords.length === 0) continue; // Skip transit/outdoors
+            // Apply category filter
+            if (categoryFilter && type !== categoryFilter) {
+                console.log(`⏭️  Skipping ${type} (filter: ${categoryFilter})`);
+                continue;
+            }
             
+            if (keywords.length === 0) {
+                console.log(`⏭️  Skipping ${type} (no keywords)`);
+                continue;
+            }
+            
+            console.log(`✅ Processing ${type} with ${keywords.length} keywords`);
             const catId = await getOrCreateCategory(type, propertyId);
             categoryMap.set(type, catId);
             
             for (const keyword of keywords) {
+                const searchQuery = `${keyword} cerca de ${property.city || property.address}`;
+                console.log(`  🔍 Searching: "${searchQuery}"`);
                 promises.push(
-                    findTopRatedPlaces(lat, lng, keyword).then(results => ({
+                    findTopRatedPlaces(lat, lng, searchQuery).then(results => ({
                         categoryId: catId,
                         categoryType: type,
                         results
@@ -122,9 +173,16 @@ export async function populateRecommendations(propertyId: number) {
             }
         }
     } else {
+        console.log(`📂 Found ${property.categories.length} existing categories`);
         // Use existing categories with custom or default keywords
         for (const category of property.categories) {
             if (!category.type) continue;
+            
+            // Apply category filter
+            if (categoryFilter && category.type !== categoryFilter) {
+                console.log(`⏭️  Skipping ${category.type} (filter: ${categoryFilter})`);
+                continue;
+            }
             
             categoryMap.set(category.type, category.id);
             
@@ -133,16 +191,22 @@ export async function populateRecommendations(propertyId: number) {
             // Use custom keywords if defined
             if (category.searchKeywords && category.searchKeywords.trim() !== "") {
                 keywords = category.searchKeywords.split(",").map(k => k.trim());
+                console.log(`✅ Using custom keywords for ${category.type}: ${keywords.join(', ')}`);
             } 
             // Fallback to defaults
             else if (DEFAULT_KEYWORDS[category.type]) {
                 keywords = DEFAULT_KEYWORDS[category.type];
+                console.log(`✅ Using default keywords for ${category.type}: ${keywords.join(', ')}`);
+            } else {
+                console.log(`⚠️  No keywords for ${category.type}`);
             }
             
             // Execute searches for this category
             for (const keyword of keywords) {
+                const searchQuery = `${keyword} cerca de ${property.city || property.address}`;
+                console.log(`  🔍 Searching: "${searchQuery}"`);
                 promises.push(
-                    findTopRatedPlaces(lat, lng, keyword).then(results => ({
+                    findTopRatedPlaces(lat, lng, searchQuery).then(results => ({
                         categoryId: category.id,
                         categoryType: category.type,
                         results
