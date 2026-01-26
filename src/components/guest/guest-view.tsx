@@ -2,27 +2,25 @@
 
 import { useState } from "react";
 import {
-  Wifi,
   Map as MapIcon,
   AlertCircle,
   BookOpen,
   MessageCircle,
   Router,
-  Copy,
-  Clock,
-  Sun,
   User,
-  Lock,
   ArrowRight,
   Star,
   ExternalLink,
   Phone,
-  CheckCircle,
-  XCircle,
 } from "lucide-react";
-import { useQRCode } from "next-qrcode";
 
 import { cn } from "@/lib/utils";
+import { GuestHero } from "@/components/features/guest/components/GuestHero";
+import { GuestWiFiCard } from "@/components/features/guest/components/GuestWiFiCard";
+import { GuestInfoGrid } from "@/components/features/guest/components/GuestInfoGrid";
+import { GuestRulesList } from "@/components/features/guest/components/GuestRulesList";
+import { GuestTabNavigation } from "@/components/features/guest/components/GuestTabNavigation";
+import { useGuestView } from "@/components/features/guest/hooks/useGuestView";
 
 interface GuestViewProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,13 +31,13 @@ interface GuestViewProps {
 
 export function GuestView({ property, dict }: GuestViewProps) {
   // We keep state for views
-  const [activeView, setActiveView] = useState<
-    "home" | "recommendations" | "transport" | "emergency"
-  >("home");
-
-  // We keep state for local filters (like recommendations categories)
-  const [activeCategory, setActiveCategory] = useState<string>("restaurants");
-  const { Canvas } = useQRCode();
+  const {
+    activeView,
+    setActiveView,
+    activeCategory,
+    setActiveCategory,
+    scrollToRules,
+  } = useGuestView();
 
   // Mock Host Data Removed - using property.hostName etc.
 
@@ -55,12 +53,7 @@ export function GuestView({ property, dict }: GuestViewProps) {
     {
       label: "Reglas",
       icon: MessageCircle,
-      onClick: () => {
-        setActiveView("home");
-        // Optional: scroll to rules if already on home, but since it's merged, it might just be visible
-        const rulesElement = document.getElementById("rules-section");
-        if (rulesElement) rulesElement.scrollIntoView({ behavior: "smooth" });
-      },
+      onClick: scrollToRules,
       color:
         "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-gray-100 dark:border-neutral-700",
     },
@@ -141,58 +134,17 @@ export function GuestView({ property, dict }: GuestViewProps) {
           {activeView === "home" && (
             <div className=" duration-300">
               {/* 1. Hero Section */}
-              <div className="relative w-full h-[380px] group">
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700"
-                  style={{
-                    backgroundImage: `url(${property.image || "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2942&auto=format&fit=crop"})`,
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                <div className="absolute bottom-10 left-0 w-full p-6 flex flex-col gap-4">
-                  <div>
-                    <span className="inline-block px-3 py-1 mb-2 text-xs font-medium tracking-wider text-white uppercase bg-[#0f756d]/90 backdrop-blur-sm rounded-full shadow-lg">
-                      Premium Stay
-                    </span>
-                    <h1 className="text-white text-4xl font-bold leading-tight drop-shadow-lg">
-                      {property.name} <br />
-                      <span className="text-white/95 font-normal text-2xl drop-shadow-md">
-                        {property.address || property.city || "Premium Stay"}
-                      </span>
-                    </h1>
-                  </div>
-
-                  {/* Host Chip */}
-                  <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 p-2 pr-4 rounded-xl w-fit hover:bg-white/20 transition-colors cursor-pointer">
-                    <div className="size-10 rounded-full bg-gray-200 overflow-hidden border-2 border-white/50">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={
-                          property.hostImage ||
-                          "https://ui-avatars.com/api/?name=" +
-                            (property.hostName || "Host") +
-                            "&background=random"
-                        }
-                        alt="Host"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-white/70 text-[10px] font-bold uppercase tracking-wide">
-                        Hosted by
-                      </span>
-                      <span className="text-white text-sm font-bold leading-none">
-                        {property.hostName || "Anfitrión"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <GuestHero
+                image={property.image}
+                name={property.name}
+                address={property.address || property.city || "Premium Stay"}
+                hostName={property.hostName}
+                hostImage={property.hostImage}
+              />
 
               <div className="px-6 flex flex-col gap-8 -mt-6 relative z-10">
                 {/* 2. Actions Grid */}
-                <div className="bg-white dark:bg-neutral-800 p-4 rounded-2xl shadow-xl shadow-black/5 border border-gray-100 dark:border-neutral-700">
+                {/* <div className="bg-white dark:bg-neutral-800 p-4 rounded-2xl shadow-xl shadow-black/5 border border-gray-100 dark:border-neutral-700">
                   <h3 className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-3 ml-1">
                     Acceso Rápido
                   </h3>
@@ -217,227 +169,23 @@ export function GuestView({ property, dict }: GuestViewProps) {
                       </button>
                     ))}
                   </div>
-                </div>
+                </div> */}
 
                 {/* 3. WiFi Card & Info */}
                 <div className="space-y-4">
-                  <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-neutral-800 shadow-sm border border-gray-100 dark:border-neutral-700 p-6">
-                    <div className="absolute top-0 right-0 p-4 opacity-[0.03]">
-                      <Wifi className="w-48 h-48" />
-                    </div>
-                    <div className="flex flex-col items-center gap-6 relative z-10">
-                      <div className="text-center">
-                        <h3 className="text-xl font-bold text-neutral-900 dark:text-white flex items-center justify-center gap-2">
-                          <Wifi className="w-5 h-5 text-[#0f756d]" /> Red WiFi
-                        </h3>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                          Escanea para conectarte automáticamente
-                        </p>
-                      </div>
+                  <GuestWiFiCard
+                    ssid={property.wifiSsid}
+                    password={property.wifiPassword}
+                  />
 
-                      <div className="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 group hover:scale-105 transition-transform duration-500">
-                        <Canvas
-                          text={`WIFI:T:WPA;S:${property.wifiSsid};P:${property.wifiPassword};;`}
-                          options={{
-                            errorCorrectionLevel: "M",
-                            margin: 2,
-                            scale: 4,
-                            width: 180,
-                            color: { dark: "#112120", light: "#ffffff" },
-                          }}
-                        />
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          window.location.href = `WIFI:T:WPA;S:${property.wifiSsid};P:${property.wifiPassword};;`;
-                        }}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-[#0f756d] text-white rounded-xl shadow-lg shadow-[#0f756d]/20 active:scale-95 transition-all text-sm font-bold animate-in zoom-in duration-300"
-                      >
-                        <Wifi className="w-4 h-4" /> Conectar Ahora
-                      </button>
-
-                      <div className="flex flex-col items-center gap-3 w-full">
-                        <div className="flex items-center gap-3 px-5 py-4 bg-[#f6f8f8] dark:bg-neutral-900/50 rounded-2xl w-full justify-between border border-gray-100 dark:border-neutral-800">
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-sm">
-                              <Router className="w-4 h-4 text-[#0f756d]" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">
-                                Red
-                              </span>
-                              <span className="text-sm font-bold text-neutral-700 dark:text-neutral-200 truncate max-w-[120px]">
-                                {property.wifiSsid || "Not Configured"}
-                              </span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() =>
-                              property.wifiSsid &&
-                              navigator.clipboard.writeText(property.wifiSsid)
-                            }
-                            className="size-8 flex items-center justify-center rounded-full bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 text-[#0f756d] shadow-sm transition-colors active:scale-90"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        <div className="flex items-center gap-3 px-5 py-4 bg-[#f6f8f8] dark:bg-neutral-900/50 rounded-2xl w-full justify-between border border-gray-100 dark:border-neutral-800">
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-sm">
-                              <Lock className="w-4 h-4 text-[#0f756d]" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">
-                                Contraseña
-                              </span>
-                              <span className="text-sm font-mono font-bold text-neutral-700 dark:text-neutral-200 truncate max-w-[120px]">
-                                {property.wifiPassword || "••••••••"}
-                              </span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() =>
-                              property.wifiPassword &&
-                              navigator.clipboard.writeText(
-                                property.wifiPassword,
-                              )
-                            }
-                            className="size-8 flex items-center justify-center rounded-full bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 text-[#0f756d] shadow-sm transition-colors active:scale-90"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white dark:bg-neutral-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-neutral-700 flex flex-col gap-3">
-                      <div className="size-10 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center">
-                        <Clock className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase font-bold tracking-wider">
-                          Check-in
-                        </p>
-                        <p className="text-neutral-900 dark:text-white font-bold text-xl">
-                          {property.checkIn || "11:00 AM"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-white dark:bg-neutral-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-neutral-700 flex flex-col gap-3">
-                      <div className="size-10 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center">
-                        <Clock className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase font-bold tracking-wider">
-                          Check-out
-                        </p>
-                        <p className="text-neutral-900 dark:text-white font-bold text-xl">
-                          {property.checkOut || "11:00 AM"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <GuestInfoGrid
+                    checkIn={property.checkIn}
+                    checkOut={property.checkOut}
+                  />
                 </div>
                 {/* 4. Rules Section (Merged into Home) */}
                 <div id="rules-section" className="space-y-6 scroll-mt-24">
-                  <div className="bg-gradient-to-br from-[#0f756d]/5 to-transparent rounded-[2rem] p-8 border border-[#0f756d]/10">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-3 bg-white dark:bg-neutral-800 rounded-2xl shadow-sm text-[#0f756d]">
-                        <MessageCircle className="w-6 h-6" />
-                      </div>
-                      <h3 className="text-xl font-bold text-neutral-900 dark:text-white">
-                        Reglas de la Casa
-                      </h3>
-                    </div>
-
-                    {/* Logic to determine if Rules are Object or String */}
-                    {(() => {
-                      const rules =
-                        typeof property.houseRules === "object" &&
-                        property.houseRules !== null
-                          ? property.houseRules
-                          : {
-                              text: property.houseRules || "",
-                              allowed: [],
-                              prohibited: [],
-                            };
-
-                      return (
-                        <div className="space-y-8">
-                          {/* Description */}
-                          <div className="relative">
-                            <div className="absolute top-0 left-0 text-[#0f756d]/10 text-6xl font-serif -translate-x-2 -translate-y-4">
-                              “
-                            </div>
-                            <div className="prose dark:prose-invert prose-sm  relative z-10 prose-p:text-neutral-600 dark:prose-p:text-neutral-300 prose-p:leading-relaxed">
-                              {rules.text ? (
-                                <p className="whitespace-pre-wrap font-medium">
-                                  {rules.text}
-                                </p>
-                              ) : (
-                                <p className="text-gray-400 italic">
-                                  Por favor respeta la propiedad y disfruta tu
-                                  estadía.
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Allowed List */}
-                          {rules.allowed && rules.allowed.length > 0 && (
-                            <div className="space-y-3 ">
-                              <h4 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                Se Permite / Info
-                              </h4>
-                              <ul className="space-y-2">
-                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                {rules.allowed.map(
-                                  (item: string, i: number) => (
-                                    <li
-                                      key={i}
-                                      className="text-sm text-neutral-600 dark:text-neutral-300 flex items-start gap-2"
-                                    >
-                                      <span className="mt-1.5 size-1.5 rounded-full bg-green-500 shrink-0" />
-                                      {item}
-                                    </li>
-                                  ),
-                                )}
-                              </ul>
-                            </div>
-                          )}
-
-                          {/* Prohibited List */}
-                          {rules.prohibited && rules.prohibited.length > 0 && (
-                            <div className="space-y-3">
-                              <h4 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                                <XCircle className="w-4 h-4 text-red-500" />
-                                Prohibido
-                              </h4>
-                              <ul className="space-y-2">
-                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                {rules.prohibited.map(
-                                  (item: string, i: number) => (
-                                    <li
-                                      key={i}
-                                      className="text-sm text-neutral-600 dark:text-neutral-300 flex items-start gap-2"
-                                    >
-                                      <span className="mt-1.5 size-1.5 rounded-full bg-red-500 shrink-0" />
-                                      {item}
-                                    </li>
-                                  ),
-                                )}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
+                  <GuestRulesList rules={property.houseRules} />
                 </div>
               </div>
             </div>
@@ -705,6 +453,10 @@ export function GuestView({ property, dict }: GuestViewProps) {
               </div>
             )}
           </div>
+          <GuestTabNavigation
+            activeView={activeView}
+            onNavigate={setActiveView}
+          />
         </div>
       </div>
     </div>
