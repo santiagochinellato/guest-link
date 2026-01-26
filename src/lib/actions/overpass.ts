@@ -15,6 +15,7 @@ interface OverpassElement {
     amenity?: string;
     shop?: string;
     tourism?: string;
+    natural?: string;
   };
 }
 
@@ -25,6 +26,8 @@ interface PlaceSuggestion {
   formattedAddress: string;
   googleMapsLink: string;
   categoryType: string;
+  externalSource?: "osm";
+  geometry?: any;
 }
 
 export async function fetchNearbyPlaces(
@@ -35,6 +38,7 @@ export async function fetchNearbyPlaces(
   try {
     // Map our categories to Overpass tags
     let queryTag = "";
+    let radius = 1000; // Default 1km
     switch (category.toLowerCase()) {
       case "restaurants":
         queryTag = '["amenity"="restaurant"]';
@@ -46,8 +50,11 @@ export async function fetchNearbyPlaces(
         queryTag = '["shop"]';
         break;
       case "trails":
-        queryTag = '["highway"~"path|footway|track"]["name"]'; // Only named trails
-        // Alternative: leisure=park, natural=beach
+      case "outdoors":
+        // 15km radius for outdoors
+        radius = 15000;
+        // Queries for hiking, huts, peaks
+        queryTag = '["highway"~"path|footway|track"]["name"],["route"="hiking"],["tourism"~"alpine_hut|wilderness_hut"],["natural"="peak"]'; 
         break;
       case "kids":
        queryTag = '["leisure"~"playground|water_park|park"]["name"]';
@@ -67,13 +74,41 @@ export async function fetchNearbyPlaces(
     }
 
 
-    // Overpass QL Query: Search within 1000m radius
+    // Overpass QL Query: Search within radius
+    // Ensure we handle multiple tag sets in union (node[tag](...); way[tag](...);) is standard but for simple OR logic in Overpass 
+    // we often use union of sets. With the comma selector above `["key"~"val"],["key2"]` it acts as AND in some contexts or we need explicit union.
+    // Actually standard Overpass `node[k=v]` is filtering. 
+    // For OR logic with different keys, we need separate statements in the union.
+    // Let's refine the query construction for "outdoors" specifically if needed, or use a simpler regex approach if possible.
+    // But comma in `node[...]` is AND. 
+    // So for "outdoors", we need a Union structure in the query string itself.
+    
+    let queryBody = "";
+    if (category.toLowerCase() === "outdoors" || category.toLowerCase() === "trails") {
+        // Complex Union for outdoors
+        queryBody = `
+          (
+            node["highway"~"path|footway|track"]["name"](around:${radius},${lat},${lon});
+            way["highway"~"path|footway|track"]["name"](around:${radius},${lat},${lon});
+            relation["route"="hiking"]["name"](around:${radius},${lat},${lon});
+            node["tourism"~"alpine_hut|wilderness_hut"](around:${radius},${lat},${lon});
+            node["natural"="peak"]["name"](around:${radius},${lat},${lon});
+            node["tourism"="attraction"](around:${radius},${lat},${lon});
+          );
+        `;
+    } else {
+        // Standard single tag set query
+        queryBody = `
+          (
+            node${queryTag}(around:${radius},${lat},${lon});
+            way${queryTag}(around:${radius},${lat},${lon});
+          );
+        `;
+    }
+
     const query = `
       [out:json][timeout:25];
-      (
-        node${queryTag}(around:1000,${lat},${lon});
-        way${queryTag}(around:1000,${lat},${lon});
-      );
+      ${queryBody}
       out center 10;
     `;
 
@@ -103,10 +138,12 @@ export async function fetchNearbyPlaces(
 
         return {
           title: name,
-          description: "Found via Auto-Search",
+          description: el.tags?.tourism ? `Tourism: ${el.tags.tourism}` : (el.tags?.natural ? `Nature: ${el.tags.natural}` : "Found via OpenStreetMap"),
           formattedAddress: address,
           googleMapsLink: `https://www.google.com/maps/search/?api=1&query=${elLat},${elLon}`,
           categoryType: category,
+          externalSource: "osm",
+          geometry: { location: { lat: elLat, lng: elLon } }
         };
       });
 

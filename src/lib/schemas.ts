@@ -8,6 +8,13 @@ export const RecommendationSchema = z.object({
   googleMapsLink: z.string().optional(),
   categoryType: z.string().min(1, "Category is required"),
   description: z.string().optional(),
+  
+  // Auto-Discovery Fields
+  rating: z.number().optional(),
+  userRatingsTotal: z.number().optional(),
+  googlePlaceId: z.string().optional(),
+  externalSource: z.enum(["manual", "google", "osm"]).optional(),
+  geometry: z.any().optional(),
 });
 
 export const EmergencyContactSchema = z.object({

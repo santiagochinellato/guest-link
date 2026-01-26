@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, real, json } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm"; // Added import
 
 export const users = pgTable("users", {
@@ -75,6 +75,14 @@ export const recommendations = pgTable("recommendations", {
   priceRange: integer("price_range"),
   isAutoSuggested: boolean("is_auto_suggested").default(false),
   isFavorite: boolean("is_favorite").default(false),
+  
+  // New Auto-Discovery Fields
+  googlePlaceId: text("google_place_id").unique(),
+  rating: real("rating"),
+  userRatingsTotal: integer("user_ratings_total"),
+  externalSource: text("external_source").default("manual"), // manual, google, osm
+  geometry: json("geometry"),
+  
   categoryId: integer("category_id").references(() => categories.id),
   propertyId: integer("property_id").references(() => properties.id),
   createdAt: timestamp("created_at").defaultNow(),
