@@ -60,6 +60,7 @@ export async function createProperty(data: PropertyFormData) {
         coverImageUrl: p.coverImageUrl,
         checkInTime: p.checkInTime,
         checkOutTime: p.checkOutTime,
+        status: p.status || "draft",
 
         // Host Info
         // Host Info - Stored in House Rules JSON to avoid migration
@@ -333,6 +334,9 @@ export async function getProperty(id: number) {
         hostPhone: (() => {
              try { return JSON.parse(prop.houseRules || "").host?.phone || ""; } catch { return ""; }
         })(),
+        // Status from DB prop
+        status: (prop.status as "active" | "draft" | "archived") || "draft",
+        
         houseRules: (() => {
              try {
                  const parsed = JSON.parse(prop.houseRules || "");

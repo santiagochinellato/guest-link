@@ -55,9 +55,9 @@ export default async function DashboardPage() {
       </header>
 
       {/* Stats Section */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="flex overflow-x-auto pb-4 gap-4 snap-x -mx-6 px-6 no-scrollbar md:grid md:grid-cols-3 md:gap-6 md:mx-0 md:px-0 md:overflow-visible">
         {/* Stat Card 1 */}
-        <div className="bg-white dark:bg-[#1a2c2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-[#0f756d]/30 transition-colors group">
+        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-[#1a2c2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-[#0f756d]/30 transition-colors group">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
               <Eye className="w-5 h-5" />
@@ -78,7 +78,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Stat Card 2 */}
-        <div className="bg-white dark:bg-[#1a2c2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-[#0f756d]/30 transition-colors group">
+        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-[#1a2c2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-[#0f756d]/30 transition-colors group">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-[#0f756d]/10 rounded-lg text-[#0f756d] group-hover:bg-[#0f756d]/20 transition-colors">
               <Home className="w-5 h-5" />
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Stat Card 3 */}
-        <div className="bg-white dark:bg-[#1a2c2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-[#0f756d]/30 transition-colors group">
+        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-[#1a2c2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-[#0f756d]/30 transition-colors group">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-purple-600 dark:text-purple-400 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
               <Scan className="w-5 h-5" />
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* Property Grid Section */}
-      <section className="flex flex-col gap-4">
+      <section className="flex flex-col gap-4 pb-20 md:pb-0">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             Your Properties
@@ -135,14 +135,15 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {properties.length > 0 ? (
             properties.map((prop, idx) => (
               <div
                 key={prop.id}
-                className="group bg-white dark:bg-[#1a2c2b] rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col h-full"
+                className="group bg-white dark:bg-[#1a2c2b] rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-md transition-all flex md:flex-col h-full items-center md:items-stretch"
               >
-                <div className="relative h-48 w-full overflow-hidden">
+                {/* Desktop Image */}
+                <div className="relative h-48 w-full overflow-hidden hidden md:block">
                   <div className="absolute top-3 right-3 z-10 bg-[#0f756d] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
                     Published
                   </div>
@@ -158,18 +159,31 @@ export default async function DashboardPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </div>
 
-                <div className="p-5 flex flex-col flex-1 gap-4">
+                {/* Mobile Thumbnail */}
+                <div className="w-20 h-20 md:hidden p-2 flex-shrink-0">
+                  <img
+                    src={
+                      prop.coverImageUrl ||
+                      MOCK_IMAGES[idx % MOCK_IMAGES.length]
+                    }
+                    alt={prop.name}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
+
+                <div className="p-4 md:p-5 flex flex-col flex-1 gap-2 md:gap-4 justify-center md:justify-start w-full">
                   <div>
-                    <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
+                    <h4 className="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
                       {prop.name}
                     </h4>
-                    <p className="text-sm text-gray-500 flex items-center gap-1">
-                      <MapPin className="w-4 h-4 text-gray-400" />
+                    <p className="text-xs md:text-sm text-gray-500 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
                       {prop.wifiSsid ? "Wifi Setup" : "No Wifi"}
                     </p>
                   </div>
 
-                  <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
+                  {/* Desktop Actions */}
+                  <div className="mt-auto hidden md:flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
                     <div className="flex items-center gap-4">
                       <div
                         className="flex items-center gap-1.5"
@@ -197,11 +211,29 @@ export default async function DashboardPage() {
                       <Edit2 className="w-5 h-5" />
                     </Link>
                   </div>
+
+                  {/* Mobile Actions/Stats */}
+                  <div className="md:hidden flex items-center justify-between mt-1">
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" /> {prop.views || 0}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <QrCode className="w-3 h-3" /> {prop.qrScans || 0}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/dashboard/properties/${prop.id}/edit`}
+                      className="text-xs font-bold text-[#0f756d]"
+                    >
+                      Edit
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="col-span-3 py-12 text-center bg-white dark:bg-[#1a2c2b] rounded-xl border border-dashed border-gray-300">
+            <div className="col-span-1 md:col-span-3 py-12 text-center bg-white dark:bg-[#1a2c2b] rounded-xl border border-dashed border-gray-300">
               <p className="text-gray-500">
                 No properties found. Add your first property!
               </p>

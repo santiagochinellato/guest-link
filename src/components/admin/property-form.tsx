@@ -28,9 +28,11 @@ import {
   Mountain,
   Baby,
   Beer,
+  ChevronDown,
   Tag,
   PlusCircle,
   Scroll,
+  Rocket,
 } from "lucide-react";
 import { QrFlyerBuilder } from "@/components/admin/qr-flyer-builder";
 import { cn } from "@/lib/utils";
@@ -196,6 +198,7 @@ export function PropertyForm({
       houseRules: initialData.houseRules || "",
       rulesAllowed: initialData.rulesAllowed || [],
       rulesProhibited: initialData.rulesProhibited || [],
+      status: initialData.status || "draft",
     },
   });
 
@@ -422,23 +425,44 @@ export function PropertyForm({
           </div>
         </div>
 
-        {/* Save Button (Header Action) */}
-        <button
-          onClick={handleSubmit(onSubmit)}
-          disabled={isSaving}
-          className="w-full md:w-auto bg-[#0f756d] hover:bg-[#0a554f] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-[#0f756d]/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSaving ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
+        {/* Save Buttons (Desktop Header) */}
+        <div className="hidden md:flex gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setValue("status", "draft");
+              handleSubmit(onSubmit)();
+            }}
+            disabled={isSaving}
+            className="bg-gray-200 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-neutral-700 px-6 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+          >
             <Save className="w-5 h-5" />
-          )}
-          {isSaving ? "Guardando..." : "Guardar Cambios"}
-        </button>
+            <span className="whitespace-nowrap">Guardar Borrador</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setValue("status", "active");
+              handleSubmit(onSubmit)();
+            }}
+            disabled={isSaving}
+            className="bg-[#0f756d] hover:bg-[#0a554f] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-[#0f756d]/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {isSaving ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Rocket className="w-5 h-5" />
+            )}
+            <span className="whitespace-nowrap">
+              {isSaving ? "Guardando..." : "Aplicar Cambios"}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Main Layout - Single Column with Horizontal Tabs */}
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 pb-40 md:pb-0">
         {/* Horizontal Scrollable Tabs */}
         <div className="flex overflow-x-auto pb-2 -mx-4 px-4 gap-2 no-scrollbar border-b border-gray-100 dark:border-neutral-800 md:justify-center">
           {TABS.map((tab) => (
@@ -830,7 +854,172 @@ export function PropertyForm({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {/* --- MOBILE ACCORDION LIST --- */}
+                <div className="md:hidden space-y-3 mb-6">
+                  {categoriesList.map((cat) => (
+                    <div
+                      key={cat.id}
+                      className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm"
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveCategory(
+                            activeCategory === cat.id ? "" : cat.id,
+                          )
+                        }
+                        className="w-full flex items-center justify-between p-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn(
+                              "w-10 h-10 rounded-full flex items-center justify-center",
+                              activeCategory === cat.id
+                                ? `${cat.bg} text-white`
+                                : "bg-gray-100 dark:bg-neutral-800 text-gray-500",
+                            )}
+                          >
+                            <cat.icon className="w-5 h-5" />
+                          </div>
+                          <div className="text-left">
+                            <h4
+                              className={cn(
+                                "font-bold text-sm",
+                                activeCategory === cat.id
+                                  ? "text-gray-900 dark:text-white"
+                                  : "text-gray-600 dark:text-gray-400",
+                              )}
+                            >
+                              {cat.label}
+                            </h4>
+                            <p className="text-xs text-gray-400">
+                              {
+                                recFields.filter(
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  (f: any) => f.categoryType === cat.id,
+                                ).length
+                              }{" "}
+                              lugares
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronDown
+                          className={cn(
+                            "w-5 h-5 text-gray-300 transition-transform duration-300",
+                            activeCategory === cat.id ? "rotate-180" : "",
+                          )}
+                        />
+                      </button>
+
+                      {/* Expanded Content */}
+                      {activeCategory === cat.id && (
+                        <div className="p-4 bg-gray-50 dark:bg-neutral-800/30 border-t border-gray-100 dark:border-neutral-800 animate-in slide-in-from-top-2 duration-200">
+                          {/* Actions */}
+                          <div className="flex flex-col gap-3 mb-4">
+                            <button
+                              type="button"
+                              onClick={handleAutoFill}
+                              disabled={isLoadingAuto}
+                              className="w-full relative px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 overflow-hidden"
+                            >
+                              {isLoadingAuto ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Sparkles className="w-4 h-4" />
+                              )}
+                              <span>Autocompletar con IA</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                appendRec({
+                                  title: "",
+                                  formattedAddress: "",
+                                  googleMapsLink: "",
+                                  categoryType: activeCategory,
+                                  description: "",
+                                })
+                              }
+                              className="w-full px-4 py-3 text-sm font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 rounded-xl flex items-center justify-center gap-2"
+                            >
+                              <Plus className="w-4 h-4" /> Agregar Lugar
+                            </button>
+                          </div>
+
+                          {/* List */}
+                          <div className="space-y-4">
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                            {recFields.map((field: any, index) => {
+                              if (field.categoryType !== activeCategory)
+                                return null;
+                              return (
+                                <div
+                                  key={field.id}
+                                  className="relative p-4 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-xl space-y-3"
+                                >
+                                  <div className="pr-6">
+                                    <input
+                                      {...register(
+                                        `recommendations.${index}.title` as const,
+                                      )}
+                                      className="w-full text-sm font-bold bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
+                                      placeholder="Nombre del Lugar"
+                                    />
+                                    <input
+                                      {...register(
+                                        `recommendations.${index}.description` as const,
+                                      )}
+                                      className="w-full text-xs text-gray-500 bg-transparent outline-none mt-2"
+                                      placeholder="Descripción breve..."
+                                    />
+                                  </div>
+                                  <input
+                                    {...register(
+                                      `recommendations.${index}.formattedAddress` as const,
+                                    )}
+                                    className="w-full text-xs bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
+                                    placeholder="Dirección o Zona"
+                                  />
+                                  <input
+                                    {...register(
+                                      `recommendations.${index}.googleMapsLink` as const,
+                                    )}
+                                    className="w-full text-xs text-blue-500 bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
+                                    placeholder="https://maps..."
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeRec(index)}
+                                    className="absolute top-3 right-3 text-gray-400 hover:text-red-500"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                            {recFields.filter(
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              (f: any) => f.categoryType === activeCategory,
+                            ).length === 0 && (
+                              <p className="text-center text-gray-400 text-xs italic py-2">
+                                Sin lugares por ahora.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingCategory(true)}
+                    className="w-full py-3 border border-dashed border-gray-300 dark:border-neutral-700 rounded-xl flex items-center justify-center text-gray-500 font-semibold text-sm gap-2"
+                  >
+                    <PlusCircle className="w-4 h-4" /> Nueva Categoría
+                  </button>
+                </div>
+
+                <div className="hidden md:grid md:grid-cols-3 gap-4 mb-6">
                   {categoriesList.map((cat) => (
                     <div
                       key={cat.id}
@@ -930,7 +1119,7 @@ export function PropertyForm({
                   )}
                 </div>
 
-                <div className="bg-gray-50 dark:bg-neutral-800/20 p-4 md:p-6 rounded-2xl border border-gray-200 dark:border-neutral-800">
+                <div className="hidden md:block bg-gray-50 dark:bg-neutral-800/20 p-4 md:p-6 rounded-2xl border border-gray-200 dark:border-neutral-800">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                     <h4 className="font-semibold capitalize flex items-center gap-2">
                       {/* Show active category icon and label */}
@@ -1293,6 +1482,37 @@ export function PropertyForm({
           </form>
         </div>
       </div>
+      {/* Mobile Fixed Action Bar */}
+      <div className="fixed bottom-16 left-0 right-0 p-4 bg-white dark:bg-neutral-900 border-t border-gray-200 dark:border-neutral-800 md:hidden z-30 flex gap-3 shadow-top">
+        <button
+          onClick={() => {
+            setValue("status", "draft");
+            handleSubmit(onSubmit)();
+          }}
+          disabled={isSaving}
+          className="flex-1 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-700 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-sm"
+        >
+          <Save className="w-5 h-5" />
+          <span>Borrador</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setValue("status", "active");
+            handleSubmit(onSubmit)();
+          }}
+          disabled={isSaving}
+          className="flex-1 bg-[#0f756d] hover:bg-[#0a554f] text-white px-4 py-3 rounded-xl font-bold shadow-lg shadow-[#0f756d]/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-sm"
+        >
+          {isSaving ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <Rocket className="w-5 h-5" />
+          )}
+          <span>{isSaving ? "..." : "Aplicar"}</span>
+        </button>
+      </div>
+
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">

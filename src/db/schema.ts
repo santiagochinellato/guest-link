@@ -31,6 +31,7 @@ export const properties = pgTable("properties", {
   ownerId: integer("owner_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  status: text("status").default("draft"), // active, draft, archived
 });
 
 // Relations for properties

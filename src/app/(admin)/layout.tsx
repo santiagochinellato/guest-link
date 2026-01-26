@@ -2,7 +2,8 @@ import "../globals.css";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google"; // Import both
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { MobileNav } from "@/components/admin/mobile-nav";
+import { MobileTopBar } from "@/components/admin/mobile-top-bar";
+import { MobileBottomNav } from "@/components/admin/mobile-bottom-nav";
 import { Sidebar } from "@/components/admin/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -38,10 +39,10 @@ export default function AdminLayout({
             <Sidebar />
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto">
-              {/* Mobile Header logic would ideally merge here but keeping simple for now */}
+            <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
               <div className="md:hidden">
-                <MobileNav />
+                <MobileTopBar />
+                <MobileBottomNav />
               </div>
               {children}
             </main>
