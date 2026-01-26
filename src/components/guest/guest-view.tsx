@@ -271,11 +271,11 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
             {/* TRANSPORT VIEW */}
             {activeView === "transport" && (
               <div className="space-y-6 animate-in slide-in-from-right duration-300">
-                <div className="space-y-2">
+                <div className="space-y-2 flex flex-col items-center justufy-center">
                   <h3 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-3">
-                    <span className="p-2 bg-blue-500/10 rounded-xl text-blue-600">
+                    {/* <span className="p-2 bg-blue-500/10 rounded-xl text-blue-600">
                       <TramFront className="w-6 h-6" />
-                    </span>
+                    </span> */}
                     Transporte
                   </h3>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
@@ -290,23 +290,25 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
                       key={i}
                       className="group flex flex-col sm:flex-row gap-4 bg-white dark:bg-neutral-800 p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-neutral-700 hover:border-blue-200 transition-colors"
                     >
-                      <div className="flex items-start gap-4">
-                        <div className="size-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform">
-                          <TramFront className="w-7 h-7" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-bold text-lg text-neutral-900 dark:text-white">
-                              {item.name}
-                            </h4>
+                      <div className="flex flex-col items-start gap-4">
+                        <div className="flex gap-2 items-center">
+                          <div className="size-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center justify-center text-blue-500 shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform">
+                            <TramFront className="w-7 h-7" />
                             <span className="text-[10px] font-bold uppercase bg-gray-100 dark:bg-neutral-700 px-2.5 py-1 rounded-lg text-gray-500">
                               {item.type}
                             </span>
                           </div>
-                          <p className="text-sm text-neutral-500 leading-relaxed">
-                            {item.description}
-                          </p>
+                          <div className="flex-1 space-y-2">
+                            <div className="flex flex-col items-start gap-1">
+                              <h4 className="font-bold text-lg text-neutral-900 dark:text-white">
+                                {item.name}
+                              </h4>
+                            </div>
+                          </div>
                         </div>
+                        <p className="text-sm text-neutral-500 leading-relaxed">
+                          {item.description}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -317,7 +319,7 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
             {/* HELP (EMERGENCY) VIEW */}
             {activeView === "help" && (
               <div className="animate-in slide-in-from-right duration-300">
-                <div className="bg-white dark:bg-neutral-800 rounded-[2.5rem] p-6 shadow-sm border border-gray-100 dark:border-neutral-700">
+                <div className=" dark:bg-neutral-800 rounded-[2.5rem]  ">
                   <div className="bg-red-50 dark:bg-red-900/10 rounded-[2rem] p-6 border border-red-100 dark:border-red-900/20 mb-8">
                     <div className="flex items-center gap-4 mb-2">
                       <div className="size-12 rounded-full bg-white dark:bg-red-900 flex items-center justify-center text-red-500 shadow-sm">
@@ -379,7 +381,19 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
                         </a>
                       </div>
                     )}
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+
+                    <div className="mt-8 p-6 bg-neutral-900 rounded-[2rem] text-center relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-full h-full bg-white/5 opacity-50" />
+                      <p className="text-[10px] text-white/50 uppercase tracking-widest mb-1 relative z-10">
+                        Servicios Públicos
+                      </p>
+                      <p className="text-4xl font-black text-white relative z-10 tracking-tight my-2">
+                        911
+                      </p>
+                      <p className="text-sm font-medium text-white/70 relative z-10">
+                        Policía & Ambulancia
+                      </p>
+                    </div>
                     {property.emergencyContacts?.map(
                       (contact: any, i: number) => (
                         <div
@@ -408,19 +422,6 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
                         </div>
                       ),
                     )}
-
-                    <div className="mt-8 p-6 bg-neutral-900 rounded-[2rem] text-center relative overflow-hidden">
-                      <div className="absolute top-0 left-0 w-full h-full bg-white/5 opacity-50" />
-                      <p className="text-[10px] text-white/50 uppercase tracking-widest mb-1 relative z-10">
-                        Servicios Públicos
-                      </p>
-                      <p className="text-4xl font-black text-white relative z-10 tracking-tight my-2">
-                        911
-                      </p>
-                      <p className="text-sm font-medium text-white/70 relative z-10">
-                        Policía & Ambulancia
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>
