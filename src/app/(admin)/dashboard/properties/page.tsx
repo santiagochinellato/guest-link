@@ -3,10 +3,18 @@ import Link from "next/link";
 import { PropertyActionsMenu } from "@/components/admin/property-actions-menu";
 import { getProperties } from "@/lib/actions/properties";
 
+interface Property {
+  id: number;
+  name: string;
+  slug: string;
+  address: string | null;
+  status: string | null;
+}
+
 // Server Component
 export default async function PropertiesPage() {
   const result = await getProperties();
-  const properties = result.success ? result.data : [];
+  const properties = (result.success ? result.data : []) as Property[];
 
   return (
     <div className="space-y-6">
@@ -45,7 +53,7 @@ export default async function PropertiesPage() {
 
       {/* Mobile ListView - Cards */}
       <div className="grid grid-cols-1 gap-4 md:hidden pb-20 px-2">
-        {properties?.map((prop: any) => (
+        {properties?.map((prop: Property) => (
           <div
             key={prop.id}
             className="bg-white dark:bg-neutral-900 p-4 rounded-xl border border-gray-200 dark:border-neutral-800 shadow-sm flex items-center justify-between"
@@ -90,7 +98,7 @@ export default async function PropertiesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
-            {properties?.map((prop: any) => (
+            {properties?.map((prop: Property) => (
               <tr
                 key={prop.id}
                 className="hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors"

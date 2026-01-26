@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import {
@@ -40,10 +40,10 @@ import { PropertyFormSchema, PropertyFormData } from "@/lib/schemas";
 import { createProperty, updateProperty } from "@/lib/actions/properties";
 import { fetchNearbyPlaces } from "@/lib/actions/overpass";
 import { AddressAutocomplete, AddressResult } from "./address-autocomplete";
+import { toast } from "sonner"; // Use correct toaster
 
 interface PropertyFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialData?: any;
+  initialData?: Partial<PropertyFormData> & { id?: number };
   isEditMode?: boolean;
 }
 
@@ -198,7 +198,7 @@ export function PropertyForm({
       houseRules: initialData.houseRules || "",
       rulesAllowed: initialData.rulesAllowed || [],
       rulesProhibited: initialData.rulesProhibited || [],
-      status: initialData.status || "draft",
+      status: (initialData.status as PropertyFormData["status"]) || "draft",
     },
   });
 
@@ -360,7 +360,7 @@ export function PropertyForm({
     }
   };
 
-  const onSubmit = async (data: PropertyFormData) => {
+  const onSubmit: SubmitHandler<PropertyFormData> = async (data) => {
     setIsSaving(true);
     try {
       let res;

@@ -281,6 +281,7 @@ export async function getProperties() {
        address: properties.address,
        slug: properties.slug,
        views: properties.views,
+       status: properties.status,
     })
     .from(properties)
     .orderBy(properties.createdAt);

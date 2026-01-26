@@ -62,7 +62,7 @@ export const PropertyFormSchema = z.object({
   hostPhone: z.string().optional(),
   
   // Status
-  status: z.enum(["active", "draft", "archived"]).optional().default("draft"),
+  status: z.enum(["active", "draft", "archived"]).default("draft"),
 });
 
 export type PropertyFormData = z.infer<typeof PropertyFormSchema>;
