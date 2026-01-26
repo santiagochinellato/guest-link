@@ -308,6 +308,7 @@ export async function getProperty(id: number) {
           },
           emergencyContacts: true,
           transportInfo: true,
+          categories: true, // Load all categories for this property
        }
      });
 
@@ -385,7 +386,8 @@ export async function getProperty(id: number) {
            description: t.description || "",
            scheduleInfo: t.scheduleInfo || "",
            priceInfo: t.priceInfo || "",
-        }))
+        })),
+        categories: prop.categories || []
      };
 
      return { success: true, data: { ...formData, id: prop.id } };

@@ -6,7 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AutoFillButton } from "@/components/admin/auto-fill-button";
 import { TransitAutoButton } from "@/components/admin/transit-auto-button";
 import { KeywordModal } from "@/components/admin/keyword-modal";
-import { updateCategoryKeywords } from "@/lib/actions/categories";
+import {
+  updateCategoryKeywords,
+  createCategory,
+  deleteCategory,
+} from "@/lib/actions/categories";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -25,7 +29,6 @@ import {
   Image as ImageIcon,
   X,
   QrCode,
-  User,
   Utensils,
   Camera,
   ShoppingBag,
@@ -42,12 +45,24 @@ import { QrFlyerBuilder } from "@/components/admin/qr-flyer-builder";
 import { cn } from "@/lib/utils";
 import { PropertyFormSchema, PropertyFormData } from "@/lib/schemas";
 import { createProperty, updateProperty } from "@/lib/actions/properties";
-import { fetchNearbyPlaces } from "@/lib/actions/overpass";
 import { AddressAutocomplete, AddressResult } from "./address-autocomplete";
-import { toast } from "sonner"; // Use correct toaster
+
+interface CategoryFromDB {
+  id: number;
+  name: string;
+  icon?: string | null;
+  type: string;
+  displayOrder?: number | null;
+  isSystemCategory?: boolean | null;
+  searchKeywords?: string | null;
+  propertyId?: number | null;
+}
 
 interface PropertyFormProps {
-  initialData?: Partial<PropertyFormData> & { id?: number };
+  initialData?: Partial<PropertyFormData> & {
+    id?: number;
+    categories?: CategoryFromDB[];
+  };
   isEditMode?: boolean;
 }
 
@@ -137,9 +152,34 @@ export function PropertyForm({
 
   const [categoriesList, setCategoriesList] = useState(defaultCategories);
 
-  // Initialize categories with custom ones found in data
+  // Initialize categories with custom ones from database
   useEffect(() => {
-    if (initialData.recommendations) {
+    // Load categories from database if available
+    if (initialData.categories && Array.isArray(initialData.categories)) {
+      const existingTypes = new Set(defaultCategories.map((c) => c.id));
+      const customCatsFromDB = initialData.categories
+        .filter((cat: CategoryFromDB) => !existingTypes.has(cat.type))
+        .map((cat: CategoryFromDB) => ({
+          id: cat.type,
+          label: cat.name,
+          icon: Tag,
+          color: "text-gray-600",
+          bg: "bg-gray-50",
+          border: "border-gray-500",
+        }));
+
+      if (customCatsFromDB.length > 0) {
+        setCategoriesList((prev) => {
+          const currentIds = new Set(prev.map((p) => p.id));
+          const uniqueToAdd = customCatsFromDB.filter(
+            (c) => !currentIds.has(c.id),
+          );
+          return [...prev, ...uniqueToAdd];
+        });
+      }
+    }
+    // Fallback: check recommendations for custom categories
+    else if (initialData.recommendations) {
       const existingTypes = new Set(defaultCategories.map((c) => c.id));
       const customFound = new Set<string>();
 
@@ -160,7 +200,6 @@ export function PropertyForm({
           border: "border-gray-500",
         }));
         setCategoriesList((prev) => {
-          // Avoid duplicates if effect runs twice
           const currentIds = new Set(prev.map((p) => p.id));
           const uniqueToAdd = newCustomCats.filter(
             (c) => !currentIds.has(c.id),
@@ -170,7 +209,7 @@ export function PropertyForm({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData.recommendations]);
+  }, [initialData.categories, initialData.recommendations]);
 
   // Handle tab change with URL update
   const handleTabChange = (newTab: string) => {
@@ -180,13 +219,28 @@ export function PropertyForm({
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
+    if (!initialData.id) {
+      alert(
+        "Debes guardar la propiedad primero antes de agregar categorías personalizadas.",
+      );
+      return;
+    }
+
     const id = newCategoryName.toLowerCase().trim().replace(/\s+/g, "_");
 
     // Check if exists
     if (categoriesList.find((c) => c.id === id)) {
       alert("Esta categoría ya existe.");
+      return;
+    }
+
+    // Save to database
+    const result = await createCategory(initialData.id, id, newCategoryName);
+
+    if (!result.success) {
+      alert("Error al crear la categoría. Intenta nuevamente.");
       return;
     }
 
@@ -203,6 +257,54 @@ export function PropertyForm({
     setActiveCategory(id);
     setNewCategoryName("");
     setIsAddingCategory(false);
+
+    // Reload page to ensure category persists and shows in all views
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    // Find the category in the database
+    const categoryFromDB = initialData.categories?.find(
+      (cat: CategoryFromDB) => cat.type === categoryId,
+    );
+
+    // Prevent deletion of system categories
+    if (categoryFromDB?.isSystemCategory) {
+      alert("No se pueden eliminar categorías del sistema.");
+      return;
+    }
+
+    if (
+      !confirm(
+        "¿Estás seguro de eliminar esta categoría? Se eliminarán también todas sus recomendaciones.",
+      )
+    ) {
+      return;
+    }
+
+    // If it's a custom category from DB, delete it
+    if (categoryFromDB?.id) {
+      const result = await deleteCategory(categoryFromDB.id);
+      if (!result.success) {
+        alert("Error al eliminar la categoría");
+        return;
+      }
+    }
+
+    // Remove from local state
+    setCategoriesList(categoriesList.filter((c) => c.id !== categoryId));
+
+    // If it was the active category, switch to first one
+    if (activeCategory === categoryId) {
+      setActiveCategory(categoriesList[0]?.id || "");
+    }
+
+    // Reload to ensure consistency
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
   };
 
   // Form Setup
@@ -291,7 +393,6 @@ export function PropertyForm({
   // Watchers
   const watchName = watch("name");
   const watchCoverImage = watch("coverImageUrl");
-  const hostImageUrl = watch("hostImage");
 
   // Auto-generate slug
   useEffect(() => {
@@ -908,26 +1009,45 @@ export function PropertyForm({
                         {/* Expanded Content */}
                         {activeCategory === cat.id && (
                           <div className="p-4 bg-gray-50 dark:bg-neutral-800/30 border-t border-gray-100 dark:border-neutral-800 animate-in slide-in-from-top-2 duration-200">
-                            {/* Keyword Edit Button */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setKeywordModal({
-                                  isOpen: true,
-                                  category: {
-                                    id: cat.id,
-                                    name: cat.label,
-                                    type: cat.id,
-                                    searchKeywords: null,
-                                  },
-                                });
-                              }}
-                              className="w-full mb-3 px-3 py-2.5 text-xs font-medium text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors flex items-center justify-center gap-2 border border-teal-200 dark:border-teal-800"
-                            >
-                              <Sparkles className="w-4 h-4" />
-                              Editar Keywords de Búsqueda
-                            </button>
+                            <div className="flex gap-2 mb-3">
+                              {/* Keyword Edit Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const dbCat = initialData.categories?.find(
+                                    (c) => c.type === cat.id,
+                                  );
+                                  setKeywordModal({
+                                    isOpen: true,
+                                    category: {
+                                      id: cat.id,
+                                      name: cat.label,
+                                      type: cat.id,
+                                      searchKeywords:
+                                        dbCat?.searchKeywords || null,
+                                    },
+                                  });
+                                }}
+                                className="flex-1 px-3 py-2.5 text-xs font-medium text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors flex items-center justify-center gap-2 border border-teal-200 dark:border-teal-800"
+                              >
+                                <Sparkles className="w-4 h-4" />
+                                Editar Keywords
+                              </button>
+
+                              {/* Delete Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteCategory(cat.id);
+                                }}
+                                className="px-3 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-red-200 dark:border-red-800"
+                                title="Eliminar categoría"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
 
                             {/* Actions */}
                             <div className="flex flex-col gap-3 mb-4">
@@ -1078,25 +1198,44 @@ export function PropertyForm({
                           </div>
                         </div>
 
-                        {/* Keyword Edit Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setKeywordModal({
-                              isOpen: true,
-                              category: {
-                                id: cat.id,
-                                name: cat.label,
-                                type: cat.id,
-                                searchKeywords: null, // TODO: fetch from DB
-                              },
-                            });
-                          }}
-                          className="px-3 py-1.5 text-xs font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors"
-                        >
-                          + Add Keywords
-                        </button>
+                        {/* Actions Row */}
+                        <div className="flex items-center justify-between mt-auto pt-2 gap-2">
+                          {/* Keyword Edit Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const dbCat = initialData.categories?.find(
+                                (c) => c.type === cat.id,
+                              );
+                              setKeywordModal({
+                                isOpen: true,
+                                category: {
+                                  id: cat.id,
+                                  name: cat.label,
+                                  type: cat.id,
+                                  searchKeywords: dbCat?.searchKeywords || null,
+                                },
+                              });
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors"
+                          >
+                            + Add Keywords
+                          </button>
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCategory(cat.id);
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Eliminar categoría"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
 
@@ -1199,7 +1338,7 @@ export function PropertyForm({
                           key={field.id}
                           className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-gray-100 dark:border-neutral-800 shadow-sm relative group"
                         >
-                          <div className="md:col-span-4 pr-6 md:pr-0">
+                          <div className="md:col-span-3 pr-6 md:pr-0">
                             <input
                               {...register(
                                 `recommendations.${index}.title` as const,
@@ -1236,7 +1375,7 @@ export function PropertyForm({
                           <button
                             type="button"
                             onClick={() => removeRec(index)}
-                            className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"
+                            className=" p-2 pt-0 text-gray-400 hover:text-red-500 opacity-100 group-hover:opacity-100 transition-opacity md:col-span-1"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -1571,12 +1710,29 @@ export function PropertyForm({
           onClose={() => setKeywordModal({ isOpen: false, category: null })}
           category={keywordModal.category}
           onSave={async (keywords) => {
+            // Find the numeric ID from the database categories
+            const catType = keywordModal.category?.id;
+            const dbCategory = initialData.categories?.find(
+              (c) => c.type === catType,
+            );
+
+            if (!dbCategory) {
+              alert(
+                "Error: Categoría no sincronizada. Por favor recarga la página.",
+              );
+              return;
+            }
+
             const result = await updateCategoryKeywords(
-              Number(keywordModal.category?.id),
+              Number(dbCategory.id),
               keywords,
             );
             if (result.success) {
+              // Update local state if needed via router refresh or toast
+              // For now just console log as revalidation handles data
               console.log("Keywords updated successfully");
+            } else {
+              alert("Error al guardar keywords");
             }
           }}
         />

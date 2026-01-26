@@ -33,6 +33,17 @@ export const TransportInfoSchema = z.object({
   priceInfo: z.string().optional(),
 });
 
+export const CategorySchema = z.object({
+  id: z.number().optional(),
+  name: z.string(),
+  icon: z.string().optional(),
+  type: z.string(),
+  displayOrder: z.number().optional(),
+  isSystemCategory: z.boolean().optional(),
+  searchKeywords: z.string().optional(),
+  propertyId: z.number().optional(),
+});
+
 export const PropertyFormSchema = z.object({
   // Basic
   name: z.string().min(3, "Name must be at least 3 characters"),
@@ -57,6 +68,7 @@ export const PropertyFormSchema = z.object({
   recommendations: z.array(RecommendationSchema).optional(),
   emergencyContacts: z.array(EmergencyContactSchema).optional(),
   transport: z.array(TransportInfoSchema).optional(),
+  categories: z.array(CategorySchema).optional(),
   
   // Content
   houseRules: z.string().optional(),

@@ -131,88 +131,82 @@ export async function populateRecommendations(
       console.log(`🎯 Single category mode: ${categoryFilter}`);
       categoriesToProcess = [categoryFilter];
     } else {
-      // All categories mode (from global Auto-Discovery)
-      categoriesToProcess = Object.keys(DEFAULT_KEYWORDS);
-      console.log(`🌐 All categories mode: ${categoriesToProcess.length} categories`);
+      // All categories mode: Defaults + Custom Existing Categories
+      const allTypes = new Set(Object.keys(DEFAULT_KEYWORDS));
+      
+      if (property.categories) {
+          property.categories.forEach(c => {
+              if (c.type) allTypes.add(c.type);
+          });
+      }
+      
+      categoriesToProcess = Array.from(allTypes);
+      console.log(`🌐 All categories mode: ${categoriesToProcess.length} categories (Defaults + Custom)`);
     }
 
     // D. Build Search Promises (Category-Driven)
     const promises: Promise<any>[] = [];
-    const categoryMap = new Map<string, number>(); // categoryType -> categoryId
+    // Create a map of existing categories for quick lookup
+    const existingCategoriesMap = new Map<string, typeof property.categories[0]>();
+    if (property.categories) {
+        property.categories.forEach(c => {
+            if (c.type) existingCategoriesMap.set(c.type, c);
+        });
+    }
 
-    // If no categories exist, create default ones
-    if (!property.categories || property.categories.length === 0) {
-        console.log("⚠️ No categories found, using defaults");
-        // Create default categories and use DEFAULT_KEYWORDS
-        for (const [type, keywords] of Object.entries(DEFAULT_KEYWORDS)) {
-            // Apply category filter
-            if (categoryFilter && type !== categoryFilter) {
-                console.log(`⏭️  Skipping ${type} (filter: ${categoryFilter})`);
-                continue;
-            }
+    console.log(`📂 Found ${existingCategoriesMap.size} existing categories`);
+
+    for (const type of categoriesToProcess) {
+        // Skip types handled explicitly later (unless we want to verify existence here, but getOrCreate handles it there)
+        if (type === 'transit' || type === 'outdoors') continue;
+
+        let categoryId: number;
+        let categoryKeywords: string[] = [];
+
+        // 1. Get ID and Keywords
+        if (existingCategoriesMap.has(type)) {
+            const cat = existingCategoriesMap.get(type)!;
+            categoryId = cat.id;
             
-            if (keywords.length === 0) {
-                console.log(`⏭️  Skipping ${type} (no keywords)`);
-                continue;
+            // Determine keywords from DB or Default
+            if (cat.searchKeywords && cat.searchKeywords.trim() !== "") {
+                categoryKeywords = cat.searchKeywords.split(",").map(k => k.trim());
+                console.log(`✅ Using custom keywords for ${type}: ${categoryKeywords.join(', ')}`);
+            } else if (DEFAULT_KEYWORDS[type]) {
+                categoryKeywords = DEFAULT_KEYWORDS[type];
+                 console.log(`✅ Using default keywords for ${type}: ${categoryKeywords.join(', ')}`);
             }
-            
-            console.log(`✅ Processing ${type} with ${keywords.length} keywords`);
-            const catId = await getOrCreateCategory(type, propertyId);
-            categoryMap.set(type, catId);
-            
-            for (const keyword of keywords) {
-                const searchQuery = `${keyword} cerca de ${property.city || property.address}`;
-                console.log(`  🔍 Searching: "${searchQuery}"`);
-                promises.push(
-                    findTopRatedPlaces(lat, lng, searchQuery).then(results => ({
-                        categoryId: catId,
-                        categoryType: type,
-                        results
-                    }))
-                );
-            }
+        } else {
+             // Category doesn't exist. 
+             // If manual filter, we MUST create it since user asked for it.
+             // If global auto-fill, we only create if it has keywords (part of our core set).
+             
+             if (!DEFAULT_KEYWORDS[type] || DEFAULT_KEYWORDS[type].length === 0) {
+                 console.log(`⏭️  Skipping ${type} (no existing category and no default keywords)`);
+                 continue;
+             }
+
+             console.log(`🆕 Creating missing category: ${type}`);
+             categoryId = await getOrCreateCategory(type, propertyId);
+             categoryKeywords = DEFAULT_KEYWORDS[type];
         }
-    } else {
-        console.log(`📂 Found ${property.categories.length} existing categories`);
-        // Use existing categories with custom or default keywords
-        for (const category of property.categories) {
-            if (!category.type) continue;
-            
-            // Apply category filter
-            if (categoryFilter && category.type !== categoryFilter) {
-                console.log(`⏭️  Skipping ${category.type} (filter: ${categoryFilter})`);
-                continue;
-            }
-            
-            categoryMap.set(category.type, category.id);
-            
-            let keywords: string[] = [];
-            
-            // Use custom keywords if defined
-            if (category.searchKeywords && category.searchKeywords.trim() !== "") {
-                keywords = category.searchKeywords.split(",").map(k => k.trim());
-                console.log(`✅ Using custom keywords for ${category.type}: ${keywords.join(', ')}`);
-            } 
-            // Fallback to defaults
-            else if (DEFAULT_KEYWORDS[category.type]) {
-                keywords = DEFAULT_KEYWORDS[category.type];
-                console.log(`✅ Using default keywords for ${category.type}: ${keywords.join(', ')}`);
-            } else {
-                console.log(`⚠️  No keywords for ${category.type}`);
-            }
-            
-            // Execute searches for this category
-            for (const keyword of keywords) {
-                const searchQuery = `${keyword} cerca de ${property.city || property.address}`;
-                console.log(`  🔍 Searching: "${searchQuery}"`);
-                promises.push(
-                    findTopRatedPlaces(lat, lng, searchQuery).then(results => ({
-                        categoryId: category.id,
-                        categoryType: category.type,
-                        results
-                    }))
-                );
-            }
+
+        if (categoryKeywords.length === 0) {
+             console.log(`⚠️  No keywords for ${type}`);
+             continue;
+        }
+
+        // 2. Schedule Searches
+        for (const keyword of categoryKeywords) {
+             const searchQuery = `${keyword} cerca de ${property.city || property.address}`;
+             console.log(`  🔍 Searching: "${searchQuery}"`);
+             promises.push(
+                findTopRatedPlaces(lat, lng, searchQuery).then(results => ({
+                    categoryId: categoryId,
+                    categoryType: type,
+                    results
+                }))
+             );
         }
     }
 
