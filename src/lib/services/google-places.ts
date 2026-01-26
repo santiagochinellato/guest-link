@@ -149,8 +149,37 @@ function mapKeywordToCategory(keyword: string): string {
 }
 
 /**
- * Find transit route from origin to destination
+ * Find nearby transit stations using Google Places (Low Cost)
+ * Fallback when OSM doesn't have data
+ */
+export async function findGoogleTransitStations(lat: number, lng: number) {
+  try {
+    const response = await client.placesNearby({
+      params: {
+        location: { lat, lng },
+        radius: 1000, // 1km
+        type: "transit_station",
+        key: process.env.GOOGLE_MAPS_API_KEY!,
+        language: "es",
+      },
+    });
+
+    return response.data.results.map((place) => ({
+      name: place.name,
+      placeId: place.place_id,
+      vicinity: place.vicinity,
+      location: place.geometry?.location,
+    }));
+  } catch (e) {
+    console.error("Google Transit Stations Error:", e);
+    return [];
+  }
+}
+
+/**
+ * Find transit route from origin to destination (High Value)
  * Returns the transit line information (bus number, duration, etc.)
+ * CRITICAL: Uses future departure time to avoid "no routes" errors at night
  */
 export async function findTransitRoute(
   originLat: number,
@@ -158,44 +187,53 @@ export async function findTransitRoute(
   destinationName: string
 ) {
   try {
+    // Calculate next Monday at 10 AM to ensure we find theoretical routes
+    // This prevents "no bus at 3 AM" errors
+    const nextMonday = new Date();
+    nextMonday.setDate(
+      nextMonday.getDate() + ((1 + 7 - nextMonday.getDay()) % 7)
+    );
+    nextMonday.setHours(10, 0, 0, 0);
+
     const response = await client.directions({
       params: {
         origin: { lat: originLat, lng: originLng },
         destination: destinationName,
         mode: TravelMode.transit,
+        departure_time: nextMonday,
         units: UnitSystem.metric,
         key: process.env.GOOGLE_MAPS_API_KEY!,
-        language: 'es'
+        language: "es",
+        alternatives: true, // Find multiple routes to discover more lines
       },
     });
 
-    if (response.data.routes.length === 0 || response.data.routes[0].legs.length === 0) {
+    if (!response.data.routes || response.data.routes.length === 0) {
       return null;
     }
 
-    const leg = response.data.routes[0].legs[0];
-    const steps = leg.steps;
-    
-    // Find first TRANSIT step (the bus/transit)
-    const transitStep = steps.find(step => step.travel_mode === "TRANSIT");
+    // Find the best route that's NOT just walking
+    for (const route of response.data.routes) {
+      if (!route.legs[0]) continue;
+      const leg = route.legs[0];
 
-    if (!transitStep || !transitStep.transit_details) {
-      return null;
+      // Find the TRANSIT step (the bus)
+      const transitStep = leg.steps.find((s) => s.travel_mode === "TRANSIT");
+
+      if (transitStep && transitStep.transit_details) {
+        const line = transitStep.transit_details.line;
+        return {
+          lineName: line.short_name || line.name || "Bus",
+          headsign: transitStep.transit_details.headsign || destinationName,
+          vehicle: line.vehicle?.name || "Colectivo",
+          duration: leg.duration?.text || "N/A",
+          summary: `Línea ${line.short_name || line.name} hacia ${transitStep.transit_details.headsign || destinationName}`,
+        };
+      }
     }
-
-    const line = transitStep.transit_details.line;
-    
-    return {
-      lineName: line.short_name || line.name,
-      vehicleType: line.vehicle?.name || "Bus",
-      destination: transitStep.transit_details.headsign || destinationName,
-      duration: leg.duration?.text || "N/A",
-      agency: line.agencies && line.agencies.length > 0 ? line.agencies[0].name : null,
-      description: `Lleva a ${destinationName} (${leg.duration?.text || 'N/A'})`
-    };
-
+    return null;
   } catch (error: any) {
-    console.error(`Error finding route to ${destinationName}:`, error.message);
+    console.error(`Route Error (${destinationName}):`, error.message);
     return null;
   }
 }

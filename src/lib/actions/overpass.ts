@@ -155,3 +155,62 @@ export async function fetchNearbyPlaces(
   }
 }
 
+export interface TransitStop {
+  name: string;
+  lines: string[]; // e.g., ["20", "50", "51"]
+  lat: number;
+  lng: number;
+  distance?: number;
+}
+
+/**
+ * Fetch nearby transit stops from OpenStreetMap (FREE)
+ * Extracts bus stop locations and line numbers from OSM tags
+ */
+export async function fetchNearbyTransitStops(
+  lat: number,
+  lng: number,
+  radius: number = 800
+): Promise<TransitStop[]> {
+  // Query optimized for bus stops and platforms
+  const query = `
+    [out:json][timeout:25];
+    (
+      node["highway"="bus_stop"](around:${radius},${lat},${lng});
+      node["public_transport"="platform"](around:${radius},${lat},${lng});
+    );
+    out body;
+  `;
+
+  try {
+    const response = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: query,
+      // Cache aggressively for development
+      next: { revalidate: 86400 },
+    });
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+
+    return data.elements.map((node: any) => {
+      // Try to extract lines from different common OSM tags
+      const routeRef =
+        node.tags?.route_ref || node.tags?.lines || node.tags?.bus_lines || "";
+      const lines = routeRef
+        ? routeRef.split(/[;,]/).map((s: string) => s.trim()).filter(Boolean)
+        : [];
+
+      return {
+        name: node.tags?.name || "Parada de Colectivo",
+        lines: lines,
+        lat: node.lat,
+        lng: node.lon,
+      };
+    });
+  } catch (error) {
+    console.warn("Overpass Transit Error:", error);
+    return [];
+  }
+}
