@@ -1,8 +1,9 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { Clock, ImageIcon, X } from "lucide-react";
+import { Clock, ImageIcon, X, Loader2, Upload } from "lucide-react";
 import { PropertyFormData } from "@/lib/schemas";
+import { useState, ChangeEvent } from "react";
 
 export function BasicInfoSection() {
   const {
@@ -14,6 +15,10 @@ export function BasicInfoSection() {
 
   const watchCoverImage = watch("coverImageUrl");
 
+  // Estado para upload
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   // Valida que la URL sea una imagen válida (no base64)
   const isValidImageUrl = (url: string) => {
     if (!url) return false;
@@ -21,6 +26,56 @@ export function BasicInfoSection() {
     if (url.startsWith("data:")) return false;
     // Aceptar URLs http/https
     return url.startsWith("http://") || url.startsWith("https://");
+  };
+
+  // Maneja la subida de archivos a Supabase Storage
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError("Solo se permiten imágenes JPEG, PNG, GIF o WebP");
+      return;
+    }
+
+    // Validar tamaño (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("El archivo es muy grande. Máximo 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Error al subir imagen");
+      }
+
+      // Setear la URL en el formulario
+      setValue("coverImageUrl", result.url);
+    } catch (error) {
+      console.error("Upload error:", error);
+      setUploadError(
+        error instanceof Error ? error.message : "Error al subir imagen",
+      );
+    } finally {
+      setIsUploading(false);
+      // Limpiar el input para permitir subir el mismo archivo de nuevo
+      e.target.value = "";
+    }
   };
 
   return (
@@ -65,7 +120,7 @@ export function BasicInfoSection() {
           )}
         </div>
 
-        {/* Cover Image - Solo URL externa */}
+        {/* Cover Image - Con upload a Supabase Storage */}
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
             <div className="w-full col-span-1">
@@ -91,15 +146,56 @@ export function BasicInfoSection() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-xl p-6 flex flex-col items-center justify-center text-gray-500 gap-2">
-                    <ImageIcon className="w-8 h-8 text-gray-300" />
-                    <p className="text-sm text-gray-500 text-center">
-                      Pega la URL de una imagen externa
+                  {/* Área de upload */}
+                  <label
+                    className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+                      isUploading
+                        ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-300 dark:border-neutral-700 hover:border-blue-500/50 hover:bg-gray-50 dark:hover:bg-neutral-800/50"
+                    }`}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                        <p className="text-sm text-blue-600 font-medium">
+                          Subiendo imagen...
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-gray-400" />
+                        <span className="text-sm text-blue-600 font-medium hover:underline">
+                          Subir imagen desde tu PC
+                        </span>
+                        <p className="text-xs text-gray-400">
+                          PNG, JPG, GIF, WebP hasta 5MB
+                        </p>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                    />
+                  </label>
+
+                  {/* Error de upload */}
+                  {uploadError && (
+                    <p className="text-red-500 text-xs flex items-center gap-1">
+                      ⚠️ {uploadError}
                     </p>
-                    <p className="text-xs text-gray-400 text-center">
-                      Usa Unsplash, Cloudinary, o cualquier URL https://
-                    </p>
+                  )}
+
+                  {/* Separador */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-gray-200 dark:bg-neutral-700" />
+                    <span className="text-xs text-gray-400">o pegar URL</span>
+                    <div className="flex-1 h-px bg-gray-200 dark:bg-neutral-700" />
                   </div>
+
+                  {/* Input de URL */}
                   <div className="flex flex-col gap-2">
                     <input
                       {...register("coverImageUrl")}
@@ -108,8 +204,7 @@ export function BasicInfoSection() {
                     />
                     {watchCoverImage && !isValidImageUrl(watchCoverImage) && (
                       <p className="text-amber-500 text-xs">
-                        ⚠️ Solo URLs https:// son válidas. No se permiten
-                        archivos locales.
+                        ⚠️ Solo URLs https:// son válidas.
                       </p>
                     )}
                   </div>
@@ -170,58 +265,6 @@ export function BasicInfoSection() {
                     </p>
                   </div>
                 </div>
-                {/* <div className="mt-4">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Foto del Anfitrión
-                  </label>
-                  <div className="mt-1">
-                    {hostImageUrl ? (
-                      <div className="relative w-24 h-24 rounded-full overflow-hidden border border-gray-200 dark:border-neutral-700 group mx-auto md:mx-0">
-                        <img
-                          src={hostImageUrl}
-                          alt="Host"
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setValue("hostImage", "")}
-                          className="absolute inset-0 bg-black/40 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-6 h-6" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col md:flex-row gap-4 items-start">
-                        <label className="border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-xl p-4 flex flex-col items-center justify-center text-gray-500 gap-2 hover:bg-gray-50 dark:hover:bg-neutral-800/50 hover:border-blue-500/50 transition-all text-center cursor-pointer w-full md:w-auto min-w-[120px]">
-                          <User className="w-6 h-6 text-gray-300" />
-                          <span className="text-xs text-blue-600 font-medium hover:underline">
-                            Subir foto
-                          </span>
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={handleFileUpload("hostImage")}
-                          />
-                        </label>
-                        <div className="flex-1 w-full">
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            O pegar URL
-                          </p>
-                          <input
-                            {...register("hostImage")}
-                            placeholder="https://..."
-                            className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 text-sm"
-                          />
-                          <p className="text-xs text-gray-400 mt-1">
-                            Recomendado: Imagen cuadrada, rostro
-                            visible.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div> */}
               </div>
             </div>
           </div>
