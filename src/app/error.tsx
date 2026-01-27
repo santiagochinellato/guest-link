@@ -27,7 +27,7 @@ export default function Error({
               alt="GuestHub"
               width={100}
               height={100}
-              className="w-20 h-auto"
+              className="w-20 md:w-24 h-auto"
             />
           </div>
           <div className="hidden dark:block">
@@ -36,7 +36,7 @@ export default function Error({
               alt="GuestHub"
               width={100}
               height={100}
-              className="w-20 h-auto"
+              className="w-20 md:w-24 h-auto"
             />
           </div>
         </div>
@@ -62,7 +62,7 @@ export default function Error({
         <div className="flex flex-col gap-3">
           <button
             onClick={() => reset()}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#0f756d] hover:bg-[#0d635c] text-white rounded-2xl font-bold transition-all shadow-lg shadow-[#0f756d]/20 active:scale-95 text-sm"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#0f756d] hover:bg-[#0d635c] text-white rounded-2xl font-bold transition-all shadow-lg shadow-[#0f756d]/20 active:scale-95 text-sm md:text-base"
           >
             <RefreshCcw className="w-4 h-4" />
             Intentar de nuevo
@@ -70,7 +70,7 @@ export default function Error({
 
           <Link
             href="/"
-            className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-white rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-neutral-700 transition-all active:scale-95 text-sm"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-white rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-neutral-700 transition-all active:scale-95 text-sm md:text-base"
           >
             <Home className="w-4 h-4" />
             Ir a mis propiedades

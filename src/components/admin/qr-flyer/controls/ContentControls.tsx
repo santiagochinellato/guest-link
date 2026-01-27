@@ -16,7 +16,7 @@ export function ContentControls({
       <div className="space-y-4">
         <div>
           <label className="text-xs font-bold text-slate-500 uppercase">
-            Headline
+            Título
           </label>
           <input
             value={config.content.title}
@@ -26,7 +26,7 @@ export function ContentControls({
         </div>
         <div>
           <label className="text-xs font-bold text-slate-500 uppercase">
-            Welcome Message
+            Mensaje de bienvenida
           </label>
           <textarea
             value={config.content.welcomeMessage}
@@ -40,12 +40,12 @@ export function ContentControls({
 
       <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
         <h4 className="flex items-center gap-2 font-bold mb-4 text-sm">
-          <Wifi className="w-4 h-4 text-[#0f756d]" /> WiFi Settings
+          <Wifi className="w-4 h-4 text-[#0f756d]" /> Configuración WiFi
         </h4>
         <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="text-xs font-bold text-slate-500 uppercase">
-              SSID
+              Red
             </label>
             <input
               value={config.content.networkName}
@@ -57,7 +57,7 @@ export function ContentControls({
           </div>
           <div>
             <label className="text-xs font-bold text-slate-500 uppercase">
-              Password
+              Contraseña
             </label>
             <div className="flex gap-2">
               <input

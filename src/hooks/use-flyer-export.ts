@@ -44,7 +44,7 @@ export function useFlyerExport({ qrRef, config }: UseFlyerExportProps) {
       }
     } catch (e) {
       console.error(e);
-      alert("Error exporting flyer. Check console.");
+      alert(`Error exporting flyer: ${e instanceof Error ? e.message : "Unknown error"}`);
     } finally {
       setIsExporting(false);
     }

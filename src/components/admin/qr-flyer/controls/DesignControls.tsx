@@ -83,7 +83,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
 
       <section>
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-          <Palette className="w-4 h-4" /> Colors
+          <Palette className="w-4 h-4" /> Colores
         </h3>
         <div className="flex flex-wrap gap-3">
           {[
@@ -113,7 +113,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
 
       <section>
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-          <Maximize2 className="w-4 h-4" /> Orientation
+          <Maximize2 className="w-4 h-4" /> Orientación
         </h3>
         <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
           <button
@@ -145,7 +145,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
 
       <section>
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-          <Type className="w-4 h-4" /> Typography
+          <Type className="w-4 h-4" /> Tipografía
         </h3>
         <select
           value={config.design.font}

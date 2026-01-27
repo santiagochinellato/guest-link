@@ -29,14 +29,14 @@ export function BrandingControls({
         />
         <CloudUpload className="w-8 h-8 text-[#0f756d] mb-2" />
         <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-          Upload Header/Logo Image
+          Subir imagen de encabezado/logo
         </span>
         <span className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</span>
       </div>
 
       <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-700">
         <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-          Embed Logo in QR
+          Insertar logo en el QR
         </span>
         <button
           type="button"

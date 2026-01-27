@@ -104,7 +104,7 @@ export function LocalGuideView() {
               <Home className="w-5 h-5 text-[#0f756d]" />
             </div>
             <h2 className="text-[#0e1b1a] dark:text-white text-lg font-bold leading-tight tracking-tight">
-              INFOHOUSE
+              GUESTHUB
             </h2>
           </div>
           {/* Desktop Search */}

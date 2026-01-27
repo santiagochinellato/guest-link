@@ -1,3 +1,4 @@
+import React from "react";
 import { useQRCode } from "next-qrcode";
 import { cn } from "@/lib/utils";
 import { FlyerConfig } from "./types";
@@ -20,6 +21,35 @@ export const QrCode = ({
   colorOverride,
 }: QrCodeProps) => {
   const { Canvas } = useQRCode();
+  const [safeLogo, setSafeLogo] = React.useState<string | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (branding.embedLogoInQr && branding.logo) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = branding.logo;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          try {
+            setSafeLogo(canvas.toDataURL("image/png"));
+          } catch (e) {
+            console.warn("Failed to convert QR logo to safe data URL", e);
+            setSafeLogo(undefined);
+          }
+        }
+      };
+      img.onerror = () => {
+        setSafeLogo(undefined);
+      };
+    } else {
+      setSafeLogo(undefined);
+    }
+  }, [branding.logo, branding.embedLogoInQr]);
 
   return (
     <div className={cn("inline-block", className)}>
@@ -38,8 +68,8 @@ export const QrCode = ({
           },
         }}
         logo={
-          branding.embedLogoInQr && branding.logo
-            ? { src: branding.logo, options: { width: size * 0.2 } }
+          safeLogo
+            ? { src: safeLogo, options: { width: size * 0.2 } }
             : undefined
         }
       />

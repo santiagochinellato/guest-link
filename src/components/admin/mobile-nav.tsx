@@ -20,7 +20,7 @@ export function MobileNav() {
     <>
       <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800">
         <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-          INFOHOUSE
+          GUESTHUB
         </h1>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -50,7 +50,7 @@ export function MobileNav() {
       >
         <div className="p-6 border-b border-gray-100 dark:border-neutral-800 flex justify-between items-center">
           <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            INFOHOUSE
+            GUESTHUB
           </h1>
           <button
             onClick={() => setIsOpen(false)}

@@ -4,9 +4,9 @@ import Image from "next/image";
 
 export default function Loading() {
   return (
-    <div className="fixed inset-0 bg-white dark:bg-neutral-950 z-50 flex flex-col items-center justify-center gap-12 overflow-hidden">
+    <div className="fixed inset-0 bg-white dark:bg-neutral-950 z-50 flex flex-col items-center justify-center gap-8 md:gap-12 overflow-hidden">
       {/* Decorative center glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#0f756d]/5 dark:bg-[#0f756d]/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] md:w-[300px] md:h-[300px] bg-[#0f756d]/5 dark:bg-[#0f756d]/10 rounded-full blur-[80px] md:blur-[100px] pointer-events-none transition-all duration-500" />
 
       <div className="relative">
         {/* Pulse effect rings */}
@@ -21,7 +21,7 @@ export default function Loading() {
               alt="GuestHub"
               width={160}
               height={160}
-              className="w-36 h-auto"
+              className="w-24 md:w-36 h-auto"
               priority
             />
           </div>
@@ -31,7 +31,7 @@ export default function Loading() {
               alt="GuestHub"
               width={160}
               height={160}
-              className="w-36 h-auto"
+              className="w-24 md:w-36 h-auto"
               priority
             />
           </div>
@@ -39,7 +39,7 @@ export default function Loading() {
       </div>
 
       <div className="flex flex-col items-center gap-4 relative z-10">
-        <div className="w-48 h-[3px] bg-gray-100 dark:bg-neutral-900 rounded-full overflow-hidden">
+        <div className="w-40 md:w-48 h-[3px] bg-gray-100 dark:bg-neutral-900 rounded-full overflow-hidden transition-all duration-300">
           <div className="h-full bg-[#0f756d] animate-[loading-bar_2s_infinite_ease-in-out]" />
         </div>
         <div className="flex flex-col items-center gap-1">

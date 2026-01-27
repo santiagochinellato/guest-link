@@ -62,7 +62,7 @@ export function PropertiesGrid({ initialProperties }: PropertiesGridProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search properties by name or address..."
+            placeholder="Buscar propiedades por nombre o dirección..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="w-full pl-10 pr-4 py-2 text-sm bg-transparent outline-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
@@ -70,9 +70,9 @@ export function PropertiesGrid({ initialProperties }: PropertiesGridProps) {
         </div>
         <div className="h-px md:h-6 w-full md:w-px bg-gray-100 dark:bg-neutral-800" />
         <select className="text-sm bg-transparent md:border-l-0 border-gray-200 dark:border-neutral-800 px-2 md:pl-0 md:pr-8 outline-none py-2 md:py-0 w-full md:w-auto text-gray-600 dark:text-gray-400">
-          <option>All Status</option>
-          <option>Active</option>
-          <option>Draft</option>
+          <option>Todos los estados</option>
+          <option>Activo</option>
+          <option>Borrador</option>
         </select>
       </div>
 

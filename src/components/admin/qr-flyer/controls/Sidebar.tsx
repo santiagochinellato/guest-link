@@ -28,8 +28,8 @@ export function Sidebar({
       {/* Top Tabs */}
       <div className="bg-white dark:bg-[#1a2c2a] border-b border-slate-200 dark:border-slate-800 p-2 grid grid-cols-3 gap-1">
         {[
-          { id: "content", label: "Content", icon: Edit3 },
-          { id: "design", label: "Design", icon: Palette },
+          { id: "content", label: "Contenido", icon: Edit3 },
+          { id: "design", label: "Diseño", icon: Palette },
           { id: "branding", label: "Branding", icon: Stamp },
         ].map((tab) => (
           <button
@@ -71,7 +71,7 @@ export function Sidebar({
           onClick={() => alert("Saved to profile!")}
           className="w-full sm:w-auto px-4 py-3 sm:py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save Preset
+          Guardar
         </button>
         <button
           type="button"
@@ -80,10 +80,10 @@ export function Sidebar({
           className="w-full sm:flex-1 px-4 py-3 sm:py-2 bg-[#0f756d] hover:bg-[#0a5c55] text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0f756d]/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isExporting ? (
-            <span className="animate-pulse">Generating...</span>
+            <span className="animate-pulse">Generando...</span>
           ) : (
             <>
-              <Download className="w-4 h-4" /> Download PDF
+              <Download className="w-4 h-4" /> Descargar PDF
             </>
           )}
         </button>

@@ -13,7 +13,7 @@ export default function NotFound() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#0f756d] rounded-full blur-[120px]" />
       </div>
 
-      <div className="max-w-md w-full text-center space-y-12 animate-in fade-in zoom-in duration-700 relative z-10">
+      <div className="max-w-md w-full text-center space-y-8 md:space-y-12 animate-in fade-in zoom-in duration-700 relative z-10 px-4 md:px-0">
         {/* Branding */}
         <div className="flex justify-center">
           <div className="block dark:hidden">
@@ -22,7 +22,7 @@ export default function NotFound() {
               alt="GuestHub"
               width={180}
               height={180}
-              className="w-32 h-auto"
+              className="w-24 md:w-32 h-auto"
               priority
             />
           </div>
@@ -32,19 +32,19 @@ export default function NotFound() {
               alt="GuestHub"
               width={180}
               height={180}
-              className="w-32 h-auto"
+              className="w-24 md:w-32 h-auto"
               priority
             />
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <div className="relative inline-block">
-            <h1 className="text-9xl font-black tracking-tighter text-[#0f756d]/10 dark:text-white/5 select-none">
+            <h1 className="text-6xl md:text-9xl font-black tracking-tighter text-[#0f756d]/10 dark:text-white/5 select-none transition-all duration-300">
               404
             </h1>
             <div className="absolute inset-0 flex items-center justify-center">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white text-center px-4">
                 Página extraviada
               </h2>
             </div>
@@ -56,7 +56,7 @@ export default function NotFound() {
 
         <Link
           href="/"
-          className="inline-flex items-center gap-3 px-10 py-4 bg-[#0f756d] hover:bg-[#0d635c] text-white rounded-2xl font-bold transition-all shadow-xl shadow-[#0f756d]/20 active:scale-95 group"
+          className="inline-flex items-center gap-3 px-8 md:px-10 py-3.5 md:py-4 bg-[#0f756d] hover:bg-[#0d635c] text-white rounded-2xl font-bold transition-all shadow-xl shadow-[#0f756d]/20 active:scale-95 group text-sm md:text-base"
         >
           <Home className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
           Volver al Inicio
