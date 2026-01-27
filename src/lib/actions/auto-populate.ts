@@ -16,7 +16,10 @@ const DEFAULT_KEYWORDS: Record<string, string[]> = {
   // Turismo (sights in DB)
   sights: ["atracciones turísticas", "mirador panorámico", "museo", "puntos de interés"],
   
-  // Compras (shopping in DB)
+  // Tiendas (shops in DB - frontend uses 'shops')
+  shops: ["ropa", "accesorios", "ropa de invierno", "calzado"],
+  
+  // Legacy shopping (kept for backward compatibility if needed, though frontend uses shops)
   shopping: ["tienda de souvenirs", "productos regionales", "artesanías", "centro comercial"],
   
   // Senderos (trails in DB)
@@ -47,6 +50,7 @@ async function getOrCreateCategory(type: string, propertyId: number): Promise<nu
     const displayNames: Record<string, string> = {
         "gastronomy": "Restaurantes",
         "sights": "Turismo",
+        "shops": "Tiendas",
         "shopping": "Compras",
         "trails": "Senderos",
         "kids": "Kids",
