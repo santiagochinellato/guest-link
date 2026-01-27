@@ -153,11 +153,12 @@ export function Sidebar() {
             </>
           )}
         </div>
-        <div className="mt-2 text-center">
+        <div className="mt-4 px-2">
           <ThemeToggle
+            variant={isCollapsed ? "icon" : "segmented"}
             className={cn(
-              "w-full justify-center opacity-50 hover:opacity-100",
-              isCollapsed && "px-0",
+              "transition-all duration-300",
+              isCollapsed ? "mx-auto" : "w-full",
             )}
           />
         </div>
