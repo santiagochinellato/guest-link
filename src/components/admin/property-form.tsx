@@ -115,6 +115,20 @@ export function PropertyForm({
     }
   };
 
+  // Manejador de errores de validación - muestra los campos con errores
+  const onError = (errors: Record<string, unknown>) => {
+    const errorFields = Object.keys(errors);
+    const errorMessages = errorFields
+      .map((field) => {
+        const error = errors[field] as { message?: string };
+        return `• ${field}: ${error?.message || "Campo inválido"}`;
+      })
+      .join("\n");
+
+    alert(`Por favor corrige los siguientes campos:\n\n${errorMessages}`);
+    console.error("Validation errors:", errors);
+  };
+
   const handleFinish = () => {
     setShowSuccessModal(false);
     router.push("/dashboard/properties");
@@ -161,7 +175,7 @@ export function PropertyForm({
             type="button"
             onClick={() => {
               setValue("status", "draft");
-              handleSubmit(onSubmit)();
+              handleSubmit(onSubmit, onError)();
             }}
             disabled={isSaving}
             className="bg-gray-200 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-neutral-700 px-6 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
@@ -174,7 +188,7 @@ export function PropertyForm({
             type="button"
             onClick={() => {
               setValue("status", "active");
-              handleSubmit(onSubmit)();
+              handleSubmit(onSubmit, onError)();
             }}
             disabled={isSaving}
             className="bg-[#0f756d] hover:bg-[#0a554f] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-[#0f756d]/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
@@ -255,7 +269,7 @@ export function PropertyForm({
         <button
           onClick={() => {
             setValue("status", "draft");
-            handleSubmit(onSubmit)();
+            handleSubmit(onSubmit, onError)();
           }}
           disabled={isSaving}
           className="flex-1 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-700 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-sm"
@@ -267,7 +281,7 @@ export function PropertyForm({
         <button
           onClick={() => {
             setValue("status", "active");
-            handleSubmit(onSubmit)();
+            handleSubmit(onSubmit, onError)();
           }}
           disabled={isSaving}
           className="flex-1 bg-[#0f756d] hover:bg-[#0a554f] text-white px-4 py-3 rounded-xl font-bold shadow-lg shadow-[#0f756d]/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-sm"
