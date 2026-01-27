@@ -15,8 +15,10 @@ if (!connectionString) {
 // ssl: 'require' funciona correctamente con certificados de Supabase
 const queryClient = postgres(connectionString, {
   ssl: 'require',
-  max: process.env.NODE_ENV === "production" ? 20 : 1,
+  max: process.env.NODE_ENV === "production" ? 10 : 1, // Reducido para evitar MaxClientsInSessionMode
   prepare: false, // Requerido para connection pooling de Supabase
+  idle_timeout: 20, // Cerrar conexiones inactivas tras 20s
+  connect_timeout: 10, // Timeout de conexión de 10s
 });
 
 export const db = drizzle(queryClient, { schema });

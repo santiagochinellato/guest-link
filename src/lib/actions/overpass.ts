@@ -27,7 +27,7 @@ interface PlaceSuggestion {
   googleMapsLink: string;
   categoryType: string;
   externalSource?: "osm";
-  geometry?: any;
+  geometry?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export async function fetchNearbyPlaces(
@@ -38,40 +38,50 @@ export async function fetchNearbyPlaces(
   try {
     // Map our categories to Overpass tags
     let queryTag = "";
-    let radius = 1000; // Default 1km
+    let radius = 2000; // Default 2km
     switch (category.toLowerCase()) {
       case "restaurants":
-        queryTag = '["amenity"="restaurant"]';
+      case "gastronomy":
+        queryTag = '["amenity"~"restaurant|fast_food"]["name"]';
         break;
       case "sights":
-        queryTag = '["tourism"~"museum|attraction|viewpoint|artwork"]';
+      case "tourism":
+        queryTag = '["tourism"~"museum|attraction|viewpoint|artwork|gallery"]["name"]';
+        radius = 5000;
         break;
+      case "shops":
       case "shopping":
-        queryTag = '["shop"]';
+        queryTag = '["shop"~"clothes|shoes|boutique|gift|souvenir|mall"]["name"]';
         break;
       case "trails":
       case "outdoors":
-        // 5km radius for outdoors (optimized for public API stability)
         radius = 5000;
-        // Queries for hiking, huts, peaks
         queryTag = '["highway"~"path|footway|track"]["name"],["route"="hiking"],["tourism"~"alpine_hut|wilderness_hut"],["natural"="peak"]'; 
         break;
       case "kids":
-       queryTag = '["leisure"~"playground|water_park|park"]["name"]';
-       break;
+        queryTag = '["leisure"~"playground|water_park|park"]["name"],["amenity"="ice_cream"]["name"]';
+        radius = 3000;
+        break;
       case "bars":
-        queryTag = '["amenity"~"bar|pub|biergarten|nightclub"]';
+      case "nightlife":
+        queryTag = '["amenity"~"bar|pub|biergarten|nightclub"]["name"]';
+        break;
+      case "breakfast":
+      case "cafe":
+        queryTag = '["amenity"~"cafe"]["name"]';
+        break;
+      case "essentials":
+      case "supermarket":
+        queryTag = '["shop"~"supermarket|convenience"]["name"],["amenity"="pharmacy"]["name"]';
         break;
       default:
-        // Try to guess or fallback to general tourism/amenities
-        // If it's a known english word we might luck out, otherwise fallback.
-        queryTag = '["tourism"]'; 
-        // We could try to make this smarter later.
+        queryTag = '["tourism"]["name"],["amenity"~"restaurant|cafe"]["name"]'; 
     }
 
     if (category.toLowerCase() === "generic" || !queryTag) {
-         queryTag = '["amenity"~"restaurant|cafe|bar|pub"]'; // Fallback
+         queryTag = '["amenity"~"restaurant|cafe|bar|pub"]["name"]';
     }
+
 
 
     // Overpass QL Query: Search within radius
@@ -143,6 +153,7 @@ export async function fetchNearbyPlaces(
           googleMapsLink: `https://www.google.com/maps/search/?api=1&query=${elLat},${elLon}`,
           categoryType: category,
           externalSource: "osm",
+          googlePlaceId: `osm:${el.id}`,
           geometry: { location: { lat: elLat, lng: elLon } }
         };
       });
@@ -167,17 +178,13 @@ export interface TransitStop {
  * Fetch nearby transit stops from OpenStreetMap (FREE)
  * Extracts bus stop locations and line numbers from OSM tags
  */
-export async function fetchNearbyTransitStops(
-  lat: number,
-  lng: number,
-  radius: number = 800
-): Promise<TransitStop[]> {
-  // Query optimized for bus stops and platforms
+export async function fetchNearbyTransitStops(lat: number, lng: number) {
+  // Busca paradas de bus o plataformas en 500m
   const query = `
     [out:json][timeout:25];
     (
-      node["highway"="bus_stop"](around:${radius},${lat},${lng});
-      node["public_transport"="platform"](around:${radius},${lat},${lng});
+      node["highway"="bus_stop"](around:500,${lat},${lng});
+      node["public_transport"="platform"](around:500,${lat},${lng});
     );
     out body;
   `;
@@ -185,32 +192,29 @@ export async function fetchNearbyTransitStops(
   try {
     const response = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
-      body: query,
-      // Cache aggressively for development
-      next: { revalidate: 86400 },
+      body: "data=" + encodeURIComponent(query),
+      next: { revalidate: 86400 } // Cachear fuerte
     });
 
     if (!response.ok) return [];
-
     const data = await response.json();
 
-    return data.elements.map((node: any) => {
-      // Try to extract lines from different common OSM tags
-      const routeRef =
-        node.tags?.route_ref || node.tags?.lines || node.tags?.bus_lines || "";
-      const lines = routeRef
-        ? routeRef.split(/[;,]/).map((s: string) => s.trim()).filter(Boolean)
-        : [];
-
+    return data.elements.map((node: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      // Intentar extraer números de línea
+      const lines = node.tags?.route_ref || node.tags?.lines || "";
       return {
-        name: node.tags?.name || "Parada de Colectivo",
-        lines: lines,
-        lat: node.lat,
-        lng: node.lon,
+        title: lines ? `Parada Bus (Líneas: ${lines})` : "Parada de Transporte Público",
+        description: `Ubicación: ${node.tags?.name || "Sin nombre"}.`,
+        formattedAddress: "Ver en mapa",
+        externalSource: "osm",
+        googlePlaceId: `osm:${node.id}`,
+        geometry: { lat: node.lat, lng: node.lon },
+        rating: null,
       };
     });
-  } catch (error) {
-    console.warn("Overpass Transit Error:", error);
+  } catch (e) {
+    console.warn("Overpass Transit fail:", e);
     return [];
   }
 }
+

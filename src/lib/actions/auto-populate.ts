@@ -4,8 +4,9 @@ import { db } from "@/db";
 import { properties, recommendations, categories } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { findTopRatedPlaces, findNearbyTransit } from "@/lib/services/google-places";
-import { fetchNearbyPlaces } from "@/lib/actions/overpass";
+import { findTopRatedPlaces } from "@/lib/services/google-places";
+import { searchFoursquarePlaces } from "@/lib/services/foursquare";
+import { fetchNearbyPlaces, fetchNearbyTransitStops } from "@/lib/actions/overpass";
 
 // --- DEFAULT KEYWORD MAPPINGS ---
 // Used when category doesn't have custom searchKeywords defined
@@ -61,6 +62,7 @@ async function getOrCreateCategory(type: string, propertyId: number): Promise<nu
         "tourism": "Atracciones & Cultura",
         "essentials": "Supermercados & Farmacias",
         "nightlife": "Vida Nocturna",
+        "coffee": "Café & Brunch",
         "transit": "Transporte Público",
         "other": "Otros"
     };
@@ -88,6 +90,55 @@ async function getOrCreateCategory(type: string, propertyId: number): Promise<nu
 
     return newCat.id;
 }
+
+// --- HELPER: Search with OSM Fallback ---
+// Intenta Google Places primero, si falla usa OpenStreetMap/Overpass
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function searchWithFallback(
+  lat: number, 
+  lng: number, 
+  keyword: string, 
+  categoryType: string,
+  city: string
+): Promise<{ results: any[]; source: "google" | "osm" }> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const searchQuery = `${keyword} cerca de ${city}`;
+  
+  try {
+    // Intentar Google Places primero
+    const googleResults = await findTopRatedPlaces(lat, lng, searchQuery);
+    
+    if (googleResults && googleResults.length > 0) {
+      console.log(`  ✅ Google: ${googleResults.length} resultados para "${keyword}"`);
+      return { results: googleResults, source: "google" };
+    }
+    
+    // Si Google no devuelve resultados, usar OSM como fallback
+    console.log(`  ⚠️ Google sin resultados, intentando OSM para "${categoryType}"...`);
+  } catch (error: any) {
+    // Si Google falla (ej: OVER_QUERY_LIMIT), usar OSM
+    console.log(`  ⚠️ Google falló (${error.message || "error"}), usando OSM fallback para "${categoryType}"`);
+  }
+  
+  // Fallback a OpenStreetMap/Overpass
+  try {
+    const osmResult = await fetchNearbyPlaces(lat, lng, categoryType);
+    if (osmResult.success && osmResult.data && osmResult.data.length > 0) {
+      console.log(`  ✅ OSM: ${osmResult.data.length} resultados para "${categoryType}"`);
+      return { 
+        results: osmResult.data.map(item => ({
+          ...item,
+          externalSource: "osm" as const
+        })), 
+        source: "osm" 
+      };
+    }
+  } catch {
+    console.log(`  ❌ OSM también falló para "${categoryType}"`);
+  }
+  
+  return { results: [], source: "osm" };
+}
+
 
 // --- MAIN ACTION: Smart Discovery 2.0 ---
 export async function populateRecommendations(
@@ -150,6 +201,7 @@ export async function populateRecommendations(
 
     // D. Build Search Promises (Category-Driven)
     const promises: Promise<any>[] = [];
+    
     // Create a map of existing categories for quick lookup
     const existingCategoriesMap = new Map<string, typeof property.categories[0]>();
     if (property.categories) {
@@ -161,78 +213,74 @@ export async function populateRecommendations(
     console.log(`📂 Found ${existingCategoriesMap.size} existing categories`);
 
     for (const type of categoriesToProcess) {
-        // Skip types handled explicitly later (unless we want to verify existence here, but getOrCreate handles it there)
-        if (type === 'transit' || type === 'outdoors') continue;
+        // 1. Get Category ID
+        const categoryId = await getOrCreateCategory(type, propertyId);
+        const categoryLabel = property.city || property.address || "";
+        
+        console.log(`  🎯 Processing category: ${type} (ID: ${categoryId})`);
 
-        let categoryId: number;
-        let categoryKeywords: string[] = [];
-
-        // 1. Get ID and Keywords
-        if (existingCategoriesMap.has(type)) {
-            const cat = existingCategoriesMap.get(type)!;
-            categoryId = cat.id;
-            
-            // Determine keywords from DB or Default
-            if (cat.searchKeywords && cat.searchKeywords.trim() !== "") {
-                categoryKeywords = cat.searchKeywords.split(",").map(k => k.trim());
-                console.log(`✅ Using custom keywords for ${type}: ${categoryKeywords.join(', ')}`);
-            } else if (DEFAULT_KEYWORDS[type]) {
-                categoryKeywords = DEFAULT_KEYWORDS[type];
-                 console.log(`✅ Using default keywords for ${type}: ${categoryKeywords.join(', ')}`);
-            }
-        } else {
-             // Category doesn't exist. 
-             // If manual filter, we MUST create it since user asked for it.
-             // If global auto-fill, we only create if it has keywords (part of our core set).
-             
-             if (!DEFAULT_KEYWORDS[type] || DEFAULT_KEYWORDS[type].length === 0) {
-                 console.log(`⏭️  Skipping ${type} (no existing category and no default keywords)`);
-                 continue;
-             }
-
-             console.log(`🆕 Creating missing category: ${type}`);
-             categoryId = await getOrCreateCategory(type, propertyId);
-             categoryKeywords = DEFAULT_KEYWORDS[type];
-        }
-
-        if (categoryKeywords.length === 0) {
-             console.log(`⚠️  No keywords for ${type}`);
-             continue;
-        }
-
-        // 2. Schedule Searches
-        for (const keyword of categoryKeywords) {
-             const searchQuery = `${keyword} cerca de ${property.city || property.address}`;
-             console.log(`  🔍 Searching: "${searchQuery}"`);
-             promises.push(
-                findTopRatedPlaces(lat, lng, searchQuery).then(results => ({
-                    categoryId: categoryId,
+        // 2. DISPATCHER: Choose the best source for each category
+        if (type === "transit") {
+            // OSM Transit (Free)
+            promises.push(
+                fetchNearbyTransitStops(lat, lng).then(results => ({
+                    categoryId,
                     categoryType: type,
-                    results
+                    results,
+                    source: "osm"
                 }))
-             );
+            );
+        } else if (type === "outdoors" || type === "trails") {
+            // OSM Outdoors
+            promises.push(
+                fetchNearbyPlaces(lat, lng, type).then(result => ({
+                    categoryId,
+                    categoryType: type,
+                    results: result.data || [],
+                    source: "osm"
+                }))
+            );
+        } else if (["gastronomy", "nightlife", "bars", "coffee", "breakfast"].includes(type)) {
+            // Foursquare for popularity
+            const fsqQuery = type === "gastronomy" ? "Restaurant Parrilla Steakhouse" : 
+                            type === "coffee" || type === "breakfast" ? "Specialty Coffee Brunch Cafe" :
+                            "Cervecería Brewery Bar Pub";
+            
+            promises.push(
+                searchFoursquarePlaces(lat, lng, fsqQuery).then(results => ({
+                    categoryId,
+                    categoryType: type,
+                    results,
+                    source: "foursquare"
+                }))
+            );
+        } else if (["essentials", "supermarket", "pharmacy"].includes(type)) {
+            // Google for precision
+            const googleQuery = type === "essentials" ? "supermarket pharmacy" : 
+                               type === "supermarket" ? "supermarket grocery" : "pharmacy farmacia";
+                               
+            promises.push(
+                findTopRatedPlaces(lat, lng, `${googleQuery} cerca de ${categoryLabel}`).then(results => ({
+                    categoryId,
+                    categoryType: type,
+                    results,
+                    source: "google"
+                }))
+            );
+        } else {
+            // Default Fallback: Google -> OSM
+            const keywords = existingCategoriesMap.get(type)?.searchKeywords?.split(",")[0] || DEFAULT_KEYWORDS[type]?.[0] || type;
+            promises.push(
+                searchWithFallback(lat, lng, keywords, type, categoryLabel).then(({ results, source }) => ({
+                    categoryId,
+                    categoryType: type,
+                    results,
+                    source
+                }))
+            );
         }
     }
 
-    // Add Transit (always)
-    const transitCatId = await getOrCreateCategory("transit", propertyId);
-    promises.push(
-        findNearbyTransit(lat, lng).then(results => ({
-            categoryId: transitCatId,
-            categoryType: "transit",
-            results
-        }))
-    );
-
-    // Add Outdoors via Overpass (always)
-    const outdoorsCatId = await getOrCreateCategory("outdoors", propertyId);
-    promises.push(
-        fetchNearbyPlaces(lat, lng, "outdoors").then(result => ({
-            categoryId: outdoorsCatId,
-            categoryType: "outdoors",
-            results: result.data || []
-        }))
-    );
 
     // D. Execute with Resilience
     const results = await Promise.allSettled(promises);
@@ -287,6 +335,7 @@ export async function populateRecommendations(
         };
     }
 
+    revalidatePath(`/dashboard/properties/${propertyId}/edit`);
     revalidatePath(`/dashboard/properties`);
     
     return { 

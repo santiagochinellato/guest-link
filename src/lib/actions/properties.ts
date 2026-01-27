@@ -276,19 +276,29 @@ export async function getProperties() {
 
 export async function getProperty(id: number) {
   try {
+     // 1. Fetch Property Basic
      const prop = await db.query.properties.findFirst({
        where: eq(properties.id, id),
-       with: {
-          recommendations: {
-             with: {
-                category: true
-             }
-          },
-          emergencyContacts: true,
-          transportInfo: true,
-          categories: true, // Load all categories for this property
-       }
      });
+
+     if (!prop) return { success: false, error: "Property not found" };
+
+     // 2. Fetch Relations separately
+     const [recs, emergency, transport, allCats] = await Promise.all([
+         db.query.recommendations.findMany({
+             where: eq(recommendations.propertyId, id),
+             with: { category: true }
+         }),
+         db.query.emergencyContacts.findMany({
+             where: eq(emergencyContacts.propertyId, id)
+         }),
+         db.query.transportInfo.findMany({
+             where: eq(transportInfo.propertyId, id)
+         }),
+         db.query.categories.findMany({
+             where: eq(categories.propertyId, id)
+         })
+     ]);
 
      if (!prop) return { success: false, error: "Property not found" };
 
@@ -346,26 +356,26 @@ export async function getProperty(id: number) {
                  return [];
              }
         })(),
-        recommendations: prop.recommendations.map(r => ({
+        recommendations: recs.map(r => ({
            title: r.title,
            description: r.description || "",
            formattedAddress: r.formattedAddress || "",
            googleMapsLink: r.googleMapsLink || "",
            categoryType: r.category?.type || "sights", // Fallback
         })),
-        emergencyContacts: prop.emergencyContacts.map(c => ({
+        emergencyContacts: emergency.map(c => ({
            name: c.name || "",
            phone: c.phone || "",
            type: (c.type as any) || "other",
         })),
-        transport: prop.transportInfo.map(t => ({
+        transport: transport.map(t => ({
            name: t.name,
            type: (t.type as any) || "taxi",
            description: t.description || "",
            scheduleInfo: t.scheduleInfo || "",
            priceInfo: t.priceInfo || "",
         })),
-        categories: prop.categories.map(c => ({
+        categories: allCats.map(c => ({
            id: c.id,
            name: c.name,
            icon: c.icon || undefined,
@@ -387,18 +397,26 @@ export async function getProperty(id: number) {
 
 export async function getPropertyBySlug(slug: string) {
   try {
+     // 1. Fetch Property Basic
      const prop = await db.query.properties.findFirst({
        where: eq(properties.slug, slug),
-       with: {
-          recommendations: {
-             with: {
-                category: true
-             }
-          },
-          emergencyContacts: true,
-          transportInfo: true,
-       }
      });
+
+     if (!prop) return { success: false, error: "Property not found" };
+
+     // 2. Fetch Relations separately (More robust for poolers)
+     const [recs, emergency, transport] = await Promise.all([
+         db.query.recommendations.findMany({
+             where: eq(recommendations.propertyId, prop.id),
+             with: { category: true }
+         }),
+         db.query.emergencyContacts.findMany({
+             where: eq(emergencyContacts.propertyId, prop.id)
+         }),
+         db.query.transportInfo.findMany({
+             where: eq(transportInfo.propertyId, prop.id)
+         })
+     ]);
 
      if (!prop) return { success: false, error: "Property not found" };
 
@@ -443,7 +461,7 @@ export async function getPropertyBySlug(slug: string) {
              checkOut: prop.checkOutTime,
              latitude: prop.latitude,
              longitude: prop.longitude,
-             recommendations: prop.recommendations.map(r => ({
+             recommendations: recs.map(r => ({
                  title: r.title,
                  description: r.description,
                  formattedAddress: r.formattedAddress,
@@ -451,8 +469,8 @@ export async function getPropertyBySlug(slug: string) {
                  category: r.category?.name || "Other", // Use category name for display
                  categoryType: r.category?.type // Keep type for filtering/icons
              })),
-             emergencyContacts: prop.emergencyContacts,
-             transport: prop.transportInfo
+             emergencyContacts: emergency,
+             transport: transport
          }
      };
 
