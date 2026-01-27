@@ -3,7 +3,6 @@
 import { useFormContext } from "react-hook-form";
 import { Clock, ImageIcon, X } from "lucide-react";
 import { PropertyFormData } from "@/lib/schemas";
-import { ChangeEvent } from "react";
 
 export function BasicInfoSection() {
   const {
@@ -15,22 +14,14 @@ export function BasicInfoSection() {
 
   const watchCoverImage = watch("coverImageUrl");
 
-  const handleFileUpload =
-    (field: "coverImageUrl" | "hostImage") =>
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        if (file.size > 5 * 1024 * 1024) {
-          alert("El archivo es demasiado grande (Máx 5MB)");
-          return;
-        }
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setValue(field, reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    };
+  // Valida que la URL sea una imagen válida (no base64)
+  const isValidImageUrl = (url: string) => {
+    if (!url) return false;
+    // Rechazar URLs base64
+    if (url.startsWith("data:")) return false;
+    // Aceptar URLs http/https
+    return url.startsWith("http://") || url.startsWith("https://");
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -74,7 +65,7 @@ export function BasicInfoSection() {
           )}
         </div>
 
-        {/* Cover Image */}
+        {/* Cover Image - Solo URL externa */}
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
             <div className="w-full col-span-1">
@@ -82,7 +73,7 @@ export function BasicInfoSection() {
                 Imagen de Portada
               </label>
 
-              {watchCoverImage ? (
+              {isValidImageUrl(watchCoverImage || "") ? (
                 <div className="relative w-full h-64 rounded-xl overflow-hidden border border-gray-200 dark:border-neutral-700 group">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -99,31 +90,28 @@ export function BasicInfoSection() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <label className="border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-xl p-8 flex flex-col items-center justify-center text-gray-500 gap-2 hover:bg-gray-50 dark:hover:bg-neutral-800/50 hover:border-blue-500/50 transition-all text-center cursor-pointer">
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-xl p-6 flex flex-col items-center justify-center text-gray-500 gap-2">
                     <ImageIcon className="w-8 h-8 text-gray-300" />
-                    <span className="text-sm text-blue-600 font-medium hover:underline">
-                      Subir archivo
-                    </span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleFileUpload("coverImageUrl")}
-                    />
-                    <p className="text-xs text-gray-400">
-                      PNG, JPG, GIF hasta 5MB
+                    <p className="text-sm text-gray-500 text-center">
+                      Pega la URL de una imagen externa
                     </p>
-                  </label>
-                  <div className="flex flex-col justify-center gap-2">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      O pegar URL
+                    <p className="text-xs text-gray-400 text-center">
+                      Usa Unsplash, Cloudinary, o cualquier URL https://
                     </p>
+                  </div>
+                  <div className="flex flex-col gap-2">
                     <input
                       {...register("coverImageUrl")}
-                      placeholder="https://..."
+                      placeholder="https://images.unsplash.com/..."
                       className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 text-sm"
                     />
+                    {watchCoverImage && !isValidImageUrl(watchCoverImage) && (
+                      <p className="text-amber-500 text-xs">
+                        ⚠️ Solo URLs https:// son válidas. No se permiten
+                        archivos locales.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
