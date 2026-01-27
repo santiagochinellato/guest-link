@@ -2,7 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, MapPin, Wifi, Scroll, Image as ImageIcon } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  Info,
+  Map,
+  Wifi,
+  MessageSquare,
+  Bus,
+  FileText,
+  Phone,
+  QrCode,
+  Image as ImageIcon,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PropertyActionsMenu } from "@/components/admin/property-actions-menu";
 import { cn } from "@/lib/utils";
@@ -16,6 +28,16 @@ interface Property {
   coverImageUrl?: string | null;
   wifiSsid?: string | null;
   houseRules?: string | null;
+  sections?: {
+    basic: boolean;
+    location: boolean;
+    wifi: boolean;
+    recommendations: boolean;
+    transport: boolean;
+    rules: boolean;
+    emergency: boolean;
+    qr: boolean;
+  };
 }
 
 interface PropertiesGridProps {
@@ -109,24 +131,89 @@ export function PropertiesGrid({ initialProperties }: PropertiesGridProps) {
                   </div>
                 </div>
 
-                {/* Features Badges */}
-                <div className="absolute bottom-3 left-3 flex gap-2">
-                  {prop.wifiSsid && (
-                    <div
-                      className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white"
-                      title="WiFi Configured"
-                    >
-                      <Wifi className="w-4 h-4" />
-                    </div>
-                  )}
-                  {prop.houseRules && (
-                    <div
-                      className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white"
-                      title="House Rules"
-                    >
-                      <Scroll className="w-4 h-4" />
-                    </div>
-                  )}
+                {/* Secciones Configuradas */}
+                <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5 max-w-[90%]">
+                  {(() => {
+                    const sections = prop.sections || {
+                      basic: false,
+                      location: false,
+                      wifi: false,
+                      recommendations: false,
+                      transport: false,
+                      rules: false,
+                      emergency: false,
+                      qr: false,
+                    };
+
+                    const sectionConfig = [
+                      {
+                        key: "basic",
+                        label: "Info Básica",
+                        icon: Info,
+                        isConfigured: sections.basic,
+                      },
+                      {
+                        key: "location",
+                        label: "Ubicación",
+                        icon: Map,
+                        isConfigured: sections.location,
+                      },
+                      {
+                        key: "wifi",
+                        label: "WiFi",
+                        icon: Wifi,
+                        isConfigured: sections.wifi,
+                      },
+                      {
+                        key: "recommendations",
+                        label: "Recomendaciones",
+                        icon: MessageSquare,
+                        isConfigured: sections.recommendations,
+                      },
+                      {
+                        key: "transport",
+                        label: "Transporte",
+                        icon: Bus,
+                        isConfigured: sections.transport,
+                      },
+                      {
+                        key: "rules",
+                        label: "Reglas",
+                        icon: FileText,
+                        isConfigured: sections.rules,
+                      },
+                      {
+                        key: "emergency",
+                        label: "Emergencia",
+                        icon: Phone,
+                        isConfigured: sections.emergency,
+                      },
+                      {
+                        key: "qr",
+                        label: "Diseño QR",
+                        icon: QrCode,
+                        isConfigured: sections.qr,
+                      },
+                    ];
+
+                    return sectionConfig.map((section) => {
+                      const Icon = section.icon;
+                      return (
+                        <div
+                          key={section.key}
+                          className={cn(
+                            "w-7 h-7 rounded-full backdrop-blur-md border flex items-center justify-center transition-all",
+                            section.isConfigured
+                              ? "bg-green-500/90 border-green-400/30 text-white shadow-sm"
+                              : "bg-gray-500/70 border-gray-400/20 text-gray-300",
+                          )}
+                          title={`${section.label}: ${section.isConfigured ? "Configurado" : "Pendiente"}`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
 

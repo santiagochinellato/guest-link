@@ -2,7 +2,7 @@ import { pgTable, text, serial, integer, timestamp, boolean, real, json } from "
 import { relations } from "drizzle-orm"; // Added import
 
 export const users = pgTable("user", {
-  id: serial("id").primaryKey(),
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name"),
   email: text("email").notNull().unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),

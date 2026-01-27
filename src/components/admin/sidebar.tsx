@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -25,7 +25,20 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [session, setSession] = useState<{
+    user?: {
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+  } | null>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => res.json())
+      .then((data) => setSession(data));
+  }, []);
 
   return (
     <aside
@@ -137,17 +150,28 @@ export function Sidebar() {
           )}
         >
           <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs">
-              SM
-            </div>
+            {session?.user?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={session.user.image}
+                alt={session.user.name || "User"}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs">
+                {session?.user?.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+            )}
           </div>
           {!isCollapsed && (
             <>
               <div className="flex flex-col overflow-hidden">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                  Santiago M.
+                  {session?.user?.name || "Usuario"}
                 </p>
-                <p className="text-xs text-gray-500 truncate">Owner Account</p>
+                <p className="text-xs text-gray-500 truncate">
+                  {session?.user?.email || "Owner Account"}
+                </p>
               </div>
               <MoreVertical className="w-4 h-4 text-gray-400 ml-auto flex-shrink-0" />
             </>

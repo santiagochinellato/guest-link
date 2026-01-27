@@ -3,12 +3,14 @@ import postgres from "postgres";
 import * as schema from "./schema";
 
 // Supabase/Vercel provee POSTGRES_URL.
+// Para Auth.js, necesitamos la conexión directa (NON_POOLING)
 const connectionString =
+  process.env.POSTGRES_URL_NON_POOLING ||
   process.env.POSTGRES_URL ||
   process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error("Missing POSTGRES_URL or DATABASE_URL");
+  throw new Error("Missing POSTGRES_URL_NON_POOLING or POSTGRES_URL or DATABASE_URL");
 }
 
 // postgres.js maneja mejor SSL con Supabase que node-postgres

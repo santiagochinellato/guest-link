@@ -12,6 +12,16 @@ interface Property {
   coverImageUrl?: string | null;
   wifiSsid?: string | null;
   houseRules?: string | null;
+  sections?: {
+    basic: boolean;
+    location: boolean;
+    wifi: boolean;
+    recommendations: boolean;
+    transport: boolean;
+    rules: boolean;
+    emergency: boolean;
+    qr: boolean;
+  };
 }
 
 // Server Component

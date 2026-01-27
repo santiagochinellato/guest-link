@@ -283,12 +283,67 @@ export async function getProperties() {
        coverImageUrl: properties.coverImageUrl,
        wifiSsid: properties.wifiSsid,
        houseRules: properties.houseRules,
+       city: properties.city,
+       country: properties.country,
+       latitude: properties.latitude,
+       longitude: properties.longitude,
+       checkInTime: properties.checkInTime,
+       checkOutTime: properties.checkOutTime,
     })
     .from(properties)
     .orderBy(properties.createdAt);
 
-    return { success: true, data: list };
-  } catch (error: any) {
+    // Fetch related data for section status
+    const sectionsData = await Promise.all(
+      list.map(async (prop) => {
+        const [recs, emergency, transport] = await Promise.all([
+          db.select({ id: recommendations.id }).from(recommendations).where(eq(recommendations.propertyId, prop.id)),
+          db.select({ id: emergencyContacts.id }).from(emergencyContacts).where(eq(emergencyContacts.propertyId, prop.id)),
+          db.select({ id: transportInfo.id }).from(transportInfo).where(eq(transportInfo.propertyId, prop.id)),
+        ]);
+
+        return {
+          id: prop.id,
+          sections: {
+            basic: !!(prop.name && prop.coverImageUrl), // Información Básica
+            location: !!(prop.address && prop.latitude && prop.longitude), // Ubicación
+            wifi: !!prop.wifiSsid, // WiFi y Acceso
+            recommendations: recs.length > 0, // Recomendaciones
+            transport: transport.length > 0, // Transporte
+            rules: !!prop.houseRules, // Reglas
+            emergency: emergency.length > 0, // Emergencia
+            qr: false, // Diseño QR Flyer (placeholder - siempre false por ahora)
+          }
+        };
+      })
+    );
+
+    const sectionsMap = new Map(sectionsData.map(s => [s.id, s.sections]));
+    
+    const enrichedList = list.map(prop => ({
+      id: prop.id,
+      name: prop.name,
+      address: prop.address,
+      slug: prop.slug,
+      views: prop.views,
+      status: prop.status,
+      coverImageUrl: prop.coverImageUrl,
+      wifiSsid: prop.wifiSsid,
+      houseRules: prop.houseRules,
+      sections: sectionsMap.get(prop.id) || {
+        basic: false,
+        location: false,
+        wifi: false,
+        recommendations: false,
+        transport: false,
+        rules: false,
+        emergency: false,
+        qr: false,
+      }
+    }));
+
+    return { success: true, data: enrichedList };
+  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("Fetch Properties Error:", error);
     return { success: false, error: error.message };
   }
