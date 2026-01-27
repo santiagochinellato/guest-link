@@ -2,11 +2,10 @@
 
 import { useState, useRef } from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import { FlyerConfig } from "./qr-flyer/types";
 import { Sidebar } from "./qr-flyer/controls/Sidebar";
 import { FlyerPreview } from "./qr-flyer/FlyerPreview";
+import { useFlyerExport } from "@/hooks/use-flyer-export";
 
 interface QrFlyerBuilderProps {
   initialData?: {
@@ -66,41 +65,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
     }));
   };
 
-  const handleExport = async (type: "png" | "pdf") => {
-    if (!qrRef.current) return;
-    try {
-      const canvas = await html2canvas(qrRef.current, {
-        scale: 3, // High Res
-        useCORS: true,
-        backgroundColor: null,
-      });
-
-      if (type === "png") {
-        const link = document.createElement("a");
-        link.download = `${config.content.title.replace(/\s+/g, "-").toLowerCase()}-flyer.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      } else {
-        const orientation =
-          config.design.orientation === "horizontal" ? "l" : "p";
-        const pdf = new jsPDF({
-          orientation: orientation,
-          unit: "mm",
-          format: "a4",
-        });
-        const imgData = canvas.toDataURL("image/png");
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-        pdf.save(
-          `${config.content.title.replace(/\s+/g, "-").toLowerCase()}-flyer.pdf`,
-        );
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Error exporting flyer. Check console.");
-    }
-  };
+  const { handleExport, isExporting } = useFlyerExport({ qrRef, config });
 
   return (
     <div className="flex flex-col md:flex-row bg-[#f6f8f8] dark:bg-[#112120] rounded-xl shadow border border-slate-200 dark:border-slate-800 h-auto md:h-[800px] overflow-hidden">
@@ -109,6 +74,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
           config={config}
           updateConfig={updateConfig}
           onExport={handleExport}
+          isExporting={isExporting}
         />
       </div>
 

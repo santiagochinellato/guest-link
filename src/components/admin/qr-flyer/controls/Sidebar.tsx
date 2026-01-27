@@ -10,9 +10,15 @@ interface SidebarProps {
   config: FlyerConfig;
   updateConfig: (section: keyof FlyerConfig, key: string, value: any) => void;
   onExport: (type: "png" | "pdf") => void;
+  isExporting?: boolean;
 }
 
-export function Sidebar({ config, updateConfig, onExport }: SidebarProps) {
+export function Sidebar({
+  config,
+  updateConfig,
+  onExport,
+  isExporting = false,
+}: SidebarProps) {
   const [activeTab, setActiveTab] = useState<"content" | "design" | "branding">(
     "design",
   );
@@ -61,17 +67,25 @@ export function Sidebar({ config, updateConfig, onExport }: SidebarProps) {
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2c2a] flex flex-col sm:flex-row justify-between gap-3 shrink-0">
         <button
           type="button"
+          disabled={isExporting}
           onClick={() => alert("Saved to profile!")}
-          className="w-full sm:w-auto px-4 py-3 sm:py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50"
+          className="w-full sm:w-auto px-4 py-3 sm:py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Save Preset
         </button>
         <button
           type="button"
+          disabled={isExporting}
           onClick={() => onExport("pdf")}
-          className="w-full sm:flex-1 px-4 py-3 sm:py-2 bg-[#0f756d] hover:bg-[#0a5c55] text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0f756d]/30"
+          className="w-full sm:flex-1 px-4 py-3 sm:py-2 bg-[#0f756d] hover:bg-[#0a5c55] text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0f756d]/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Download className="w-4 h-4" /> Download PDF
+          {isExporting ? (
+            <span className="animate-pulse">Generating...</span>
+          ) : (
+            <>
+              <Download className="w-4 h-4" /> Download PDF
+            </>
+          )}
         </button>
       </div>
     </aside>

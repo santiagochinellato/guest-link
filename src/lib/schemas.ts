@@ -85,3 +85,14 @@ export const PropertyFormSchema = z.object({
 });
 
 export type PropertyFormData = z.infer<typeof PropertyFormSchema>;
+
+export interface CategoryFromDB {
+  id: number;
+  name: string;
+  icon?: string | null;
+  type: string;
+  displayOrder?: number | null;
+  isSystemCategory?: boolean | null;
+  searchKeywords?: string | null;
+  propertyId?: number | null;
+}
