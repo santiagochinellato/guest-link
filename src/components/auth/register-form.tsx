@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { register } from "@/lib/actions/auth";
 import { ArrowRight, Loader2, Mail, Lock, User, UserPlus } from "lucide-react";
 import Image from "next/image";
@@ -14,6 +15,16 @@ export function RegisterForm() {
     register,
     undefined,
   );
+  const router = useRouter();
+
+  useEffect(() => {
+    if (errorMessage === "success") {
+      const timer = setTimeout(() => {
+        router.push("/login");
+      }, 2000); // Redirect after 2 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage, router]);
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-[350px] mx-auto">
