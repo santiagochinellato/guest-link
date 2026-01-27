@@ -34,10 +34,11 @@ export async function searchFoursquarePlaces(
   const params = new URLSearchParams({
     ll: `${lat},${lng}`,
     query: query,
-    sort: "POPULARITY", // EL SECRETO: Ordenar por fama, no solo distancia
+    sort: "POPULARITY",
     limit: "8",
     fields: "fsq_id,name,location,rating,stats,link,categories,geocodes",
-    open_now: "false" // Importante: Traer lugares famosos aunque estén cerrados ahora
+    open_now: "false",
+    v: "20231010" // Versión de la API v3
   });
 
   try {

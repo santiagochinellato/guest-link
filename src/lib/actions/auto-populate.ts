@@ -184,7 +184,7 @@ export async function populateRecommendations(
       newCats.forEach(c => existingCatMap.set(c.type!, c.id));
     }
 
-    // 2. DISPATCHER: Choose the best source for each category
+    // 2. DISPATCHER: Choose the best source for each category with Resilient Fallbacks
     for (const type of categoriesToProcess) {
         const categoryId = existingCatMap.get(type)!;
         const categoryLabel = property.city || property.address || "";
@@ -195,15 +195,58 @@ export async function populateRecommendations(
             promises.push(fetchNearbyTransitStops(lat, lng).then(results => ({ categoryId, categoryType: type, results, source: "osm" })));
         } else if (type === "outdoors" || type === "trails") {
             promises.push(fetchNearbyPlaces(lat, lng, type).then(result => ({ categoryId, categoryType: type, results: result.data || [], source: "osm" })));
-        } else if (["gastronomy", "nightlife", "bars", "coffee", "breakfast"].includes(type)) {
+        } else if (["gastronomy", "nightlife", "bars", "coffee", "breakfast", "shops", "shopping", "tourism", "sights"].includes(type)) {
+            // Triple Fallback Strategy: Foursquare -> Google -> OSM
             const fsqQuery = type === "gastronomy" ? "Restaurant Parrilla Steakhouse" : 
-                            type === "coffee" || type === "breakfast" ? "Specialty Coffee Brunch Cafe" :
+                            ["coffee", "breakfast"].includes(type) ? "Specialty Coffee Brunch Cafe" :
+                            ["shops", "shopping"].includes(type) ? "Shopping Mall Boutique Store" :
                             "Cervecería Brewery Bar Pub";
-            promises.push(searchFoursquarePlaces(lat, lng, fsqQuery).then(results => ({ categoryId, categoryType: type, results, source: "foursquare" })));
+            
+            const googleKeyword = type === "gastronomy" ? "restaurante parrilla" :
+                                 ["coffee", "breakfast"].includes(type) ? "cafetería desayuno" : 
+                                 ["shops", "shopping"].includes(type) ? "centro comercial tiendas" : "bar cervecería";
+
+            promises.push(
+                searchFoursquarePlaces(lat, lng, fsqQuery).then(async (fsqResults) => {
+                    if (fsqResults && fsqResults.length > 0) {
+                        return { categoryId, categoryType: type, results: fsqResults, source: "foursquare" };
+                    }
+                    
+                    // FALLBACK 1: GOOGLE
+                    console.log(`  ⚠️ FSQ fallback to Google for ${type}...`);
+                    try {
+                        const googleResults = await findTopRatedPlaces(lat, lng, `${googleKeyword} cerca de ${categoryLabel}`);
+                        if (googleResults && googleResults.length > 0) {
+                            return { categoryId, categoryType: type, results: googleResults, source: "google" };
+                        }
+                    } catch (e) {
+                        console.warn(`  ❌ Google failed for ${type} (Quota?), trying OSM...`);
+                    }
+
+                    // FALLBACK 2: OSM (OpenStreetMap)
+                    console.log(`  ⚠️ Google fallback to OSM for ${type}...`);
+                    const osmResult = await fetchNearbyPlaces(lat, lng, type);
+                    return { categoryId, categoryType: type, results: osmResult.data || [], source: "osm" };
+                })
+            );
         } else if (["essentials", "supermarket", "pharmacy"].includes(type)) {
             const googleQuery = type === "essentials" ? "supermarket pharmacy" : 
                                type === "supermarket" ? "supermarket grocery" : "pharmacy farmacia";
-            promises.push(findTopRatedPlaces(lat, lng, `${googleQuery} cerca de ${categoryLabel}`).then((results: any) => ({ categoryId, categoryType: type, results, source: "google" }))); // eslint-disable-line @typescript-eslint/no-explicit-any
+            
+            promises.push(
+                findTopRatedPlaces(lat, lng, `${googleQuery} cerca de ${categoryLabel}`).then(async (results) => {
+                    if (results && (results as any).length > 0) {
+                        return { categoryId, categoryType: type, results, source: "google" };
+                    }
+                    // Fallback to OSM
+                    console.log(`  ⚠️ Essentials fallback to OSM...`);
+                    const osmResult = await fetchNearbyPlaces(lat, lng, type);
+                    return { categoryId, categoryType: type, results: osmResult.data || [], source: "osm" };
+                }).catch(async () => {
+                    const osmResult = await fetchNearbyPlaces(lat, lng, type);
+                    return { categoryId, categoryType: type, results: osmResult.data || [], source: "osm" };
+                })
+            );
         } else {
             const keywords = property.categories.find(c => c.type === type)?.searchKeywords?.split(",")[0] || DEFAULT_KEYWORDS[type]?.[0] || type;
             promises.push(searchWithFallback(lat, lng, keywords, type, categoryLabel).then(({ results, source }) => ({ categoryId, categoryType: type, results, source })));
