@@ -44,52 +44,6 @@ const DEFAULT_KEYWORDS: Record<string, string[]> = {
   other: ["lugares de interés"],
 };
 
-// --- HELPER: Get or Create Category ---
-async function getOrCreateCategory(type: string, propertyId: number): Promise<number> {
-    const normalizedType = type.toLowerCase().trim();
-    
-    const displayNames: Record<string, string> = {
-        "gastronomy": "Restaurantes",
-        "sights": "Turismo",
-        "shops": "Tiendas",
-        "shopping": "Compras",
-        "trails": "Senderos",
-        "kids": "Kids",
-        "bars": "Bares",
-        "outdoors": "Outdoors",
-        // Legacy
-        "breakfast": "Desayuno & Cafetería",
-        "tourism": "Atracciones & Cultura",
-        "essentials": "Supermercados & Farmacias",
-        "nightlife": "Vida Nocturna",
-        "coffee": "Café & Brunch",
-        "transit": "Transporte Público",
-        "other": "Otros"
-    };
-
-    const displayName = displayNames[normalizedType] || 
-                        (normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1));
-
-    const existing = await db.select().from(categories).where(
-        and(
-            eq(categories.propertyId, propertyId),
-            eq(categories.type, normalizedType)
-        )
-    ).limit(1);
-
-    if (existing.length > 0) {
-        return existing[0].id;
-    }
-
-    const [newCat] = await db.insert(categories).values({
-        name: displayName,
-        type: normalizedType,
-        propertyId: propertyId,
-        isSystemCategory: false
-    }).returning({ id: categories.id });
-
-    return newCat.id;
-}
 
 // --- HELPER: Search with OSM Fallback ---
 // Intenta Google Places primero, si falla usa OpenStreetMap/Overpass
@@ -200,111 +154,104 @@ export async function populateRecommendations(
     }
 
     // D. Build Search Promises (Category-Driven)
-    const promises: Promise<any>[] = [];
+    const promises: Promise<any>[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
     
-    // Create a map of existing categories for quick lookup
-    const existingCategoriesMap = new Map<string, typeof property.categories[0]>();
-    if (property.categories) {
-        property.categories.forEach(c => {
-            if (c.type) existingCategoriesMap.set(c.type, c);
-        });
+    // 1. Identify all categories to process and batch create them if missing (Optimized)
+    const existingCats = property.categories || [];
+    const existingCatMap = new Map(existingCats.map(c => [c.type, c.id]));
+    const missingCatTypes = categoriesToProcess.filter(type => !existingCatMap.has(type));
+
+    if (missingCatTypes.length > 0) {
+      console.log(`🆕 Batch creating ${missingCatTypes.length} categories...`);
+      const newCats = await db.insert(categories).values(
+        missingCatTypes.map(type => {
+          const displayNames: Record<string, string> = {
+            "gastronomy": "Restaurantes", "sights": "Turismo", "shops": "Tiendas",
+            "shopping": "Compras", "trails": "Senderos", "kids": "Kids",
+            "bars": "Bares", "outdoors": "Outdoors", "breakfast": "Desayuno & Cafetería",
+            "tourism": "Atracciones & Cultura", "essentials": "Supermercados & Farmacias",
+            "nightlife": "Vida Nocturna", "coffee": "Café & Brunch",
+            "transit": "Transporte Público", "other": "Otros"
+          };
+          return {
+            name: displayNames[type] || (type.charAt(0).toUpperCase() + type.slice(1)),
+            type: type,
+            propertyId: propertyId,
+            isSystemCategory: false
+          };
+        })
+      ).returning();
+      newCats.forEach(c => existingCatMap.set(c.type!, c.id));
     }
 
-    console.log(`📂 Found ${existingCategoriesMap.size} existing categories`);
-
+    // 2. DISPATCHER: Choose the best source for each category
     for (const type of categoriesToProcess) {
-        // 1. Get Category ID
-        const categoryId = await getOrCreateCategory(type, propertyId);
+        const categoryId = existingCatMap.get(type)!;
         const categoryLabel = property.city || property.address || "";
         
-        console.log(`  🎯 Processing category: ${type} (ID: ${categoryId})`);
+        console.log(`  🎯 Queueing search for category: ${type} (ID: ${categoryId})`);
 
-        // 2. DISPATCHER: Choose the best source for each category
         if (type === "transit") {
-            // OSM Transit (Free)
-            promises.push(
-                fetchNearbyTransitStops(lat, lng).then(results => ({
-                    categoryId,
-                    categoryType: type,
-                    results,
-                    source: "osm"
-                }))
-            );
+            promises.push(fetchNearbyTransitStops(lat, lng).then(results => ({ categoryId, categoryType: type, results, source: "osm" })));
         } else if (type === "outdoors" || type === "trails") {
-            // OSM Outdoors
-            promises.push(
-                fetchNearbyPlaces(lat, lng, type).then(result => ({
-                    categoryId,
-                    categoryType: type,
-                    results: result.data || [],
-                    source: "osm"
-                }))
-            );
+            promises.push(fetchNearbyPlaces(lat, lng, type).then(result => ({ categoryId, categoryType: type, results: result.data || [], source: "osm" })));
         } else if (["gastronomy", "nightlife", "bars", "coffee", "breakfast"].includes(type)) {
-            // Foursquare for popularity
             const fsqQuery = type === "gastronomy" ? "Restaurant Parrilla Steakhouse" : 
                             type === "coffee" || type === "breakfast" ? "Specialty Coffee Brunch Cafe" :
                             "Cervecería Brewery Bar Pub";
-            
-            promises.push(
-                searchFoursquarePlaces(lat, lng, fsqQuery).then(results => ({
-                    categoryId,
-                    categoryType: type,
-                    results,
-                    source: "foursquare"
-                }))
-            );
+            promises.push(searchFoursquarePlaces(lat, lng, fsqQuery).then(results => ({ categoryId, categoryType: type, results, source: "foursquare" })));
         } else if (["essentials", "supermarket", "pharmacy"].includes(type)) {
-            // Google for precision
             const googleQuery = type === "essentials" ? "supermarket pharmacy" : 
                                type === "supermarket" ? "supermarket grocery" : "pharmacy farmacia";
-                               
-            promises.push(
-                findTopRatedPlaces(lat, lng, `${googleQuery} cerca de ${categoryLabel}`).then(results => ({
-                    categoryId,
-                    categoryType: type,
-                    results,
-                    source: "google"
-                }))
-            );
+            promises.push(findTopRatedPlaces(lat, lng, `${googleQuery} cerca de ${categoryLabel}`).then((results: any) => ({ categoryId, categoryType: type, results, source: "google" }))); // eslint-disable-line @typescript-eslint/no-explicit-any
         } else {
-            // Default Fallback: Google -> OSM
-            const keywords = existingCategoriesMap.get(type)?.searchKeywords?.split(",")[0] || DEFAULT_KEYWORDS[type]?.[0] || type;
-            promises.push(
-                searchWithFallback(lat, lng, keywords, type, categoryLabel).then(({ results, source }) => ({
-                    categoryId,
-                    categoryType: type,
-                    results,
-                    source
-                }))
-            );
+            const keywords = property.categories.find(c => c.type === type)?.searchKeywords?.split(",")[0] || DEFAULT_KEYWORDS[type]?.[0] || type;
+            promises.push(searchWithFallback(lat, lng, keywords, type, categoryLabel).then(({ results, source }) => ({ categoryId, categoryType: type, results, source })));
         }
     }
 
 
-    // D. Execute with Resilience
+    // D. Process & Batch Insert Results
     const results = await Promise.allSettled(promises);
     
     let addedCount = 0;
     let failedServices = 0;
-
+    const allPendingRecs: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
+    
     for (const res of results) {
         if (res.status === "fulfilled") {
             const { categoryId, results: items } = res.value;
-            
-            // Insert items (limit 3 per keyword to avoid spam)
-            for (const item of (items || []).slice(0, 3)) {
-                // Check for duplicates
-                if (item.googlePlaceId) {
-                    const existing = await db.select().from(recommendations).where(
-                        eq(recommendations.googlePlaceId, item.googlePlaceId)
-                    ).limit(1);
-                    if (existing.length > 0) continue;
-                }
+            if (items) {
+                // Limit 3 per Service/Keyword to avoid spam
+                items.slice(0, 3).forEach((item: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                    allPendingRecs.push({ ...item, categoryId });
+                });
+            }
+        } else {
+            failedServices++;
+            console.warn("Service failed:", res.reason);
+        }
+    }
 
-                await db.insert(recommendations).values({
+    if (allPendingRecs.length > 0) {
+        console.log(`🔍 Checking duplicates for ${allPendingRecs.length} total potential recommendations...`);
+        
+        // Batch fetch all existing place IDs for this property to avoid N+1 duplicate checks
+        const existingRecs = await db.select({ googlePlaceId: recommendations.googlePlaceId })
+            .from(recommendations)
+            .where(eq(recommendations.propertyId, propertyId));
+        
+        const existingIdSet = new Set(existingRecs.map(r => r.googlePlaceId).filter(Boolean));
+
+        const filteredRecs = allPendingRecs.filter(rec => !rec.googlePlaceId || !existingIdSet.has(rec.googlePlaceId));
+        
+        if (filteredRecs.length > 0) {
+            console.log(`📥 Bulk inserting ${filteredRecs.length} new unique recommendations...`);
+            
+            await db.insert(recommendations).values(
+                filteredRecs.map((item: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                     propertyId: propertyId,
-                    categoryId: categoryId,
+                    categoryId: item.categoryId,
                     title: item.title,
                     description: item.description || "Recomendado automáticamente",
                     formattedAddress: item.formattedAddress,
@@ -315,13 +262,9 @@ export async function populateRecommendations(
                     externalSource: item.externalSource || "google",
                     geometry: item.geometry || null,
                     isAutoSuggested: true
-                });
-                
-                addedCount++;
-            }
-        } else {
-            failedServices++;
-            console.warn("Service failed:", res.reason);
+                }))
+            );
+            addedCount = filteredRecs.length;
         }
     }
 

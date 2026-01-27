@@ -44,87 +44,99 @@ export async function createProperty(data: PropertyFormData) {
   const p = result.data;
 
   try {
-    // 1. Insert Property (sin transacción para evitar bug con postgres.js)
-    const [newProp] = await db.insert(properties).values({
-      name: p.name,
-      slug: p.slug,
-      address: p.address,
-      city: p.city,
-      country: p.country,
-      latitude: p.latitude,
-      longitude: p.longitude,
-      wifiSsid: p.wifiSsid,
-      wifiPassword: p.wifiPassword,
-      wifiQrCode: p.wifiQrCode,
-      coverImageUrl: p.coverImageUrl,
-      checkInTime: p.checkInTime,
-      checkOutTime: p.checkOutTime,
-      status: p.status || "draft",
-      houseRules: JSON.stringify({
-        text: p.houseRules || "",
-        allowed: p.rulesAllowed?.map(r => r.value) || [],
-        prohibited: p.rulesProhibited?.map(r => r.value) || [],
-        host: {
-          name: p.hostName,
-          image: p.hostImage,
-          phone: p.hostPhone
-        }
-      }),
-    }).returning({ id: properties.id });
+    // 1. Insert Property (sin transacción para evitar conflictos de poolers en inserción inicial si es posible, 
+    // pero aquí usaremos transacción para consistencia si hay relaciones)
+    const propId = await db.transaction(async (tx) => {
+      const [newProp] = await tx.insert(properties).values({
+        name: p.name,
+        slug: p.slug,
+        address: p.address,
+        city: p.city,
+        country: p.country,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        wifiSsid: p.wifiSsid,
+        wifiPassword: p.wifiPassword,
+        wifiQrCode: p.wifiQrCode,
+        coverImageUrl: p.coverImageUrl,
+        checkInTime: p.checkInTime,
+        checkOutTime: p.checkOutTime,
+        status: p.status || "draft",
+        houseRules: JSON.stringify({
+          text: p.houseRules || "",
+          allowed: p.rulesAllowed?.map(r => r.value) || [],
+          prohibited: p.rulesProhibited?.map(r => r.value) || [],
+          host: {
+            name: p.hostName,
+            image: p.hostImage,
+            phone: p.hostPhone
+          }
+        }),
+      }).returning({ id: properties.id });
 
-    const propId = newProp.id;
+      const id = newProp.id;
 
-    // 2. Insert Recommendations (si existen)
-    if (p.recommendations && p.recommendations.length > 0) {
-      for (const rec of p.recommendations) {
-        // Primero crear categoría si no existe
-        const [cat] = await db.insert(categories).values({
-          name: rec.categoryType,
-          type: rec.categoryType.toLowerCase(),
-          propertyId: propId,
-        }).returning({ id: categories.id });
+      // 2. Bulk Insert Categories & Recommendations
+      if (p.recommendations && p.recommendations.length > 0) {
+        const uniqueCatTypes = Array.from(new Set(p.recommendations.map(r => r.categoryType)));
         
-        await db.insert(recommendations).values({
-          title: rec.title,
-          formattedAddress: rec.formattedAddress,
-          googleMapsLink: rec.googleMapsLink,
-          description: rec.description,
-          propertyId: propId,
-          categoryId: cat.id,
-          rating: rec.rating,
-          userRatingsTotal: rec.userRatingsTotal,
-          googlePlaceId: rec.googlePlaceId,
-          externalSource: rec.externalSource,
-          geometry: rec.geometry,
-        });
+        // Inserción masiva de categorías
+        const insertedCats = await tx.insert(categories).values(
+          uniqueCatTypes.map(type => ({
+            name: type.charAt(0).toUpperCase() + type.slice(1),
+            type: type.toLowerCase(),
+            propertyId: id,
+          }))
+        ).returning();
+
+        const catMap = new Map(insertedCats.map(c => [c.type, c.id]));
+
+        // Inserción masiva de recomendaciones
+        await tx.insert(recommendations).values(
+          p.recommendations.map(rec => ({
+            propertyId: id,
+            categoryId: catMap.get(rec.categoryType.toLowerCase()),
+            title: rec.title,
+            formattedAddress: rec.formattedAddress,
+            googleMapsLink: rec.googleMapsLink,
+            description: rec.description,
+            rating: rec.rating ? Number(rec.rating) : null,
+            userRatingsTotal: rec.userRatingsTotal ? Number(rec.userRatingsTotal) : null,
+            googlePlaceId: rec.googlePlaceId,
+            externalSource: rec.externalSource || "manual",
+            geometry: rec.geometry || null,
+          }))
+        );
       }
-    }
 
-    // 3. Insert Emergency Contacts
-    if (p.emergencyContacts && p.emergencyContacts.length > 0) {
-      await db.insert(emergencyContacts).values(
-        p.emergencyContacts.map(c => ({
-          propertyId: propId,
-          name: c.name,
-          phone: c.phone,
-          type: c.type ?? "other"
-        }))
-      );
-    }
+      // 3. Bulk Insert Emergency Contacts
+      if (p.emergencyContacts && p.emergencyContacts.length > 0) {
+        await tx.insert(emergencyContacts).values(
+          p.emergencyContacts.map(c => ({
+            propertyId: id,
+            name: c.name,
+            phone: c.phone,
+            type: c.type ?? "other"
+          }))
+        );
+      }
 
-    // 4. Insert Transport Info
-    if (p.transport && p.transport.length > 0) {
-      await db.insert(transportInfo).values(
-        p.transport.map(t => ({
-          propertyId: propId,
-          name: t.name,
-          type: t.type ?? "taxi",
-          description: t.description,
-          scheduleInfo: t.scheduleInfo,
-          priceInfo: t.priceInfo
-        }))
-      );
-    }
+      // 4. Bulk Insert Transport Info
+      if (p.transport && p.transport.length > 0) {
+        await tx.insert(transportInfo).values(
+          p.transport.map(t => ({
+            propertyId: id,
+            name: t.name,
+            type: t.type ?? "taxi",
+            description: t.description,
+            scheduleInfo: t.scheduleInfo,
+            priceInfo: t.priceInfo
+          }))
+        );
+      }
+
+      return id;
+    });
 
     revalidatePath("/dashboard/properties");
     return { success: true, id: propId };
@@ -137,118 +149,126 @@ export async function createProperty(data: PropertyFormData) {
 
 
 export async function updateProperty(id: number, data: PropertyFormData) {
-   const result = PropertyFormSchema.safeParse(data);
+  const result = PropertyFormSchema.safeParse(data);
   if (!result.success) {
     return { success: false, error: result.error.message };
   }
   const p = result.data;
 
   try {
-     await db.transaction(async (tx) => {
-        // Update basic
-        await tx.update(properties).set({
-            name: p.name,
-            slug: p.slug,
-            address: p.address,
-            city: p.city,
-            country: p.country,
-            latitude: p.latitude,
-            longitude: p.longitude,
-            wifiSsid: p.wifiSsid,
-            wifiPassword: p.wifiPassword,
-            wifiQrCode: p.wifiQrCode,
-            coverImageUrl: p.coverImageUrl,
-            checkInTime: p.checkInTime,
-            checkOutTime: p.checkOutTime,
+    await db.transaction(async (tx) => {
+      // 1. Update basic property info
+      await tx.update(properties).set({
+        name: p.name,
+        slug: p.slug,
+        address: p.address,
+        city: p.city,
+        country: p.country,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        wifiSsid: p.wifiSsid,
+        wifiPassword: p.wifiPassword,
+        wifiQrCode: p.wifiQrCode,
+        coverImageUrl: p.coverImageUrl,
+        checkInTime: p.checkInTime,
+        checkOutTime: p.checkOutTime,
+        houseRules: JSON.stringify({
+          text: p.houseRules || "",
+          allowed: p.rulesAllowed?.map(r => r.value) || [],
+          prohibited: p.rulesProhibited?.map(r => r.value) || [],
+          host: {
+            name: p.hostName,
+            image: p.hostImage,
+            phone: p.hostPhone
+          }
+        }),
+        updatedAt: new Date(),
+        status: p.status || "draft"
+      }).where(eq(properties.id, id));
 
-            // Serialize House Rules including Host Info
-            houseRules: JSON.stringify({
-                  text: p.houseRules || "",
-                  allowed: p.rulesAllowed?.map(r => r.value) || [],
-                  prohibited: p.rulesProhibited?.map(r => r.value) || [],
-                  host: {
-                     name: p.hostName,
-                     image: p.hostImage,
-                     phone: p.hostPhone
-                  }
-                }),
-            updatedAt: new Date()
-        }).where(eq(properties.id, id));
+      // 2. Sync Categories (Optimized)
+      const uniqueCategoryTypes = Array.from(new Set(p.recommendations?.map(r => r.categoryType) || []));
+      
+      // Fetch existing categories for this property only
+      const existingCats = await tx.select().from(categories).where(eq(categories.propertyId, id));
+      const existingCatMap = new Map(existingCats.map(c => [c.type, c.id]));
 
-        // Update relations: simplest approach is delete all and re-insert for this MVP 
-        
-        // 1. Recommendations & Categories
-        await tx.delete(recommendations).where(eq(recommendations.propertyId, id));
-        await tx.delete(categories).where(eq(categories.propertyId, id)); // Delete categories associated with this property
+      // Identify missing categories
+      const missingCatTypes = uniqueCategoryTypes.filter(t => !existingCatMap.has(t));
+      
+      if (missingCatTypes.length > 0) {
+        const newCats = await tx.insert(categories).values(
+          missingCatTypes.map(type => ({
+            name: type.charAt(0).toUpperCase() + type.slice(1),
+            type: type,
+            propertyId: id
+          }))
+        ).returning();
+        newCats.forEach(c => existingCatMap.set(c.type!, c.id));
+      }
 
-        if (p.recommendations && p.recommendations.length > 0) {
-           for (const rec of p.recommendations) {
-               // Find or create category for this property
-               let targetCat = await tx.query.categories.findFirst({
-                   where: eq(categories.type, rec.categoryType),
-               });
+      // 3. Bulk Sync Recommendations
+      await tx.delete(recommendations).where(eq(recommendations.propertyId, id));
+      if (p.recommendations && p.recommendations.length > 0) {
+        const recsToInsert = p.recommendations.map(rec => ({
+          propertyId: id,
+          categoryId: existingCatMap.get(rec.categoryType),
+          title: rec.title,
+          description: rec.description,
+          formattedAddress: rec.formattedAddress,
+          googleMapsLink: rec.googleMapsLink,
+          rating: rec.rating ? Number(rec.rating) : null,
+          userRatingsTotal: rec.userRatingsTotal ? Number(rec.userRatingsTotal) : null,
+          googlePlaceId: rec.googlePlaceId,
+          externalSource: rec.externalSource || "manual",
+          geometry: rec.geometry || null,
+        }));
 
-               if (!targetCat) {
-                   [targetCat] = await tx.insert(categories).values({
-                       name: rec.categoryType.charAt(0).toUpperCase() + rec.categoryType.slice(1),
-                       type: rec.categoryType,
-                       propertyId: id,
-                   }).returning();
-               }
+        // Split into chunks of 50 if very large, but usually it is small
+        await tx.insert(recommendations).values(recsToInsert);
+      }
 
-               await tx.insert(recommendations).values({
-                   title: rec.title,
-                   formattedAddress: rec.formattedAddress,
-                   googleMapsLink: rec.googleMapsLink,
-                   description: rec.description,
-                   propertyId: id,
-                   categoryId: targetCat.id
-               });
-           } 
-        }
+      // 4. Bulk Sync Emergency Contacts
+      await tx.delete(emergencyContacts).where(eq(emergencyContacts.propertyId, id));
+      if (p.emergencyContacts && p.emergencyContacts.length > 0) {
+        await tx.insert(emergencyContacts).values(
+          p.emergencyContacts.map(c => ({
+            propertyId: id,
+            name: c.name,
+            phone: c.phone,
+            type: c.type ?? "other"
+          }))
+        );
+      }
 
-        // 2. Emergency
-        await tx.delete(emergencyContacts).where(eq(emergencyContacts.propertyId, id));
-        if (p.emergencyContacts && p.emergencyContacts.length > 0) {
-             await tx.insert(emergencyContacts).values(
-                p.emergencyContacts.map(c => ({
-                    propertyId: id,
-                    name: c.name,
-                    phone: c.phone,
-                    type: c.type ?? "other"
-                }))
-            );
-        }
+      // 5. Bulk Sync Transport Info
+      await tx.delete(transportInfo).where(eq(transportInfo.propertyId, id));
+      if (p.transport && p.transport.length > 0) {
+        await tx.insert(transportInfo).values(
+          p.transport.map(t => ({
+            propertyId: id,
+            name: t.name,
+            type: t.type ?? "taxi",
+            description: t.description,
+            scheduleInfo: t.scheduleInfo,
+            priceInfo: t.priceInfo
+          }))
+        );
+      }
+    });
 
-        // 3. Transport
-        await tx.delete(transportInfo).where(eq(transportInfo.propertyId, id));
-        if (p.transport && p.transport.length > 0) {
-             await tx.insert(transportInfo).values(
-                p.transport.map(t => ({
-                    propertyId: id,
-                    name: t.name,
-                    type: t.type ?? "taxi",
-                    description: t.description,
-                    scheduleInfo: t.scheduleInfo,
-                    priceInfo: t.priceInfo
-                }))
-            );
-        }
-     });
-
-     revalidatePath(`/dashboard/properties`);
-     revalidatePath(`/dashboard/properties/${id}/edit`);
-     // Revalidate Guest Views (Assuming es/en locales)
-     if (p.slug) {
-         revalidatePath(`/es/stay/${p.slug}`);
-         revalidatePath(`/en/stay/${p.slug}`);
-         // Try generic revalidation just in case
-         revalidatePath(`/[lang]/stay/${p.slug}`, 'page');
-     }
-     return { success: true };
+    // Revalidate paths
+    revalidatePath(`/dashboard/properties`);
+    revalidatePath(`/dashboard/properties/${id}/edit`);
+    if (p.slug) {
+      revalidatePath(`/es/stay/${p.slug}`);
+      revalidatePath(`/en/stay/${p.slug}`);
+      revalidatePath(`/[lang]/stay/${p.slug}`, 'page');
+    }
+    return { success: true };
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-       console.error("Update Error:", err);
-       return { success: false, error: err.message };
+    console.error("Update Error:", err);
+    return { success: false, error: err.message };
   }
 }
 export async function getProperties() {
