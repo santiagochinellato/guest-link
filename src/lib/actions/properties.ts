@@ -44,119 +44,97 @@ export async function createProperty(data: PropertyFormData) {
   const p = result.data;
 
   try {
-    const insertedId = await db.transaction(async (tx) => {
-      // 1. Insert Property
-      const [newProp] = await tx.insert(properties).values({
-        name: p.name,
-        slug: p.slug,
-        address: p.address,
-        city: p.city,
-        country: p.country,
-        latitude: p.latitude,
-        longitude: p.longitude,
-        wifiSsid: p.wifiSsid,
-        wifiPassword: p.wifiPassword,
-        wifiQrCode: p.wifiQrCode,
-        coverImageUrl: p.coverImageUrl,
-        checkInTime: p.checkInTime,
-        checkOutTime: p.checkOutTime,
-        status: p.status || "draft",
-
-        // Host Info
-        // Host Info - Stored in House Rules JSON to avoid migration
-        // Serialize House Rules including Host Info
-        houseRules: JSON.stringify({
-              text: p.houseRules || "",
-              allowed: p.rulesAllowed?.map(r => r.value) || [],
-              prohibited: p.rulesProhibited?.map(r => r.value) || [],
-              host: {
-                 name: p.hostName,
-                 image: p.hostImage,
-                 phone: p.hostPhone
-              }
-            }),
-      }).returning({ id: properties.id });
-
-      const propId = newProp.id;
-
-      // 2. Insert Recommendations
-      if (p.recommendations && p.recommendations.length > 0) {
-        // Need to ensure category IDs are handled or we map string types to category relation? 
-        // For this MVP, we might be storing minimal data or relying on implicit categories.
-        // The schema has `categoryId` FK and `recommendations` table has it.
-        // If we don't have categories table pre-filled, this might fail if we enforce FK.
-        // Let's assume for now we just insert recommendations directly if allowed, 
-        // OR we need to lookup category IDs. 
-        // The current schema shows `recommendations` needs `categoryId` OR `propertyId`.
-        // Wait, schema says `categoryId` is a reference. 
-        // We probably need to resolve `categoryType` string to `categoryId`.
-        // Simplification for MVP: Create categories on the fly or fetch them.
-        // Since we are rebuilding, let's assume we just save them linked to property and maybe create a default category if needed.
-        // ACTUALLY, checking schema: `recommendations` table has `categoryId` integer reference.
-        // So we MUST have a category.
-        
-        // Let's fetch all categories for this property or system categories first.
-        // Complexity: This requires extensive category management.
-        // Hack for MVP Prompt: Just insert them. If FK fails, we need to fix. 
-        // Assuming we are just storing them for now.
-        
-        for (const rec of p.recommendations) {
-           await tx.insert(recommendations).values({
-             title: rec.title,
-             formattedAddress: rec.formattedAddress,
-             googleMapsLink: rec.googleMapsLink,
-             description: rec.description,
-             propertyId: propId,
-             // categoryId: ??? We need to solve this. 
-             // We'll store categoryType in description or handle it later?
-             // NO, `categoryType` isn't in `recommendations` table in schema line 43. 
-             // It is in `categories` table.
-             // So each rec must belong to a category.
-             // We should find/create category for this property.
-           });
-           // Note: The schema provided earlier had `recommendations` table linked to `categories`.
-           // Code needs to handle this.
-           // I'll skip complex category logic for a moment and focus on Property data.
-           // User prompt said: "categoryType: activeCategory.toLowerCase()" in the client.
+    // 1. Insert Property (sin transacción para evitar bug con postgres.js)
+    const [newProp] = await db.insert(properties).values({
+      name: p.name,
+      slug: p.slug,
+      address: p.address,
+      city: p.city,
+      country: p.country,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      wifiSsid: p.wifiSsid,
+      wifiPassword: p.wifiPassword,
+      wifiQrCode: p.wifiQrCode,
+      coverImageUrl: p.coverImageUrl,
+      checkInTime: p.checkInTime,
+      checkOutTime: p.checkOutTime,
+      status: p.status || "draft",
+      houseRules: JSON.stringify({
+        text: p.houseRules || "",
+        allowed: p.rulesAllowed?.map(r => r.value) || [],
+        prohibited: p.rulesProhibited?.map(r => r.value) || [],
+        host: {
+          name: p.hostName,
+          image: p.hostImage,
+          phone: p.hostPhone
         }
-      }
+      }),
+    }).returning({ id: properties.id });
 
-      // 3. Insert Emergency
-      if (p.emergencyContacts && p.emergencyContacts.length > 0) {
-        await tx.insert(emergencyContacts).values(
-          p.emergencyContacts.map(c => ({
-            propertyId: propId,
-            name: c.name,
-            phone: c.phone,
-            type: c.type ?? "other"
-          }))
-        );
-      }
+    const propId = newProp.id;
 
-      // 4. Insert Transport
-      if (p.transport && p.transport.length > 0) {
-        await tx.insert(transportInfo).values(
-            p.transport.map(t => ({
-                propertyId: propId,
-                name: t.name,
-                type: t.type ?? "taxi",
-                description: t.description,
-                scheduleInfo: t.scheduleInfo,
-                priceInfo: t.priceInfo
-            }))
-        );
+    // 2. Insert Recommendations (si existen)
+    if (p.recommendations && p.recommendations.length > 0) {
+      for (const rec of p.recommendations) {
+        // Primero crear categoría si no existe
+        const [cat] = await db.insert(categories).values({
+          name: rec.categoryType,
+          type: rec.categoryType.toLowerCase(),
+          propertyId: propId,
+        }).returning({ id: categories.id });
+        
+        await db.insert(recommendations).values({
+          title: rec.title,
+          formattedAddress: rec.formattedAddress,
+          googleMapsLink: rec.googleMapsLink,
+          description: rec.description,
+          propertyId: propId,
+          categoryId: cat.id,
+          rating: rec.rating,
+          userRatingsTotal: rec.userRatingsTotal,
+          googlePlaceId: rec.googlePlaceId,
+          externalSource: rec.externalSource,
+          geometry: rec.geometry,
+        });
       }
+    }
 
-      return propId;
-    });
+    // 3. Insert Emergency Contacts
+    if (p.emergencyContacts && p.emergencyContacts.length > 0) {
+      await db.insert(emergencyContacts).values(
+        p.emergencyContacts.map(c => ({
+          propertyId: propId,
+          name: c.name,
+          phone: c.phone,
+          type: c.type ?? "other"
+        }))
+      );
+    }
+
+    // 4. Insert Transport Info
+    if (p.transport && p.transport.length > 0) {
+      await db.insert(transportInfo).values(
+        p.transport.map(t => ({
+          propertyId: propId,
+          name: t.name,
+          type: t.type ?? "taxi",
+          description: t.description,
+          scheduleInfo: t.scheduleInfo,
+          priceInfo: t.priceInfo
+        }))
+      );
+    }
 
     revalidatePath("/dashboard/properties");
-    return { success: true, id: insertedId };
-  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-    console.error("Create Property Error:", error);
-    return { success: false, error: error.message };
+    return { success: true, id: propId };
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Create Property Error:", err);
+    return { success: false, error: err.message };
   }
 }
+
 
 export async function updateProperty(id: number, data: PropertyFormData) {
    const result = PropertyFormSchema.safeParse(data);
