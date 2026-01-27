@@ -8,6 +8,20 @@
       "when": 1769178465402,
       "tag": "0000_faithful_meteorite",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1769517303667,
+      "tag": "0001_worthless_dark_beast",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769520138137,
+      "tag": "0002_remarkable_mattie_franklin",
+      "breakpoints": true
     }
   ]
 }

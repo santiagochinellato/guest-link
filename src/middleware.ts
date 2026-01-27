@@ -1,6 +1,8 @@
+import NextAuth from "next-auth";
 import createMiddleware from 'next-intl/middleware';
- 
-export default createMiddleware({
+import { authConfig } from "./auth.config";
+
+const intlMiddleware = createMiddleware({
   // A list of all locales that are supported
   locales: ['en', 'es', 'pt'],
  
@@ -10,10 +12,12 @@ export default createMiddleware({
   // Detects the user's preferred language from the Accept-Language header
   localeDetection: true
 });
- 
+
+export default NextAuth(authConfig).auth((req) => {
+  return intlMiddleware(req);
+});
+
 export const config = {
   // Match only internationalized pathnames
-  // We apply this only to /stay/... routes if we want admin to be untranslated or default
-  // But typically middleware wraps everything or specific paths.
-  matcher: ['/stay/:path*']
+  matcher: ['/((?!api|_next|.*\\..*).*)']
 };
