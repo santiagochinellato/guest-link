@@ -4,12 +4,19 @@ import * as schema from "./schema";
 
 // Supabase/Vercel provee POSTGRES_URL.
 // Usamos "rejectUnauthorized: false" porque los certificados self-signed de Supabase lo requieren.
-const connectionString =
+const rawConnectionString =
   process.env.POSTGRES_URL ||
   process.env.DATABASE_URL;
 
-if (!connectionString) {
+if (!rawConnectionString) {
   throw new Error("Missing POSTGRES_URL or DATABASE_URL");
+}
+
+// Remover sslmode del string para evitar conflicto con nuestra configuración ssl manual
+// y agregar uselibpqcompat para compatibilidad con certificados self-signed
+let connectionString = rawConnectionString.replace(/[?&]sslmode=[^&]*/g, '');
+if (!connectionString.includes('uselibpqcompat')) {
+  connectionString += (connectionString.includes('?') ? '&' : '?') + 'uselibpqcompat=true';
 }
 
 const globalForDb = globalThis as unknown as { conn: Pool | undefined };
@@ -27,4 +34,3 @@ const pool = globalForDb.conn ?? new Pool({
 if (process.env.NODE_ENV !== "production") globalForDb.conn = pool;
 
 export const db = drizzle(pool, { schema });
-
