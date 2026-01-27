@@ -1,9 +1,10 @@
+import "dotenv/config";
 import { db } from "./index";
 import { properties, categories, recommendations, emergencyContacts, transportInfo } from "./schema";
-import { eq } from "drizzle-orm";
+
 
 async function main() {
-  console.log("🌱 Starting seed...");
+  console.log("🌱 Starting seed (Supabase Edition)...");
 
   try {
     // 1. Limpiar datos existentes (Delete in reverse dependency order)
@@ -15,32 +16,32 @@ async function main() {
     await db.delete(properties);
 
     // 2. Crear Propiedad
-    console.log("🏠 Creating Demo Property...");
+    console.log("🏠 Creating Main Property: Sunset Villa - Demo...");
     const [property] = await db.insert(properties).values({
-        name: "Casa del Lago - Demo",
-        slug: "casa-del-lago-demo",
-        address: "Av. Bustillo Km 5, Bariloche",
-        city: "San Carlos de Bariloche",
+        name: "Sunset Villa - Demo",
+        slug: "sunset-villa-demo",
+        address: "Av. Del Sol 450",
+        city: "Mendoza",
         country: "Argentina",
-        wifiSsid: "CasaDelLago_Guest",
-        wifiPassword: "disfrutadellago",
-        checkInTime: "15:00",
-        checkOutTime: "11:00",
+        wifiSsid: "SunsetVilla_Guest",
+        wifiPassword: "sunsetexperience",
+        checkInTime: "14:00",
+        checkOutTime: "10:00",
         status: "active",
-        coverImageUrl: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80",
+        coverImageUrl: "https://images.unsplash.com/photo-1613490493576-2f508152fca9?auto=format&fit=crop&q=80",
         houseRules: JSON.stringify({
-            text: "Prohibido fumar en el interior. No se permiten fiestas ruidosas. Respetar el horario de silencio a partir de las 22hs.", 
-            allowed: ["Mascotas (consultar)", "Fumar en el balcón"], 
-            prohibited: ["Fiestas", "Drogas"]
+            text: "Relax and enjoy the view. No loud music after 10 PM. No smoking inside.",
+            allowed: ["Pets (small)", "Barbecue"],
+            prohibited: ["Smoking inside", "Parties"]
         })
     }).returning();
 
     // 3. Crear Categorías
     console.log("📂 Creating Categories...");
     const catsData = [
-        { name: "Restaurantes", type: "restaurants", icon: "Utensils", displayOrder: 1 },
-        { name: "Vida Nocturna", type: "bars", icon: "Martini", displayOrder: 2 },
-        { name: "Farmacias", type: "pharmacy", icon: "Pill", displayOrder: 3 },
+        { name: "Gastronomy", type: "restaurants", icon: "Utensils", displayOrder: 1 },
+        { name: "Nightlife", type: "bars", icon: "Martini", displayOrder: 2 },
+        { name: "Services", type: "pharmacy", icon: "Briefcase", displayOrder: 3 },
     ];
 
     const insertedCats = await db.insert(categories).values(
@@ -51,62 +52,94 @@ async function main() {
         }))
     ).returning();
 
-    const restaurantCat = insertedCats.find(c => c.type === "restaurants");
-    const nightlifeCat = insertedCats.find(c => c.type === "bars");
-    const pharmacyCat = insertedCats.find(c => c.type === "pharmacy");
+    const gastroCat = insertedCats.find(c => c.type === "restaurants");
+    const nightCat = insertedCats.find(c => c.type === "bars");
+    const servicesCat = insertedCats.find(c => c.type === "pharmacy");
 
     // 4. Crear Recomendaciones
-    if (restaurantCat) {
+    if (gastroCat) {
         await db.insert(recommendations).values([
             {
-                title: "El Boliche de Alberto",
-                description: "La mejor parrilla de Bariloche. Carnes excelentes y porciones abundantes.",
-                formattedAddress: "Villegas 347",
-                googleMapsLink: "https://maps.google.com/?q=El+Boliche+de+Alberto",
+                title: "La Parrilla de Don Julio",
+                description: "World famous steakhouse. Reservation required.",
+                formattedAddress: "Guatemala 4699",
+                googleMapsLink: "https://maps.google.com/?q=Don+Julio+Parrilla",
                 propertyId: property.id,
-                categoryId: restaurantCat.id
+                categoryId: gastroCat.id
             },
             {
-                title: "Manush",
-                description: "Cervecería artesanal con muy buena comida y ambiente acogedor.",
-                formattedAddress: "Elflein 47", 
-                googleMapsLink: "https://maps.google.com/?q=Manush",
+                title: "Azafrán",
+                description: "Contemporary Argentine cuisine with a great wine cellar.",
+                formattedAddress: "Sarmiento 765",
+                googleMapsLink: "https://maps.google.com/?q=Azafran+Resto",
                 propertyId: property.id,
-                categoryId: restaurantCat.id
+                categoryId: gastroCat.id
+            },
+             {
+                title: "Casa Vigil",
+                description: "Winery lunch experience. Top rated.",
+                formattedAddress: "Videla Aranda 7008",
+                googleMapsLink: "https://maps.google.com/?q=Casa+Vigil",
+                propertyId: property.id,
+                categoryId: gastroCat.id
             }
         ]);
     }
 
-    if (nightlifeCat) {
+    if (nightCat) {
         await db.insert(recommendations).values([
             {
-                title: "Cervecería Patagonia",
-                description: "Vista increíble al lago y cervezas premium. Ideal para el atardecer.",
-                formattedAddress: "Ruta 77, Circuito Chico",
-                googleMapsLink: "https://maps.google.com/?q=Cerveceria+Patagonia",
+                title: "Blue Velvet Bar",
+                description: "Jazz and cocktails in a speakeasy atmosphere.",
+                formattedAddress: "Av. Aristides Villanueva 234",
+                googleMapsLink: "https://maps.google.com/?q=Blue+Velvet",
                 propertyId: property.id,
-                categoryId: nightlifeCat.id
+                categoryId: nightCat.id
             },
             {
-                title: "Ice Bariloche",
-                description: "Bar de hielo, una experiencia única en el centro.",
-                formattedAddress: "España 476",
-                googleMapsLink: "https://maps.google.com/?q=Ice+Bariloche",
+                title: "Gingger",
+                description: "Trendy bar with DJ sets.",
+                formattedAddress: "Av. Aristides Villanueva 400",
+                googleMapsLink: "https://maps.google.com/?q=Gingger+Bar",
                 propertyId: property.id,
-                categoryId: nightlifeCat.id
+                categoryId: nightCat.id
+            },
+             {
+                title: "The Beer Club",
+                description: "Craft beer heaven.",
+                formattedAddress: "Lencinas 45",
+                googleMapsLink: "https://maps.google.com/?q=The+Beer+Club",
+                propertyId: property.id,
+                categoryId: nightCat.id
             }
         ]);
     }
-    
-    if (pharmacyCat) {
+
+    if (servicesCat) {
          await db.insert(recommendations).values([
             {
-                title: "Farmacia Del Centro",
-                description: "Abierto 24hs. Atención rápida.",
-                formattedAddress: "Mitre 123",
-                googleMapsLink: "https://maps.google.com/?q=Farmacia+Del+Centro",
+                title: "Central Hospital",
+                description: "General hospital, 24/7 ER.",
+                formattedAddress: "Alem 123",
+                googleMapsLink: "https://maps.google.com/?q=Hospital+Central",
                 propertyId: property.id,
-                categoryId: pharmacyCat.id
+                categoryId: servicesCat.id
+            },
+             {
+                title: "Police Station #3",
+                description: "Nearest police station.",
+                formattedAddress: "San Martin 345",
+                googleMapsLink: "https://maps.google.com/?q=Comisaria+3",
+                propertyId: property.id,
+                categoryId: servicesCat.id
+            },
+            {
+                title: "Super Market Vea",
+                description: "Grocery store nearby.",
+                formattedAddress: "Las Heras 234",
+                googleMapsLink: "https://maps.google.com/?q=Super+Vea",
+                propertyId: property.id,
+                categoryId: servicesCat.id
             }
         ]);
     }
@@ -114,7 +147,7 @@ async function main() {
     // 5. Crear Emergencia
     console.log("🚨 Creating Emergency Contacts...");
     await db.insert(emergencyContacts).values({
-        name: "Policía",
+        name: "Emergency (General)",
         phone: "911",
         type: "police",
         propertyId: property.id
@@ -123,11 +156,11 @@ async function main() {
     // 6. Crear Transporte
     console.log("🚕 Creating Transport Info...");
     await db.insert(transportInfo).values({
-        name: "Remises Bariloche",
+        name: "Uber / Cabify",
         type: "taxi",
-        phone: "+54 294 444 4444",
-        description: "Servicio de taxi confiable 24hs. Aceptan pagos con tarjeta.",
-        scheduleInfo: "24hs",
+        phone: "App",
+        description: "Recommended for getting around the city. Reliable and trackable.",
+        scheduleInfo: "24/7",
         propertyId: property.id
     });
 
