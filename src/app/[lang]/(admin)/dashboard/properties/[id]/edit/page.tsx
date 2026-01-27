@@ -2,6 +2,7 @@ import { PropertyForm } from "@/components/admin/property-form";
 import { Suspense } from "react";
 import { getProperty } from "@/lib/actions/properties";
 import { notFound } from "next/navigation";
+import { ContentLoader } from "@/components/ui/content-loader";
 
 // Server Component (removed "use client")
 export default async function EditPropertyPage({
@@ -27,7 +28,7 @@ export default async function EditPropertyPage({
   }
 
   return (
-    <Suspense fallback={<div>Cargando formulario...</div>}>
+    <Suspense fallback={<ContentLoader text="Cargando propiedad..." />}>
       <PropertyForm initialData={result.data} isEditMode={true} />
     </Suspense>
   );

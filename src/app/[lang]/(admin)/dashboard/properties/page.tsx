@@ -31,7 +31,7 @@ export default async function PropertiesPage() {
 
   return (
     <div className="space-y-6 px-2 pb-16">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Properties</h1>
           <p className="text-gray-500 dark:text-gray-400">

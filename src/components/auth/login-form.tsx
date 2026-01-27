@@ -22,7 +22,6 @@ export function LoginForm() {
     undefined,
   );
 
-  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (registerState === "success") {
       setShowSuccess(true);
