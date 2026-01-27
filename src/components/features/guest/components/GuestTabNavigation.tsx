@@ -1,24 +1,17 @@
-import {
-  BookOpen,
-  Router,
-  MessageCircle,
-  Wifi,
-  FileText,
-  CableCar,
-  TramFront,
-  Info,
-} from "lucide-react";
+import { Wifi, FileText, CableCar, TramFront, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GuestViewMode } from "@/components/features/guest/hooks/useGuestView";
 
 interface GuestTabNavigationProps {
   activeView: GuestViewMode;
   onNavigate: (view: GuestViewMode) => void;
+  variant?: "mobile" | "desktop";
 }
 
 export function GuestTabNavigation({
   activeView,
   onNavigate,
+  variant = "mobile",
 }: GuestTabNavigationProps) {
   const tabs: {
     id: GuestViewMode;
@@ -55,11 +48,37 @@ export function GuestTabNavigation({
   ];
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-black/90 backdrop-blur-2xl border border-white/20 dark:border-white/10 p-1.5 rounded-3xl shadow-2xl z-50 flex items-center justify-center gap-1 sm:gap-2 ring-1 ring-black/5 w-[95%]">
+    <div
+      className={cn(
+        variant === "mobile"
+          ? "fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-black/90 backdrop-blur-2xl border border-white/20 dark:border-white/10 p-1.5 rounded-3xl shadow-2xl z-50 flex items-center justify-center gap-1 sm:gap-2 ring-1 ring-black/5 w-[95%]"
+          : "flex items-center justify-center gap-2 w-full",
+      )}
+    >
       {tabs.map((tab) => {
         const isActive = activeView === tab.id;
 
-        if (tab.isCenter) {
+        // Desktop Specific Button Style
+        if (variant === "desktop") {
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onNavigate(tab.id)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold",
+                isActive
+                  ? "bg-[#0f756d] text-white shadow-lg"
+                  : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5",
+              )}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          );
+        }
+
+        // Mobile Styles (Original)
+        if (tab.isCenter && variant === "mobile") {
           return (
             <button
               key={tab.id}

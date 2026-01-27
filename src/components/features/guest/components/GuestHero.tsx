@@ -1,20 +1,27 @@
+import { cn } from "@/lib/utils";
+
 interface GuestHeroProps {
   image: string;
   name: string;
   address: string;
   hostName?: string;
   hostImage?: string;
+  className?: string;
 }
 
 export function GuestHero({
   image,
   name,
-  address,
-  hostName,
-  hostImage,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  address: _address,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  hostName: _hostName,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  hostImage: _hostImage,
+  className,
 }: GuestHeroProps) {
   return (
-    <div className="relative w-full h-[380px] group">
+    <div className={cn("relative w-full h-[380px] group", className)}>
       <div
         className="absolute inset-0 bg-cover bg-center transition-transform duration-700"
         style={{
@@ -23,7 +30,7 @@ export function GuestHero({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-      <div className="absolute bottom-10 left-0 w-full p-6 flex flex-col gap-4">
+      <div className="absolute  left-0 w-full p-6 flex flex-col gap-4">
         <div>
           <span className="inline-block px-3 py-1 mb-2 text-xs font-medium tracking-wider text-white uppercase bg-[#0f756d]/90 backdrop-blur-sm rounded-full shadow-lg">
             Bienvenido a
