@@ -387,7 +387,16 @@ export async function getProperty(id: number) {
            scheduleInfo: t.scheduleInfo || "",
            priceInfo: t.priceInfo || "",
         })),
-        categories: prop.categories || []
+        categories: prop.categories.map(c => ({
+           id: c.id,
+           name: c.name,
+           icon: c.icon || undefined,
+           type: c.type || "other",
+           displayOrder: c.displayOrder || undefined,
+           isSystemCategory: c.isSystemCategory || undefined,
+           searchKeywords: c.searchKeywords || undefined,
+           propertyId: c.propertyId || undefined
+        })) || []
      };
 
      return { success: true, data: { ...formData, id: prop.id } };

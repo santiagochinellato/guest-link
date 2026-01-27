@@ -1,4 +1,4 @@
-import { Client, TravelMode, UnitSystem } from "@googlemaps/google-maps-services-js";
+import { Client, TravelMode, UnitSystem, Language } from "@googlemaps/google-maps-services-js";
 
 const client = new Client({});
 
@@ -160,7 +160,7 @@ export async function findGoogleTransitStations(lat: number, lng: number) {
         radius: 1000, // 1km
         type: "transit_station",
         key: process.env.GOOGLE_MAPS_API_KEY!,
-        language: "es",
+        language: Language.es,
       },
     });
 
@@ -203,7 +203,7 @@ export async function findTransitRoute(
         departure_time: nextMonday,
         units: UnitSystem.metric,
         key: process.env.GOOGLE_MAPS_API_KEY!,
-        language: "es",
+        language: Language.es,
         alternatives: true, // Find multiple routes to discover more lines
       },
     });
@@ -218,7 +218,7 @@ export async function findTransitRoute(
       const leg = route.legs[0];
 
       // Find the TRANSIT step (the bus)
-      const transitStep = leg.steps.find((s) => s.travel_mode === "TRANSIT");
+      const transitStep = leg.steps.find((s) => s.travel_mode === TravelMode.transit);
 
       if (transitStep && transitStep.transit_details) {
         const line = transitStep.transit_details.line;

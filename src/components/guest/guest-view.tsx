@@ -29,7 +29,9 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
   const categories = property.recommendations
     ? Array.from(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        new Set(property.recommendations.map((r: any) => r.categoryType)),
+        new Set<string>(
+          property.recommendations.map((r: any) => r.categoryType),
+        ),
       ).filter((c) => c !== "transit")
     : [];
 

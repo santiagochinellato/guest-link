@@ -1,5 +1,4 @@
 import {
-  Plus,
   TrendingUp,
   Eye,
   Home,
@@ -10,21 +9,19 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getProperties } from "@/lib/actions/properties";
-import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 export default async function DashboardPage() {
   const result = await getProperties();
-  const properties = result.success ? result.data : [];
+  const properties = result.success && result.data ? result.data : [];
 
   const activePropertiesCount = properties.length;
   const totalViews = properties.reduce(
     (acc, curr) => acc + (curr.views || 0),
     0,
   );
-  const totalScans = properties.reduce(
-    (acc, curr) => acc + (curr.qrScans || 0),
-    0,
-  );
+  // qrScans is not yet supported in DB
+  const totalScans = 0;
 
   // MOCK Images for demo purposes if real properties don't have images
   const MOCK_IMAGES = [
@@ -147,13 +144,14 @@ export default async function DashboardPage() {
                   <div className="absolute top-3 right-3 z-10 bg-[#0f756d] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
                     Published
                   </div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={
                       prop.coverImageUrl ||
                       MOCK_IMAGES[idx % MOCK_IMAGES.length]
                     }
                     alt={prop.name}
+                    width={500}
+                    height={300}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -161,12 +159,14 @@ export default async function DashboardPage() {
 
                 {/* Mobile Thumbnail */}
                 <div className="w-20 h-20 md:hidden p-2 flex-shrink-0">
-                  <img
+                  <Image
                     src={
                       prop.coverImageUrl ||
                       MOCK_IMAGES[idx % MOCK_IMAGES.length]
                     }
                     alt={prop.name}
+                    width={80}
+                    height={80}
                     className="w-full h-full object-cover rounded-lg"
                   />
                 </div>
@@ -200,7 +200,7 @@ export default async function DashboardPage() {
                       >
                         <QrCode className="w-4 h-4 text-gray-400" />
                         <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                          {prop.qrScans || 0}
+                          {0}
                         </span>
                       </div>
                     </div>
@@ -219,7 +219,7 @@ export default async function DashboardPage() {
                         <Eye className="w-3 h-3" /> {prop.views || 0}
                       </span>
                       <span className="flex items-center gap-1">
-                        <QrCode className="w-3 h-3" /> {prop.qrScans || 0}
+                        <QrCode className="w-3 h-3" /> {0}
                       </span>
                     </div>
                     <Link

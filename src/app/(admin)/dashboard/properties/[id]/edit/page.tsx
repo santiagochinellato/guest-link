@@ -1,4 +1,5 @@
 import { PropertyForm } from "@/components/admin/property-form";
+import { Suspense } from "react";
 import { getProperty } from "@/lib/actions/properties";
 import { notFound } from "next/navigation";
 
@@ -25,5 +26,9 @@ export default async function EditPropertyPage({
     );
   }
 
-  return <PropertyForm initialData={result.data} isEditMode={true} />;
+  return (
+    <Suspense fallback={<div>Cargando formulario...</div>}>
+      <PropertyForm initialData={result.data} isEditMode={true} />
+    </Suspense>
+  );
 }

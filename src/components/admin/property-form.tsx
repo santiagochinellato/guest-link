@@ -20,11 +20,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  PropertyFormSchema,
-  PropertyFormData,
-  CategoryFromDB,
-} from "@/lib/schemas";
+import { PropertyFormSchema, PropertyFormData } from "@/lib/schemas";
 import { createProperty, updateProperty } from "@/lib/actions/properties";
 import {
   BasicInfoSection,
@@ -40,7 +36,6 @@ import {
 interface PropertyFormProps {
   initialData?: Partial<PropertyFormData> & {
     id?: number;
-    categories?: CategoryFromDB[];
   };
   isEditMode?: boolean;
 }

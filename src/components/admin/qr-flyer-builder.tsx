@@ -18,7 +18,7 @@ interface QrFlyerBuilderProps {
 }
 
 export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
-  const qrRef = useRef<HTMLDivElement>(null);
+  const qrRef = useRef<HTMLDivElement>(null!);
   const [scale, setScale] = useState(0.5);
 
   const [config, setConfig] = useState<FlyerConfig>({

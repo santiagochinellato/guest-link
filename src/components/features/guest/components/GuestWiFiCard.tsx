@@ -35,11 +35,12 @@ export function GuestWiFiCard({ ssid, password }: GuestWiFiCardProps) {
         </div>
 
         {/* Responsive Layout: Flex Column on Mobile, Grid/Flex Row on Desktop */}
-        <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+        {/* Responsive Layout: Flex Column on Mobile/Tablet/Laptop, Grid/Flex Row on Large Desktop (XL) */}
+        <div className="flex flex-col xl:flex-row items-center gap-6 xl:gap-8 relative z-10">
           {/* Left Side: QR Code & Title (Centered) */}
           <div className="flex flex-col items-center gap-4 shrink-0">
-            <div className="text-center md:text-left">
-              <h3 className="text-xl font-bold text-neutral-900 dark:text-white flex items-center justify-center md:justify-start gap-2">
+            <div className="text-center xl:text-left">
+              <h3 className="text-xl font-bold text-neutral-900 dark:text-white flex items-center justify-center xl:justify-start gap-2">
                 <Wifi className="w-5 h-5 text-[#0f756d]" /> Red WiFi
               </h3>
               <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
@@ -61,17 +62,17 @@ export function GuestWiFiCard({ ssid, password }: GuestWiFiCardProps) {
             </div>
             <button
               onClick={handleConnect}
-              className="flex items-center gap-2 px-6 py-2 bg-[#0f756d] text-white rounded-xl shadow-lg shadow-[#0f756d]/20 active:scale-95 transition-all text-sm font-bold animate-in zoom-in duration-300 md:hidden"
+              className="flex items-center gap-2 px-6 py-2 bg-[#0f756d] text-white rounded-xl shadow-lg shadow-[#0f756d]/20 active:scale-95 transition-all text-sm font-bold animate-in zoom-in duration-300 xl:hidden"
             >
               <Wifi className="w-4 h-4" /> Conectar
             </button>
           </div>
 
           {/* Right Side: Details & Desktop Connect Button */}
-          <div className="flex flex-col items-center md:items-start gap-4 flex-1 min-w-0">
-            {/* Desktop Connect Button (Visible only on md+) */}
-            <div className="hidden md:block w-full mb-2">
-              <div className="p-4 bg-[#f0fdfc] dark:bg-[#0f756d]/10 rounded-2xl border border-[#0f756d]/20 text-center md:text-left">
+          <div className="flex flex-col items-center xl:items-start gap-4 flex-1 min-w-0 w-full">
+            {/* Desktop Connect Button (Visible only on xl+) */}
+            <div className="hidden xl:block w-full mb-2">
+              <div className="p-4 bg-[#f0fdfc] dark:bg-[#0f756d]/10 rounded-2xl border border-[#0f756d]/20 text-center xl:text-left">
                 <p className="text-sm text-[#0f756d] font-medium mb-3">
                   ¿Estás en tu móvil? Toca abajo para conectar.
                 </p>
@@ -86,13 +87,13 @@ export function GuestWiFiCard({ ssid, password }: GuestWiFiCardProps) {
 
             <div className="flex flex-col gap-3 w-full">
               {/* Network Name */}
-              <div className="flex items-center gap-3 px-5 py-4 bg-[#f6f8f8] dark:bg-neutral-900/50 rounded-2xl w-full justify-between border border-gray-100 dark:border-neutral-800">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-sm">
+              <div className="flex items-center gap-3 px-4 py-3 bg-[#f6f8f8] dark:bg-neutral-900/50 rounded-2xl w-full justify-between border border-gray-100 dark:border-neutral-800">
+                <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+                  <div className="p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-sm shrink-0">
                     <Router className="w-4 h-4 text-[#0f756d]" />
                   </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">
+                  <div className="flex flex-col text-left overflow-hidden min-w-0">
+                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider truncate">
                       Red
                     </span>
                     <span className="text-sm font-bold text-neutral-700 dark:text-neutral-200 truncate">
@@ -102,20 +103,20 @@ export function GuestWiFiCard({ ssid, password }: GuestWiFiCardProps) {
                 </div>
                 <button
                   onClick={() => handleCopy(ssid || "")}
-                  className="size-8 flex items-center justify-center rounded-full bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 text-[#0f756d] shadow-sm transition-colors active:scale-90"
+                  className="size-8 flex items-center justify-center rounded-full bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 text-[#0f756d] shadow-sm transition-colors active:scale-90 shrink-0"
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </button>
               </div>
 
               {/* Password */}
-              <div className="flex items-center gap-3 px-5 py-4 bg-[#f6f8f8] dark:bg-neutral-900/50 rounded-2xl w-full justify-between border border-gray-100 dark:border-neutral-800">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-sm">
+              <div className="flex items-center gap-3 px-4 py-3 bg-[#f6f8f8] dark:bg-neutral-900/50 rounded-2xl w-full justify-between border border-gray-100 dark:border-neutral-800">
+                <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+                  <div className="p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-sm shrink-0">
                     <Lock className="w-4 h-4 text-[#0f756d]" />
                   </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">
+                  <div className="flex flex-col text-left overflow-hidden min-w-0">
+                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider truncate">
                       Contraseña
                     </span>
                     <span className="text-sm font-mono font-bold text-neutral-700 dark:text-neutral-200 truncate">
@@ -125,7 +126,7 @@ export function GuestWiFiCard({ ssid, password }: GuestWiFiCardProps) {
                 </div>
                 <button
                   onClick={() => handleCopy(password || "")}
-                  className="size-8 flex items-center justify-center rounded-full bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 text-[#0f756d] shadow-sm transition-colors active:scale-90"
+                  className="size-8 flex items-center justify-center rounded-full bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 text-[#0f756d] shadow-sm transition-colors active:scale-90 shrink-0"
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </button>

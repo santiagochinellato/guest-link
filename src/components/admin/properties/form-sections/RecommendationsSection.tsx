@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PropertyFormData, CategoryFromDB } from "@/lib/schemas";
+import { PropertyFormData } from "@/lib/schemas";
 import { AutoFillButton } from "@/components/admin/auto-fill-button";
 import { KeywordModal } from "@/components/admin/keyword-modal";
 import {
@@ -30,7 +30,7 @@ import {
 interface RecommendationsTabProps {
   initialData: {
     id?: number;
-    categories?: CategoryFromDB[];
+    categories?: PropertyFormData["categories"];
     recommendations?: any[];
   };
 }
@@ -122,8 +122,10 @@ export function RecommendationsSection({
     if (initialData.categories && Array.isArray(initialData.categories)) {
       const existingTypes = new Set(defaultCategories.map((c) => c.id));
       const customCatsFromDB = initialData.categories
-        .filter((cat: CategoryFromDB) => !existingTypes.has(cat.type))
-        .map((cat: CategoryFromDB) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((cat: any) => !existingTypes.has(cat.type))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((cat: any) => ({
           id: cat.type,
           label: cat.name,
           icon: Tag,
@@ -135,8 +137,9 @@ export function RecommendationsSection({
       if (customCatsFromDB.length > 0) {
         setCategoriesList((prev) => {
           const currentIds = new Set(prev.map((p) => p.id));
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const uniqueToAdd = customCatsFromDB.filter(
-            (c) => !currentIds.has(c.id),
+            (c: any) => !currentIds.has(c.id),
           );
           return [...prev, ...uniqueToAdd];
         });
@@ -222,8 +225,9 @@ export function RecommendationsSection({
 
   const handleDeleteCategory = async (categoryId: string) => {
     // Find the category in the database
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const categoryFromDB = initialData.categories?.find(
-      (cat: CategoryFromDB) => cat.type === categoryId,
+      (cat: any) => cat.type === categoryId,
     );
 
     // Prevent deletion of system categories
