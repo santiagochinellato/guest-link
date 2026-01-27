@@ -12,7 +12,7 @@ async function main() {
   console.log("🔍 Checking DB Connection...");
   try {
      const res = await db.execute(sql`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`);
-     console.log("📂 Tables in DB:", res.rows.map((r: any) => r.table_name));
+     console.log("📂 Tables in DB:", res.map((r) => r.table_name));
      
      const count = await db.select({ count: sql<number>`count(*)` }).from(properties);
      console.log("✅ Check properties count:", count);

@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import * as schema from "./schema";
 
 // Supabase/Vercel provee POSTGRES_URL.
@@ -11,19 +11,14 @@ if (!connectionString) {
   throw new Error("Missing POSTGRES_URL or DATABASE_URL");
 }
 
-const globalForDb = globalThis as unknown as { conn: Pool | undefined };
-
-// SSL con rejectUnauthorized: false para certificados self-signed de Supabase
-// Las opciones del Pool override el sslmode del connection string
-const pool = globalForDb.conn ?? new Pool({
-  connectionString,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+// postgres.js maneja mejor SSL con Supabase que node-postgres
+// ssl: 'require' funciona correctamente con certificados de Supabase
+const queryClient = postgres(connectionString, {
+  ssl: 'require',
   max: process.env.NODE_ENV === "production" ? 20 : 1,
+  prepare: false, // Requerido para connection pooling de Supabase
 });
 
-if (process.env.NODE_ENV !== "production") globalForDb.conn = pool;
+export const db = drizzle(queryClient, { schema });
 
-export const db = drizzle(pool, { schema });
 
