@@ -29,7 +29,10 @@ export function TransportSection({
       <div className="border-b border-gray-100 dark:border-neutral-800 pb-4 flex flex-col md:flex-row justify-between gap-4 md:items-center">
         <div>
           <h3 className="text-xl font-semibold">Transporte</h3>
-          <p className="text-sm text-gray-500">Cómo moverse.</p>
+          <p className="text-sm text-brand-void dark:text-white">
+            Cómo moverse en la ciudad, puedes brindar detalles de Uber, Taxi,
+            Bus, etc.
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           {propertyId && (
@@ -64,7 +67,7 @@ export function TransportSection({
                 description: "",
               })
             }
-            className="text-sm font-semibold text-blue-600 flex items-center gap-1"
+            className="text-sm font-semibold text-brand-void dark:text-brand-copper flex items-center gap-1"
           >
             <Plus className="w-4 h-4" /> Agregar Opción
           </button>
@@ -80,11 +83,11 @@ export function TransportSection({
               <input
                 {...register(`transport.${index}.name` as const)}
                 placeholder="Proveedor (ej. Uber)"
-                className="px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700"
+                className="px-3 py-2 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-neutral-700"
               />
               <select
                 {...register(`transport.${index}.type` as const)}
-                className="px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700"
+                className="px-3 py-2 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-neutral-700"
               >
                 <option value="taxi">Taxi / Uber</option>
                 <option value="bus">Autobús</option>
@@ -95,7 +98,7 @@ export function TransportSection({
             <textarea
               {...register(`transport.${index}.description` as const)}
               placeholder="Detalles..."
-              className="w-full px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 resize-none h-20"
+              className="w-full px-3 py-2 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-neutral-700 resize-none h-20"
             />
             <input
               type="hidden"

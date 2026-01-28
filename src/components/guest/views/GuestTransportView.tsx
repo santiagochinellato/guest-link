@@ -24,7 +24,7 @@ export function GuestTransportView({ transport }: GuestTransportViewProps) {
         {transport?.map((item: any, i: number) => (
           <div
             key={i}
-            className="group flex flex-col sm:flex-row gap-4 bg-white dark:bg-neutral-800 p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-neutral-700 hover:border-blue-200 transition-colors"
+            className="group flex flex-col sm:flex-row gap-4 bg-white dark:bg-brand-void p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-neutral-700 hover:border-blue-200 transition-colors"
           >
             <div className="flex flex-col items-start gap-4">
               <div className="flex gap-2 items-center">

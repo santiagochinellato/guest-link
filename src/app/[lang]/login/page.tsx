@@ -6,7 +6,7 @@ export default function LoginPage() {
   return (
     <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden">
       {/* Columna Izquierda: Formulario */}
-      <div className="flex flex-col justify-center items-center h-full overflow-y-auto py-6 px-4 sm:px-6 lg:px-8 bg-background relative lg:pr-12 xl:pr-24 no-scrollbar">
+      <div className="flex flex-col justify-center items-center h-full overflow-y-auto py-6 px-4 sm:px-6 lg:px-8 bg-background dark:bg-brand-void/60 relative lg:pr-12 xl:pr-24 no-scrollbar">
         <div className="w-full max-w-sm space-y-6">
           <LoginForm />
         </div>

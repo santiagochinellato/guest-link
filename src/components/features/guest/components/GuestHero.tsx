@@ -32,10 +32,10 @@ export function GuestHero({
 
       <div className="absolute  left-0 bottom-10 md:top-0 w-full p-6 flex flex-col gap-4">
         <div>
-          <span className="inline-block px-3 py-1 mb-2 text-xs font-medium tracking-wider text-white uppercase bg-brand-copper/90 backdrop-blur-sm rounded-full shadow-lg">
+          <span className="inline-block px-3 py-1 mb-2 text-xs font-medium tracking-wider text-white uppercase bg-brand-void/90 dark:bg-brand-copper/90 backdrop-blur-sm rounded-full shadow-lg">
             Bienvenido a
           </span>
-          <h1 className="text-white text-4xl font-bold leading-tight drop-shadow-lg">
+          <h1 className="text-white text-4xl font-bold leading-tight drop-shadow-lg ">
             {name} <br />
             {/* <span className="text-white/95 font-normal text-2xl drop-shadow-md">
               {address}

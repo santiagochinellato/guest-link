@@ -47,12 +47,27 @@ export function LoginForm() {
                 : "w-[12vh] h-[12vh] min-w-[80px] min-h-[80px]"
             } max-w-[160px] max-h-[160px] hover:scale-105`}
           >
+            {/* Light mode: Original Logo */}
             <Image
               src="/hostlyVertical.webp"
               alt="Hostly Logo"
               fill
-              className="object-contain"
+              className="object-contain dark:hidden"
               priority
+            />
+            {/* Dark mode: Copper Colored Logo Mask */}
+            <div
+              className="hidden dark:block absolute inset-0 bg-brand-copper"
+              style={{
+                maskImage: "url(/hostlyVertical.webp)",
+                WebkitMaskImage: "url(/hostlyVertical.webp)",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+              }}
             />
           </div>
         </div>
@@ -63,7 +78,7 @@ export function LoginForm() {
             onClick={() => toggleView(true)}
             className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all text-center ${
               isLogin
-                ? "bg-white dark:bg-neutral-900 text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/5"
+                ? "bg-white dark:bg-brand-void text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/5"
                 : "text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-neutral-800/50"
             }`}
           >
@@ -73,7 +88,7 @@ export function LoginForm() {
             onClick={() => toggleView(false)}
             className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all text-center ${
               !isLogin
-                ? "bg-white dark:bg-neutral-900 text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/5"
+                ? "bg-white dark:bg-brand-void text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/5"
                 : "text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-neutral-800/50"
             }`}
           >
@@ -260,7 +275,7 @@ export function LoginForm() {
             <span className="w-full border-t border-neutral-200 dark:border-neutral-800" />
           </div>
           <div className="relative flex justify-center text-xs uppercase tracking-wider">
-            <span className="bg-background px-4 text-muted-foreground font-medium">
+            <span className="bg-background dark:bg-transparent px-4 text-muted-foreground font-medium">
               O continúa con
             </span>
           </div>
@@ -271,7 +286,7 @@ export function LoginForm() {
           onClick={async () => {
             await signIn("google", { redirectTo: "/dashboard" });
           }}
-          className="inline-flex items-center justify-center rounded-xl text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-full"
+          className="inline-flex items-center justify-center rounded-xl text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background dark:bg-brand-void hover:bg-accent hover:text-accent-foreground h-10 w-full"
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
             <path

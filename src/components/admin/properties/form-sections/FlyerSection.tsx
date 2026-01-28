@@ -11,7 +11,7 @@ export function FlyerSection() {
     <div className="animate-in fade-in duration-300 h-full">
       <div className="border-b border-gray-100 dark:border-neutral-800 pb-4 mb-6">
         <h3 className="text-xl font-semibold">Diseñador de Flyers</h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-brand-void dark:text-white">
           Crea y descarga posters listos para imprimir.
         </p>
       </div>

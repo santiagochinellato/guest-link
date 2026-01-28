@@ -15,7 +15,7 @@ export function ContentControls({
     <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
       <div className="space-y-4">
         <div>
-          <label className="text-xs font-bold text-slate-500 uppercase">
+          <label className="text-xs font-bold text-slate-500 dark:text-white uppercase">
             Título
           </label>
           <input
@@ -25,7 +25,7 @@ export function ContentControls({
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-slate-500 uppercase">
+          <label className="text-xs font-bold text-slate-500 dark:text-white uppercase">
             Mensaje de bienvenida
           </label>
           <textarea
@@ -44,7 +44,7 @@ export function ContentControls({
         </h4>
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase">
+            <label className="text-xs font-bold text-slate-500 dark:text-white uppercase">
               Red
             </label>
             <input
@@ -56,7 +56,7 @@ export function ContentControls({
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase">
+            <label className="text-xs font-bold text-slate-500 dark:text-white uppercase">
               Contraseña
             </label>
             <div className="flex gap-2">

@@ -27,7 +27,7 @@ export function BrandingControls({
             }
           }}
         />
-        <CloudUpload className="w-8 h-8 text-[#0f756d] mb-2" />
+        <CloudUpload className="w-8 h-8 text-brand-copper dark:text-brand-copper mb-2" />
         <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
           Subir imagen de encabezado/logo
         </span>

@@ -15,29 +15,29 @@ interface GuestEmergencyViewProps {
 export function GuestEmergencyView({ property }: GuestEmergencyViewProps) {
   return (
     <div className="animate-in slide-in-from-right duration-300">
-      <div className=" dark:bg-neutral-800 rounded-[2.5rem]  ">
-        <div className="bg-red-50 dark:bg-red-900/10 rounded-[2rem] p-6 border border-red-100 dark:border-red-900/20 mb-8">
+      <div className=" dark:bg-transparent rounded-[2.5rem]  ">
+        <div className="bg-red-50 dark:bg-red-900 rounded-[2rem] p-6 border border-red-100 dark:border-red-900/20 mb-8">
           <div className="flex items-center gap-4 mb-2">
-            <div className="size-12 rounded-full bg-white dark:bg-red-900 flex items-center justify-center text-red-500 shadow-sm">
+            <div className="size-12 rounded-full bg-white dark:bg-red-900 flex items-center justify-center text-red-500 dark:text-white shadow-sm">
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-red-700 dark:text-red-400">
+              <h3 className="text-xl font-bold text-red-700 dark:text-white">
                 Zona de Ayuda
               </h3>
-              <p className="text-xs text-red-600/70 dark:text-red-400/70 font-bold uppercase tracking-wider">
+              <p className="text-xs text-red-600/70 dark:text-white/70 font-bold uppercase tracking-wider">
                 Prioridad Alta
               </p>
             </div>
           </div>
-          <p className="text-sm text-red-800/80 dark:text-red-200/80 leading-relaxed pl-1">
+          <p className="text-sm text-red-800/80 dark:text-white/80 leading-relaxed pl-1">
             Si tienes un problema urgente o necesitas asistencia inmediata,
             utiliza estos contactos. Estamos aquí para ayudarte 24/7.
           </p>
         </div>
 
         <div className="space-y-4">
-          <h4 className="text-sm font-bold text-neutral-400 uppercase tracking-widest px-2">
+          <h4 className="text-sm font-bold text-neutral-400 uppercase tracking-widest px-2 dark:text-white">
             Contactos Directos
           </h4>
 
@@ -77,7 +77,7 @@ export function GuestEmergencyView({ property }: GuestEmergencyViewProps) {
             </div>
           )}
 
-          <div className="mt-8 p-6 bg-neutral-900 rounded-[2rem] text-center relative overflow-hidden">
+          <div className="mt-8 p-6 bg-neutral-900 dark:bg-brand-void rounded-[2rem] text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full bg-white/5 opacity-50" />
             <p className="text-[10px] text-white/50 uppercase tracking-widest mb-1 relative z-10">
               Servicios Públicos
@@ -92,7 +92,7 @@ export function GuestEmergencyView({ property }: GuestEmergencyViewProps) {
           {property.emergencyContacts?.map((contact: any, i: number) => (
             <div
               key={i}
-              className="flex items-center justify-between p-5 bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-gray-100 dark:border-neutral-700 group hover:border-[#0f756d]/30 transition-all"
+              className="flex items-center justify-between p-5 bg-white  rounded-2xl shadow-sm border border-gray-100 dark:border-neutral-700 dark:bg-brand-void group hover:border-[#0f756d]/30 transition-all"
             >
               <div className="flex items-center gap-4 min-w-0 flex-1">
                 <div className="size-12 rounded-full bg-gray-50 dark:bg-neutral-800 group-hover:bg-[#0f756d]/10 flex items-center justify-center text-gray-400 group-hover:text-[#0f756d] transition-colors flex-shrink-0">

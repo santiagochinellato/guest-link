@@ -16,9 +16,9 @@ export function GuestRulesList({ rules: rawRules }: GuestRulesListProps) {
         };
 
   return (
-    <div className="bg-gradient-to-br from-[#0f756d]/5 to-transparent rounded-[2rem] p-8 border border-[#0f756d]/10">
+    <div className="dark:bg-brand-void from-[#0f756d]/5 to-transparent rounded-[2rem] p-8 border border-[#0f756d]/10">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 bg-white dark:bg-neutral-800 rounded-2xl shadow-sm text-[#0f756d]">
+        <div className="p-3 bg-white dark:bg-white/5 rounded-2xl shadow-sm text-[#0f756d]">
           <MessageCircle className="w-6 h-6" />
         </div>
         <h3 className="text-xl font-bold text-neutral-900 dark:text-white">

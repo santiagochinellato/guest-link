@@ -54,7 +54,7 @@ export function LocationSection() {
           </label>
           <input
             {...register("address")}
-            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 transition-all"
+            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 transition-all dark:bg-white/5"
           />
         </div>
 
@@ -65,7 +65,7 @@ export function LocationSection() {
             </label>
             <input
               {...register("city")}
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 dark:bg-white/5"
             />
           </div>
           <div>
@@ -74,7 +74,7 @@ export function LocationSection() {
             </label>
             <input
               {...register("country")}
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 dark:bg-white/5"
             />
           </div>
         </div>
@@ -86,7 +86,7 @@ export function LocationSection() {
             </label>
             <input
               {...register("latitude")}
-              className="w-full bg-transparent border-b border-gray-300 dark:border-neutral-700 py-1 outline-none text-sm font-mono"
+              className="w-full bg-transparent border-b border-gray-300 dark:border-neutral-700 py-1 outline-none text-sm font-mono dark:bg-white/5"
               readOnly
             />
           </div>
@@ -96,7 +96,7 @@ export function LocationSection() {
             </label>
             <input
               {...register("longitude")}
-              className="w-full bg-transparent border-b border-gray-300 dark:border-neutral-700 py-1 outline-none text-sm font-mono"
+              className="w-full bg-transparent border-b border-gray-300 dark:border-neutral-700 py-1 outline-none text-sm font-mono dark:bg-white/5"
               readOnly
             />
           </div>

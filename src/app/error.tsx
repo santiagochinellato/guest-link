@@ -18,11 +18,11 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-neutral-950 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-white dark:bg-brand-void flex items-center justify-center p-6">
       <div className="max-w-md w-full text-center space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Branding */}
         <div className="flex justify-center">
-          <HostlyLogoVertical className="w-[100px] h-auto text-brand-copper dark:text-white" />
+          <HostlyLogoVertical className="w-[100px] h-auto text-brand-void/80 dark:text-white/80" />
         </div>
 
         <div className="space-y-6">
@@ -33,10 +33,10 @@ export default function Error({
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-2xl font-bold text-brand-void/80 dark:text-white/80">
               Algo no salió como esperábamos
             </h2>
-            <p className="text-gray-500 dark:text-neutral-500 text-sm">
+            <p className="text-brand-void/80 dark:text-white/80 text-sm">
               Hubo un problema técnico al cargar esta sección. No te preocupes,
               tus datos están seguros.
             </p>
@@ -46,15 +46,15 @@ export default function Error({
         <div className="flex flex-col gap-3">
           <button
             onClick={() => reset()}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-[#0f756d] hover:bg-[#0d635c] text-white rounded-2xl font-bold transition-all shadow-lg shadow-[#0f756d]/20 active:scale-95 text-sm md:text-base"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-copper hover:bg-brand-copper/80 text-white rounded-2xl font-bold transition-all shadow-lg shadow-brand-copper/20 active:scale-95 text-sm md:text-base"
           >
             <RefreshCcw className="w-4 h-4" />
             Intentar de nuevo
           </button>
 
           <Link
-            href="/"
-            className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-white rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-neutral-700 transition-all active:scale-95 text-sm md:text-base"
+            href="/dashboard"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-copper hover:bg-brand-copper/80 text-white rounded-2xl font-bold transition-all shadow-lg shadow-brand-copper/20 active:scale-95 text-sm md:text-base"
           >
             <Home className="w-4 h-4" />
             Ir a mis propiedades

@@ -161,7 +161,7 @@ export function PropertyForm({
             <h1 className="text-2xl font-bold tracking-tight">
               {isEditMode ? "Editar Propiedad" : "Nueva Propiedad"}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
+            <p className="text-gray-500 dark:text-white text-sm">
               {isEditMode
                 ? "Administra tu guía existente."
                 : "Crea y configura tu guía de bienvenida."}
@@ -191,7 +191,7 @@ export function PropertyForm({
               handleSubmit(onSubmit, onError)();
             }}
             disabled={isSaving}
-            className="bg-brand-copper hover:bg-brand-copper/90 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-brand-copper/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+            className="bg-brand-void hover:bg-brand-void/90 dark:bg-brand-copper dark:hover:bg-brand-copper/90 dark:text-white text-white px-6 py-2.5 rounded-lg font-bold shadow-lg dark:shadow-brand-copper/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
           >
             {isSaving ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -217,14 +217,16 @@ export function PropertyForm({
               className={cn(
                 "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap border dark:border-transparent flex-shrink-0",
                 activeTab === tab.id
-                  ? "bg-brand-copper/10 border-brand-copper/20 text-brand-copper"
-                  : "bg-white dark:bg-neutral-900 text-gray-600 dark:text-gray-400 border-gray-200 hover:bg-gray-50 dark:hover:bg-neutral-800",
+                  ? "bg-brand-void/10 border-brand-void/20 text-brand-void dark:text-white dark:bg-brand-copper/10 dark:border-brand-copper/20 dark:text-brand-copper"
+                  : "bg-white dark:bg-brand-void text-gray-600 dark:text-gray-400 border-gray-200 hover:bg-gray-50 dark:hover:bg-neutral-800",
               )}
             >
               <tab.icon
                 className={cn(
                   "w-4 h-4",
-                  activeTab === tab.id ? "text-brand-copper" : "text-gray-500",
+                  activeTab === tab.id
+                    ? "text-brand-void dark:text-brand-copper  dark:text-brand-copper"
+                    : "text-gray-500 dark:text-gray-400",
                 )}
               />
               {tab.label}
@@ -238,7 +240,7 @@ export function PropertyForm({
             <form
               onSubmit={handleSubmit(onSubmit)}
               className={cn(
-                "bg-white dark:bg-neutral-900 p-4 md:p-8 rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-sm relative",
+                "bg-white dark:bg-brand-void p-4 md:p-8 rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-sm relative",
                 activeTab === "flyer"
                   ? ""
                   : "min-h-[600px] overflow-y-auto pr-2 custom-scrollbar",
@@ -299,7 +301,7 @@ export function PropertyForm({
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-neutral-900 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-green-100 dark:bg-brand-copper/30 text-brand-copper rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-bold mb-2">¡Éxito!</h3>
@@ -309,7 +311,7 @@ export function PropertyForm({
             </p>
             <button
               onClick={handleFinish}
-              className="w-full py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-xl hover:opacity-90 transition-opacity"
+              className="w-full py-3 bg-brand-copper text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
             >
               Continuar
             </button>

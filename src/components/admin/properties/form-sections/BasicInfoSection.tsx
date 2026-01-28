@@ -94,7 +94,7 @@ export function BasicInfoSection() {
           </label>
           <input
             {...register("name")}
-            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all"
+            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all dark:bg-white/5"
             placeholder="ej. Casa Azul - Vista al Mar"
           />
           {errors.name && (
@@ -112,7 +112,7 @@ export function BasicInfoSection() {
             </span>
             <input
               {...register("slug")}
-              className="w-full pl-48 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none font-mono text-sm focus:border-brand-copper transition-all"
+              className="w-full pl-48 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none font-mono text-sm focus:border-brand-copper transition-all dark:bg-white/5"
             />
           </div>
           {errors.slug && (
@@ -148,7 +148,7 @@ export function BasicInfoSection() {
                 <div className="space-y-4">
                   {/* Área de upload */}
                   <label
-                    className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+                    className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all dark:bg-white/5 ${
                       isUploading
                         ? "border-brand-copper bg-brand-copper/5 dark:bg-brand-copper/10"
                         : "border-gray-300 dark:border-neutral-700 hover:border-brand-copper/50 hover:bg-gray-50 dark:hover:bg-neutral-800/50"
@@ -200,7 +200,7 @@ export function BasicInfoSection() {
                     <input
                       {...register("coverImageUrl")}
                       placeholder="https://images.unsplash.com/..."
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper text-sm"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper text-sm dark:bg-white/5"
                     />
                     {watchCoverImage && !isValidImageUrl(watchCoverImage) && (
                       <p className="text-amber-500 text-xs">
@@ -221,7 +221,7 @@ export function BasicInfoSection() {
                   <input
                     type="time"
                     {...register("checkInTime")}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper dark:bg-white/5"
                   />
                 </div>
                 <div className="w-full">
@@ -231,7 +231,7 @@ export function BasicInfoSection() {
                   <input
                     type="time"
                     {...register("checkOutTime")}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper dark:bg-white/5"
                   />
                 </div>
               </div>
@@ -246,7 +246,7 @@ export function BasicInfoSection() {
                     </label>
                     <input
                       {...register("hostName")}
-                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all"
+                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all dark:bg-white/5"
                       placeholder="Ej. Santiago"
                     />
                   </div>
@@ -256,7 +256,7 @@ export function BasicInfoSection() {
                     </label>
                     <input
                       {...register("hostPhone")}
-                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all"
+                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all dark:bg-white/5"
                       placeholder="+54 9 11 ..."
                     />
                     <p className="text-xs text-gray-400 mt-1">

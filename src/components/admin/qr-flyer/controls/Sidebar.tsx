@@ -24,9 +24,9 @@ export function Sidebar({
   );
 
   return (
-    <aside className="w-full md:w-[420px] shrink-0 flex flex-col h-full md:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-neutral-950 relative z-20">
+    <aside className="w-full md:w-[420px] shrink-0 flex flex-col h-full md:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-brand-void relative z-20">
       {/* Top Tabs */}
-      <div className="bg-white dark:bg-neutral-950 border-b border-slate-200 dark:border-slate-800 p-2 grid grid-cols-3 gap-1">
+      <div className="bg-white dark:bg-white/5 border-b border-slate-200 dark:border-slate-800 p-2 grid grid-cols-3 gap-1">
         {[
           { id: "content", label: "Contenido", icon: Edit3 },
           { id: "design", label: "Diseño", icon: Palette },
@@ -40,8 +40,8 @@ export function Sidebar({
             className={cn(
               "flex items-center justify-center gap-2 py-3 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider transition-colors",
               activeTab === tab.id
-                ? "bg-brand-copper/5 dark:bg-brand-copper/10 text-brand-copper"
-                : "text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5",
+                ? "bg-white/10 dark:bg-brand-copper/10 text-brand-void dark:text-brand-copper"
+                : "text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 dark:text-white",
             )}
           >
             <tab.icon className="w-4 h-4" />
@@ -51,7 +51,7 @@ export function Sidebar({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8 custom-scrollbar bg-white dark:bg-white/5">
         {activeTab === "design" && (
           <DesignControls config={config} updateConfig={updateConfig} />
         )}
@@ -64,12 +64,12 @@ export function Sidebar({
       </div>
 
       {/* Action Bar */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2c2a] flex flex-col sm:flex-row justify-between gap-3 shrink-0">
+      <div className="p-4 border-t border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 flex flex-col sm:flex-row justify-between gap-3 shrink-0">
         <button
           type="button"
           disabled={isExporting}
           onClick={() => alert("Saved to profile!")}
-          className="w-full sm:w-auto px-4 py-3 sm:py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto px-4 py-3 sm:py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 dark:text-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Guardar
         </button>
@@ -77,7 +77,7 @@ export function Sidebar({
           type="button"
           disabled={isExporting}
           onClick={() => onExport("pdf")}
-          className="w-full sm:flex-1 px-4 py-3 sm:py-2 bg-brand-copper hover:bg-brand-copper/90 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-copper/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:flex-1 px-4 py-3 sm:py-2 dark:bg-brand-copper dark:hover:bg-brand-copper/90 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 shadow-lg dark:shadow-brand-copper/30 disabled:opacity-50 disabled:cursor-not-allowed bg-brand-void dark:bg-brand-copper"
         >
           {isExporting ? (
             <span className="animate-pulse">Generando...</span>

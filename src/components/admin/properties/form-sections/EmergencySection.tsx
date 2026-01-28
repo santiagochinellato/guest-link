@@ -20,21 +20,24 @@ export function EmergencySection() {
       <div className="border-b border-gray-100 dark:border-neutral-800 pb-4 flex flex-col md:flex-row justify-between gap-4 md:items-center">
         <div>
           <h3 className="text-xl font-semibold">Contactos de Emergencia</h3>
-          <p className="text-sm text-gray-500">Números esenciales.</p>
+          <p className="text-sm text-brand-void dark:text-white">
+            Números esenciales.
+          </p>
         </div>
         <button
           type="button"
           onClick={() => appendContact({ name: "", phone: "", type: "other" })}
-          className="text-sm font-semibold text-blue-600 flex items-center gap-1"
+          className="text-sm font-semibold text-brand-void dark:text-brand-copper flex items-center gap-1"
         >
-          <Plus className="w-4 h-4" /> Add Contact
+          <Plus className="w-4 h-4 text-brand-void dark:text-brand-copper" />{" "}
+          Add Contact
         </button>
       </div>
       <div className="space-y-3">
         {contactFields.map((field, index) => (
           <div
             key={field.id}
-            className="flex flex-col md:flex-row md:items-center gap-4 p-3 bg-white dark:bg-neutral-900 border rounded-xl"
+            className="flex flex-col md:flex-row md:items-center gap-4 p-3 bg-white dark:bg-white/5 border rounded-xl"
           >
             <input
               {...register(`emergencyContacts.${index}.name` as const)}

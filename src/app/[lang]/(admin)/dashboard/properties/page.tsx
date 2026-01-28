@@ -30,17 +30,17 @@ export default async function PropertiesPage() {
   const properties = (result.success ? result.data : []) as Property[];
 
   return (
-    <div className="space-y-6 px-2 pb-16">
+    <div className="space-y-6 px-8 pb-16">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Propiedades</h1>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-white dark:text-white">
             Administra tus unidades de alquiler y guías.
           </p>
         </div>
         <Link
           href="/dashboard/properties/new"
-          className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+          className="w-full md:w-auto bg-brand-void hover:bg-brand-void/90 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors dark:bg-brand-copper dark:hover:bg-brand-copper/90"
         >
           <Plus className="w-4 h-4" />
           Agregar Propiedad

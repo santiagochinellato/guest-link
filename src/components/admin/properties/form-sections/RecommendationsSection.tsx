@@ -272,7 +272,9 @@ export function RecommendationsSection({
       <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-4">
         <div>
           <h3 className="text-xl font-semibold">Recomendaciones Locales</h3>
-          <p className="text-sm text-gray-500">Gestiona lugares destacados.</p>
+          <p className="text-sm text-brand-void dark:text-white">
+            Gestiona lugares destacados.
+          </p>
         </div>
         {initialData.id && <AutoFillButton propertyId={initialData.id} />}
       </div>
@@ -356,7 +358,7 @@ export function RecommendationsSection({
                           },
                         });
                       }}
-                      className="flex-1 px-3 py-2.5 text-xs font-medium text-brand-copper dark:text-brand-copper hover:bg-brand-copper/10 dark:hover:bg-brand-copper/20 rounded-lg transition-colors flex items-center justify-center gap-2 border border-brand-copper/20 dark:border-brand-copper/30"
+                      className="flex-1 px-3 py-2.5 text-xs font-medium text-brand-void dark:text-brand-copper hover:bg-brand-void/10 dark:hover:bg-brand-copper/20 rounded-lg transition-colors flex items-center justify-center gap-2 border border-brand-void/20 dark:border-brand-copper/30"
                     >
                       <Sparkles className="w-4 h-4" />
                       Editar Keywords
@@ -389,7 +391,7 @@ export function RecommendationsSection({
                           description: "",
                         })
                       }
-                      className="w-full px-4 py-3 text-sm font-semibold text-brand-copper bg-brand-copper/10 dark:bg-brand-copper/20 border border-brand-copper/20 dark:border-brand-copper/30 rounded-xl flex items-center justify-center gap-2"
+                      className="w-full px-4 py-3 text-sm font-semibold text-brand-void dark:text-brand-copper bg-brand-void/10 dark:bg-brand-copper/20 border border-brand-void/20 dark:border-brand-copper/30 rounded-xl flex items-center justify-center gap-2"
                     >
                       <Plus className="w-4 h-4" /> Agregar Lugar
                     </button>
@@ -474,10 +476,10 @@ export function RecommendationsSection({
             <div
               key={cat.id}
               className={cn(
-                "p-4 border rounded-xl transition-all hover:bg-gray-50 dark:hover:bg-transparent flex items-center gap-3 relative overflow-hidden group",
+                "p-4 border rounded-xl transition-all hover:bg-gray-50 dark:hover:bg-brand-copper/10 flex items-center gap-3 relative overflow-hidden group",
                 activeCategory === cat.id
-                  ? `${cat.border} dark:border-opacity-50`
-                  : "border-gray-200 dark:border-neutral-800",
+                  ? `${cat.border} dark:border-opacity-50 dark:bg-brand-copper/10`
+                  : "border-gray-200 dark:border-neutral-800 dark:bg-white/5",
               )}
             >
               <div
@@ -494,18 +496,16 @@ export function RecommendationsSection({
                 >
                   <cat.icon
                     className={cn(
-                      "w-5 h-5",
-                      activeCategory === cat.id ? cat.color : "text-gray-500",
+                      "w-5 h-5 dark:text-white",
+                      activeCategory === cat.id ? cat.color : "dark:text-white",
                     )}
                   />
                 </div>
                 <div>
                   <h4
                     className={cn(
-                      "font-bold text-base",
-                      activeCategory === cat.id
-                        ? cat.color
-                        : "text-gray-700 dark:text-gray-300",
+                      "font-bold text-base dark:text-white",
+                      activeCategory === cat.id ? cat.color : "dark:text-white",
                     )}
                   >
                     {cat.label}
@@ -542,7 +542,7 @@ export function RecommendationsSection({
                       },
                     });
                   }}
-                  className="px-3 py-1.5 text-xs font-medium text-brand-copper hover:text-brand-copper dark:text-brand-copper dark:hover:text-brand-copper hover:bg-brand-copper/10 dark:hover:bg-brand-copper/20 rounded-lg transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium text-brand-copper/80 hover:text-brand-copper dark:text-brand-copper dark:hover:text-brand-copper hover:bg-brand-copper/10 dark:hover:bg-brand-copper/20 rounded-lg transition-colors"
                 >
                   + Add Keywords
                 </button>
@@ -608,7 +608,7 @@ export function RecommendationsSection({
         )}
       </div>
 
-      <div className="hidden md:block bg-gray-50 dark:bg-neutral-800/20 p-4 md:p-6 rounded-2xl border border-gray-200 dark:border-neutral-800">
+      <div className="hidden md:block bg-gray-50 dark:bg-white/5 p-4 md:p-6 rounded-2xl border border-gray-200 dark:border-neutral-800">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <h4 className="font-semibold capitalize flex items-center gap-2">
             {/* Show active category icon and label */}
@@ -617,8 +617,12 @@ export function RecommendationsSection({
               if (!cat) return activeCategory;
               return (
                 <>
-                  <cat.icon className={cn("w-5 h-5", cat.color)} />
-                  <span className={cat.color}>{cat.label}</span>
+                  <cat.icon
+                    className={cn(cat.color, "w-5 h-5 dark:text-white")}
+                  />
+                  <span className={cn("dark:text-white", cat.color)}>
+                    {cat.label}
+                  </span>
                 </>
               );
             })()}
@@ -642,7 +646,7 @@ export function RecommendationsSection({
                   description: "",
                 })
               }
-              className="px-4 py-2.5 text-sm font-semibold text-brand-copper bg-brand-copper/10 dark:bg-brand-copper/20 border border-brand-copper/20 dark:border-brand-copper/30 rounded-xl hover:bg-brand-copper/20 dark:hover:bg-brand-copper/30 transition-colors flex items-center justify-center gap-2"
+              className="px-4 py-2.5 text-sm font-semibold text-brand-void dark:text-white bg-brand-void/10 dark:bg-brand-copper border border-brand-void/20 dark:border-brand-copper rounded-xl hover:bg-brand-void/20 dark:hover:bg-brand-copper/90 transition-colors flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" /> Agregar Lugar
             </button>
@@ -656,7 +660,7 @@ export function RecommendationsSection({
             return (
               <div
                 key={field.id}
-                className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-gray-100 dark:border-neutral-800 shadow-sm relative group"
+                className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-neutral-800 shadow-sm relative group"
               >
                 <div className="md:col-span-3 pr-6 md:pr-0">
                   <input
@@ -686,7 +690,7 @@ export function RecommendationsSection({
                     {...register(
                       `recommendations.${index}.googleMapsLink` as const,
                     )}
-                    className="w-full text-sm text-brand-copper bg-transparent border-b border-gray-200 focus:border-brand-copper outline-none pb-1"
+                    className="w-full text-sm text-brand-copper/80 bg-transparent border-b border-gray-200 focus:border-brand-copper outline-none pb-1"
                     placeholder="https://maps..."
                   />
                 </div>

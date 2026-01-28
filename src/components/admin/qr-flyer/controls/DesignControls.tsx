@@ -11,7 +11,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-300">
       <section>
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-bold text-slate-500 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
           <LayoutTemplate className="w-4 h-4" /> Layout
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -82,7 +82,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
       </section>
 
       <section>
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-bold text-slate-500 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
           <Palette className="w-4 h-4" /> Colores
         </h3>
         <div className="flex flex-wrap gap-3">
@@ -112,7 +112,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
       </section>
 
       <section>
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-bold text-slate-500 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
           <Maximize2 className="w-4 h-4" /> Orientación
         </h3>
         <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
@@ -144,7 +144,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
       </section>
 
       <section>
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-bold text-slate-500 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
           <Type className="w-4 h-4" /> Tipografía
         </h3>
         <select

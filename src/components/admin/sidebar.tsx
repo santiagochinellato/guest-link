@@ -77,12 +77,27 @@ export function Sidebar() {
             isCollapsed ? "justify-center" : "",
           )}
         >
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 relative w-10 h-10">
+            {/* Light mode: Original Logo */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/hostlylogo.svg"
               alt="Hostly"
-              className="w-10 h-10 object-contain"
+              className="dark:hidden w-full h-full object-contain"
+            />
+            {/* Dark mode: Copper Colored Logo Mask */}
+            <div
+              className="hidden dark:block w-full h-full bg-brand-copper"
+              style={{
+                maskImage: "url(/hostlylogo.svg)",
+                WebkitMaskImage: "url(/hostlylogo.svg)",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+              }}
             />
           </div>
           <div
@@ -91,11 +106,11 @@ export function Sidebar() {
               isCollapsed ? "max-w-0 opacity-0" : "max-w-[200px] opacity-100",
             )}
           >
-            <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white whitespace-nowrap font-sans">
+            <span className="text-xl font-bold tracking-tight text-brand-void dark:text-white whitespace-nowrap font-sans">
               HOSTLY
             </span>
             <p
-              className="text-[12px] text-gray-500 font-medium tracking-wide whitespace-nowrap"
+              className="text-[12px] text-brand-void dark:text-white font-medium tracking-wide whitespace-nowrap"
               style={{ fontFamily: "var(--font-inter)" }}
             >
               The city, simplified

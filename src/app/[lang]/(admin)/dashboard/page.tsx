@@ -35,19 +35,19 @@ export default async function DashboardPage() {
       {/* Header Section */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-[#4b5563] dark:text-gray-400 text-sm font-medium uppercase tracking-wider">
+          <h2 className="text-[#4b5563] dark:text-white text-sm font-medium uppercase tracking-wider">
             Good morning, Santiago
           </h2>
           <h1 className="text-4xl font-black text-brand-void dark:text-white tracking-tight">
-            Dashboard Overview
+            Dashboard
           </h1>
         </div>
         <Link
           href="/dashboard/properties/new"
-          className="bg-brand-copper hover:bg-brand-copper/90 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all flex items-center gap-2"
+          className="bg-brand-void hover:bg-brand-void/90 dark:bg-brand-copper dark:hover:bg-brand-copper/90 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all flex items-center gap-2"
         >
           <Home className="w-5 h-5" />
-          <span>Add Property</span>
+          <span>Agregar Propiedad</span>
         </Link>
       </header>
 
@@ -65,10 +65,10 @@ export default async function DashboardPage() {
             </span>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <p className="text-sm font-medium text-brand-void dark:text-white">
               Total Views
             </p>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
+            <h3 className="text-3xl font-bold text-brand-void dark:text-white mt-1">
               {totalViews}
             </h3>
           </div>
@@ -86,10 +86,10 @@ export default async function DashboardPage() {
             </span>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <p className="text-sm font-medium text-brand-void dark:text-white">
               Active Properties
             </p>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
+            <h3 className="text-3xl font-bold text-brand-void dark:text-white mt-1">
               {activePropertiesCount}
             </h3>
           </div>
@@ -107,10 +107,10 @@ export default async function DashboardPage() {
             </span>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <p className="text-sm font-medium text-brand-void dark:text-white">
               QR Scans
             </p>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
+            <h3 className="text-3xl font-bold text-brand-void dark:text-white mt-1">
               {totalScans}
             </h3>
           </div>
@@ -125,9 +125,9 @@ export default async function DashboardPage() {
           </h3>
           <Link
             href="/dashboard/properties"
-            className="text-sm font-semibold text-brand-copper hover:text-brand-copper/90 flex items-center gap-1"
+            className="text-sm font-semibold text-brand-void hover:text-brand-void/90 flex items-center gap-1 dark:text-white"
           >
-            View All
+            VER TODO
             <span className="text-lg">→</span>
           </Link>
         </div>
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
               >
                 {/* Desktop Image */}
                 <div className="relative h-48 w-full overflow-hidden hidden md:block">
-                  <div className="absolute top-3 right-3 z-10 bg-brand-copper text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                  <div className="absolute top-3 right-3 z-10 bg-brand-void text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
                     Published
                   </div>
                   <Image
@@ -176,8 +176,8 @@ export default async function DashboardPage() {
                     <h4 className="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
                       {prop.name}
                     </h4>
-                    <p className="text-xs md:text-sm text-gray-500 flex items-center gap-1">
-                      <MapPin className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
+                    <p className="text-xs md:text-sm text-gray-500 dark:text-white flex items-center gap-1">
+                      <MapPin className="w-3 h-3 md:w-4 md:h-4 text-gray-400 dark:text-white" />
                       {prop.wifiSsid ? "Wifi Setup" : "No Wifi"}
                     </p>
                   </div>

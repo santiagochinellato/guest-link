@@ -42,7 +42,7 @@ export function RulesSection() {
         <textarea
           {...register("houseRules")}
           placeholder="Ej. Bienvenidos a nuestra casa. Por favor siéntanse cómodos..."
-          className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper h-32 resize-none"
+          className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper h-32 resize-none dark:bg-white/5"
         />
       </div>
 

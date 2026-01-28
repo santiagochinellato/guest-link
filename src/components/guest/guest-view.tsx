@@ -1,7 +1,6 @@
 "use client";
 
 import { MapPinned } from "lucide-react";
-import Image from "next/image";
 import { GuestHero } from "@/components/features/guest/components/GuestHero";
 import { GuestWiFiCard } from "@/components/features/guest/components/GuestWiFiCard";
 import { GuestInfoGrid } from "@/components/features/guest/components/GuestInfoGrid";
@@ -68,14 +67,20 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
           </div>
 
           {/* Host Chip / Property Branding */}
-          <div className="bg-white dark:bg-[#112120] p-5 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-800 flex flex-col gap-3 shrink-0">
-            <div className="flex items-center gap-4">
-              <Image
-                src="/hostlyLogo.webp"
-                alt="Hostly"
-                width={32}
-                height={32}
-                className="w-8 h-8 object-contain"
+          <div className="bg-white dark:bg-brand-void p-5 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-800 flex flex-col gap-3 shrink-0">
+            <div className="flex items-center">
+              <div
+                className="w-8 h-8 bg-neutral-900 dark:bg-brand-copper shrink-0 transition-colors"
+                style={{
+                  maskImage: "url('/hostlylogo.svg')",
+                  maskSize: "contain",
+                  maskPosition: "center",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskImage: "url('/hostlylogo.svg')",
+                  WebkitMaskSize: "contain",
+                  WebkitMaskPosition: "center",
+                  WebkitMaskRepeat: "no-repeat",
+                }}
               />
               <div>
                 <h2 className="text-base font-bold">HOSTLY</h2>
@@ -102,7 +107,7 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
 
             {/* Quick Actions */}
             <Button
-              className="w-full rounded-xl h-9 text-xs flex items-center justify-center gap-2"
+              className="w-full rounded-xl h-9 text-xs flex items-center justify-center gap-2 bg-brand-void dark:bg-brand-copper text-white shadow-lg"
               onClick={() => {
                 const query =
                   property.latitude && property.longitude
@@ -125,7 +130,7 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 flex flex-col gap-6 overflow-y-auto no-scrollbar pb-10 h-full">
           {/* Desktop Navigation (Tabs) */}
-          <div className=" top-6 z-40 bg-white/80 dark:bg-[#112120]/90 backdrop-blur-xl p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+          <div className=" top-6 z-40 bg-white/80 dark:bg-brand-void/90 backdrop-blur-xl p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
             <GuestTabNavigation
               activeView={activeView}
               onNavigate={setActiveView}
@@ -134,7 +139,7 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
           </div>
 
           {/* Content Container */}
-          <div className="bg-white dark:bg-[#112120] rounded-[2rem] p-8 shadow-sm border border-gray-100 dark:border-gray-800 ">
+          <div className="bg-white dark:bg-brand-void/50 rounded-[2rem] p-8 shadow-sm border border-gray-100 dark:border-gray-800 ">
             {activeView === "home" && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <h2 className="text-3xl font-bold mb-6">Información General</h2>
@@ -193,17 +198,23 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
         MOBILE LAYOUT (Visible < md, Hidden on md+)
         Original "Phone" Container logic
       */}
-      <div className="md:hidden w-full h-full relative flex flex-col overflow-hidden bg-[#f6f8f8] dark:bg-[#112120]">
+      <div className="md:hidden w-full h-full relative flex flex-col overflow-hidden bg-[#f6f8f8] dark:bg-brand-void/60">
         {/* Top Header Mobile */}
         <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-black/20 backdrop-blur-md z-20 border-b border-gray-100 dark:border-white/5 absolute top-0 w-full">
           <div className="flex items-center justify-between gap-3 text-[#0f756d] w-full">
             <div className="flex items-center gap-3">
-              <Image
-                src="/hostlylogo.svg"
-                alt="Hostly"
-                width={32}
-                height={32}
-                className="w-8 h-8 object-contain"
+              <div
+                className="w-8 h-8 bg-neutral-900 dark:bg-brand-copper shrink-0 transition-colors"
+                style={{
+                  maskImage: "url('/hostlylogo.svg')",
+                  maskSize: "contain",
+                  maskPosition: "center",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskImage: "url('/hostlylogo.svg')",
+                  WebkitMaskSize: "contain",
+                  WebkitMaskPosition: "center",
+                  WebkitMaskRepeat: "no-repeat",
+                }}
               />
               <div className="flex flex-col">
                 <h2 className="text-neutral-900 dark:text-white text-lg font-bold tracking-tight leading-none font-sans">
@@ -250,7 +261,7 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
                 checkOut={property.checkOut}
               />
               <Button
-                className="rounded-xl w-fit flex items-center gap-2"
+                className="rounded-xl w-fit flex items-center gap-2 bg-brand-void dark:bg-brand-copper text-white"
                 onClick={() => {
                   const query =
                     property.latitude && property.longitude

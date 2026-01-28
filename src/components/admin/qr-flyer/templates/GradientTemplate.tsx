@@ -17,9 +17,9 @@ const QrCard = ({
   branding: FlyerConfig["branding"];
   primaryColor: string;
 }) => (
-  <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl flex flex-col items-center relative z-20 mx-auto">
+  <div className="bg-white p-2 rounded-[2.5rem] shadow-2xl flex flex-col items-center relative z-20 mx-auto">
     <HostlyLogoVertical
-      className="h-32 w-auto"
+      className="h-24 w-auto"
       style={{ color: primaryColor }}
     />
     <QrCode
@@ -144,7 +144,7 @@ export const GradientTemplate: React.FC<TemplateProps> = ({
     <div
       ref={qrRef}
       className={cn(
-        "w-full h-full text-white font-sans flex flex-col items-center justify-center p-10 relative overflow-hidden",
+        "w-full h-full text-white font-sans flex flex-col items-center justify-center p-6 relative overflow-hidden",
         containerStyles,
       )}
       style={backgroundStyle}

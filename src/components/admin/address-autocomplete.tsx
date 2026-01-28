@@ -87,7 +87,7 @@ export function AddressAutocomplete({
             if (e.target.value === "") setIsOpen(false);
           }}
           placeholder="Search address (OpenStreetMap)..."
-          className="w-full pl-11 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 transition-all"
+          className="w-full pl-11 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 transition-all dark:bg-white/5"
         />
         {isLoading && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -103,7 +103,7 @@ export function AddressAutocomplete({
               key={i + item.lat}
               type="button"
               onClick={() => handleSelect(item)}
-              className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-neutral-800 flex items-start gap-3 transition-colors border-b border-gray-50 dark:border-neutral-800 last:border-0"
+              className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-neutral-800 flex items-start gap-3 transition-colors border-b border-gray-50 dark:border-neutral-800 last:border-0 dark:bg-white/5"
             >
               <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
               <div>
