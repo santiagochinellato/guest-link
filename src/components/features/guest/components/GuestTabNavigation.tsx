@@ -67,7 +67,7 @@ export function GuestTabNavigation({
               className={cn(
                 "flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold",
                 isActive
-                  ? "bg-[#0f756d] text-white shadow-lg"
+                  ? "bg-brand-copper text-white shadow-lg"
                   : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5",
               )}
             >
@@ -86,13 +86,13 @@ export function GuestTabNavigation({
               className={cn(
                 "relative -mt-8 mx-1 w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xl",
                 isActive
-                  ? "bg-[#0f756d] text-white shadow-[#0f756d]/40 scale-110"
+                  ? "bg-brand-copper text-white shadow-brand-copper/40 scale-110"
                   : "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:scale-105",
               )}
             >
               <tab.icon className="w-6 h-6" />
               {isActive && (
-                <span className="absolute -bottom-6 text-[10px] font-bold text-[#0f756d] bg-white/90 dark:bg-black/90 px-2 py-0.5 rounded-full shadow-sm">
+                <span className="absolute -bottom-6 text-[10px] font-bold text-brand-copper bg-white/90 dark:bg-black/90 px-2 py-0.5 rounded-full shadow-sm">
                   WiFi
                 </span>
               )}
@@ -107,7 +107,7 @@ export function GuestTabNavigation({
             className={cn(
               "relative px-3 sm:px-4 py-3 rounded-2xl transition-all duration-300 flex flex-col items-center gap-1 group min-w-[60px]",
               isActive
-                ? "bg-neutral-100 dark:bg-white/10 text-[#0f756d] dark:text-white"
+                ? "bg-neutral-100 dark:bg-white/10 text-brand-copper dark:text-white"
                 : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5",
             )}
           >

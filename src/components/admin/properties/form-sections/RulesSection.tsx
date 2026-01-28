@@ -42,7 +42,7 @@ export function RulesSection() {
         <textarea
           {...register("houseRules")}
           placeholder="Ej. Bienvenidos a nuestra casa. Por favor siéntanse cómodos..."
-          className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 h-32 resize-none"
+          className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper h-32 resize-none"
         />
       </div>
 
@@ -57,7 +57,7 @@ export function RulesSection() {
             <button
               type="button"
               onClick={() => appendAllowed({ value: "" })}
-              className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 text-blue-600"
+              className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 text-brand-copper"
             >
               <PlusCircle className="w-5 h-5" />
             </button>
@@ -96,7 +96,7 @@ export function RulesSection() {
             <button
               type="button"
               onClick={() => appendProhibited({ value: "" })}
-              className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 text-blue-600"
+              className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 text-brand-copper"
             >
               <PlusCircle className="w-5 h-5" />
             </button>

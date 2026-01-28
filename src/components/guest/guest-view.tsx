@@ -71,16 +71,16 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
           <div className="bg-white dark:bg-[#112120] p-5 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-800 flex flex-col gap-3 shrink-0">
             <div className="flex items-center gap-4">
               <Image
-                src="/guestHubLogo.png"
-                alt="GuestHub"
+                src="/hostlyLogo.webp"
+                alt="Hostly"
                 width={32}
                 height={32}
                 className="w-8 h-8 object-contain"
               />
               <div>
-                <h2 className="text-base font-bold">GUESTHUB</h2>
+                <h2 className="text-base font-bold">HOSTLY</h2>
                 <p className="text-[10px] text-neutral-500">
-                  You stay, connected.
+                  The city, simplified.
                 </p>
               </div>
             </div>
@@ -199,15 +199,15 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
           <div className="flex items-center justify-between gap-3 text-[#0f756d] w-full">
             <div className="flex items-center gap-3">
               <Image
-                src="/guestHubLogo.png"
-                alt="GuestHub"
+                src="/hostlylogo.svg"
+                alt="Hostly"
                 width={32}
                 height={32}
                 className="w-8 h-8 object-contain"
               />
               <div className="flex flex-col">
                 <h2 className="text-neutral-900 dark:text-white text-lg font-bold tracking-tight leading-none font-sans">
-                  GUESTHUB
+                  HOSTLY
                 </h2>
                 <p
                   className="text-[10px] text-neutral-500 font-medium tracking-wide leading-none mt-1"

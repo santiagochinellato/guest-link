@@ -239,7 +239,7 @@ export function PropertiesGrid({ initialProperties }: PropertiesGridProps) {
                     <Link
                       href={`/stay/${prop.slug}`}
                       target="_blank"
-                      className="text-xs font-medium text-[#0f756d] hover:underline font-mono"
+                      className="text-xs font-medium text-brand-copper hover:underline font-mono"
                     >
                       /{prop.slug}
                     </Link>

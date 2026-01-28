@@ -24,9 +24,9 @@ export function Sidebar({
   );
 
   return (
-    <aside className="w-full md:w-[420px] shrink-0 flex flex-col h-full md:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2c2a] relative z-20">
+    <aside className="w-full md:w-[420px] shrink-0 flex flex-col h-full md:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-neutral-950 relative z-20">
       {/* Top Tabs */}
-      <div className="bg-white dark:bg-[#1a2c2a] border-b border-slate-200 dark:border-slate-800 p-2 grid grid-cols-3 gap-1">
+      <div className="bg-white dark:bg-neutral-950 border-b border-slate-200 dark:border-slate-800 p-2 grid grid-cols-3 gap-1">
         {[
           { id: "content", label: "Contenido", icon: Edit3 },
           { id: "design", label: "Diseño", icon: Palette },
@@ -40,7 +40,7 @@ export function Sidebar({
             className={cn(
               "flex items-center justify-center gap-2 py-3 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider transition-colors",
               activeTab === tab.id
-                ? "bg-[#f0f4f4] dark:bg-[#0e201e] text-[#0f756d]"
+                ? "bg-brand-copper/5 dark:bg-brand-copper/10 text-brand-copper"
                 : "text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5",
             )}
           >
@@ -77,7 +77,7 @@ export function Sidebar({
           type="button"
           disabled={isExporting}
           onClick={() => onExport("pdf")}
-          className="w-full sm:flex-1 px-4 py-3 sm:py-2 bg-[#0f756d] hover:bg-[#0a5c55] text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0f756d]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:flex-1 px-4 py-3 sm:py-2 bg-brand-copper hover:bg-brand-copper/90 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-copper/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isExporting ? (
             <span className="animate-pulse">Generando...</span>

@@ -31,7 +31,7 @@ export function RegisterForm() {
       <div className="flex flex-col items-center gap-2 text-center mb-2">
         <div className="w-12 h-12 bg-[#0f756d]/10 rounded-xl flex items-center justify-center mb-2">
           <Image
-            src="/guestHubLogo.png"
+            src="/hostlyLogo.webp"
             alt="Logo"
             width={24}
             height={24}
@@ -42,7 +42,7 @@ export function RegisterForm() {
           Crear cuenta
         </h1>
         <p className="text-sm text-gray-500 dark:text-neutral-400">
-          Únete a GuestHub y comienza a gestionar
+          Únete a Hostly y comienza a gestionar
         </p>
       </div>
 

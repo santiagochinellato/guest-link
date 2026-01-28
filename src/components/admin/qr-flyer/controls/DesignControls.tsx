@@ -34,7 +34,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
               id: "gradient",
               label: "Modern Gradient",
               preview: (
-                <div className="w-full h-16 bg-gradient-to-br from-[#0f756d] to-[#1e293b] rounded-lg p-2 flex items-center justify-center relative overflow-hidden">
+                <div className="w-full h-16 bg-gradient-to-br from-brand-void to-brand-copper rounded-lg p-2 flex items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 bg-white/10 skew-y-12"></div>
                   <div className="w-8 h-8 bg-white/90 rounded border border-white/50 shadow-sm flex items-center justify-center">
                     <div className="w-4 h-4 bg-black/80"></div>
@@ -59,9 +59,9 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
               key={opt.id}
               onClick={() => updateConfig("design", "layout", opt.id)}
               className={cn(
-                "cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center gap-3 transition-all hover:border-[#0f756d]/50 group",
+                "cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center gap-3 transition-all hover:border-brand-copper/50 group",
                 config.design.layout === opt.id
-                  ? "border-[#0f756d] bg-[#0f756d]/5"
+                  ? "border-brand-copper bg-brand-copper/5"
                   : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800",
               )}
             >
@@ -70,7 +70,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
                 className={cn(
                   "text-xs font-bold",
                   config.design.layout === opt.id
-                    ? "text-[#0f756d]"
+                    ? "text-brand-copper"
                     : "text-slate-500 group-hover:text-slate-700",
                 )}
               >
@@ -87,11 +87,11 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
         </h3>
         <div className="flex flex-wrap gap-3">
           {[
-            "#0f756d",
+            "#D97706", // Copper
+            "#0F2A3D", // Void
             "#3b82f6",
             "#8b5cf6",
             "#ec4899",
-            "#f97316",
             "#ef4444",
             "#000000",
           ].map((color) => (
@@ -122,7 +122,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
             className={cn(
               "flex-1 py-2 text-xs font-bold rounded-md transition-all",
               config.design.orientation === "vertical"
-                ? "bg-white dark:bg-[#1a2c2a] shadow text-slate-900 dark:text-white"
+                ? "bg-white dark:bg-brand-void-light shadow text-slate-900 dark:text-white"
                 : "text-slate-400",
             )}
           >
@@ -134,7 +134,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
             className={cn(
               "flex-1 py-2 text-xs font-bold rounded-md transition-all",
               config.design.orientation === "horizontal"
-                ? "bg-white dark:bg-[#1a2c2a] shadow text-slate-900 dark:text-white"
+                ? "bg-white bg-brand-copper/5 dark:bg-brand-copper/10 shadow text-slate-900 dark:text-white"
                 : "text-slate-400",
             )}
           >

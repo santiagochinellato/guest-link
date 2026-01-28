@@ -38,13 +38,13 @@ export default async function DashboardPage() {
           <h2 className="text-[#4b5563] dark:text-gray-400 text-sm font-medium uppercase tracking-wider">
             Good morning, Santiago
           </h2>
-          <h1 className="text-4xl font-black text-[#0e1b1a] dark:text-white tracking-tight">
+          <h1 className="text-4xl font-black text-brand-void dark:text-white tracking-tight">
             Dashboard Overview
           </h1>
         </div>
         <Link
           href="/dashboard/properties/new"
-          className="bg-[#0f756d] hover:bg-[#0a554f] text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all flex items-center gap-2"
+          className="bg-brand-copper hover:bg-brand-copper/90 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all flex items-center gap-2"
         >
           <Home className="w-5 h-5" />
           <span>Add Property</span>
@@ -54,7 +54,7 @@ export default async function DashboardPage() {
       {/* Stats Section */}
       <section className="flex overflow-x-auto pb-4 gap-4 snap-x -mx-6 px-6 no-scrollbar md:grid md:grid-cols-3 md:gap-6 md:mx-0 md:px-0 md:overflow-visible">
         {/* Stat Card 1 */}
-        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-[#1a2c2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-[#0f756d]/30 transition-colors group">
+        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-brand-copper/30 transition-colors group">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
               <Eye className="w-5 h-5" />
@@ -75,9 +75,9 @@ export default async function DashboardPage() {
         </div>
 
         {/* Stat Card 2 */}
-        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-[#1a2c2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-[#0f756d]/30 transition-colors group">
+        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-brand-copper/30 transition-colors group">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-[#0f756d]/10 rounded-lg text-[#0f756d] group-hover:bg-[#0f756d]/20 transition-colors">
+            <div className="p-3 bg-brand-copper/10 rounded-lg text-brand-copper group-hover:bg-brand-copper/20 transition-colors">
               <Home className="w-5 h-5" />
             </div>
             <span className="flex items-center text-emerald-600 text-sm font-medium bg-emerald-50 px-2 py-1 rounded-full">
@@ -96,7 +96,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Stat Card 3 */}
-        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-[#1a2c2b] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-[#0f756d]/30 transition-colors group">
+        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-brand-copper/30 transition-colors group">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-purple-600 dark:text-purple-400 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
               <Scan className="w-5 h-5" />
@@ -125,7 +125,7 @@ export default async function DashboardPage() {
           </h3>
           <Link
             href="/dashboard/properties"
-            className="text-sm font-semibold text-[#0f756d] hover:text-[#0a554f] flex items-center gap-1"
+            className="text-sm font-semibold text-brand-copper hover:text-brand-copper/90 flex items-center gap-1"
           >
             View All
             <span className="text-lg">→</span>
@@ -137,11 +137,11 @@ export default async function DashboardPage() {
             properties.map((prop, idx) => (
               <div
                 key={prop.id}
-                className="group bg-white dark:bg-[#1a2c2b] rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-md transition-all flex md:flex-col h-full items-center md:items-stretch"
+                className="group bg-white dark:bg-brand-void rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-md transition-all flex md:flex-col h-full items-center md:items-stretch"
               >
                 {/* Desktop Image */}
                 <div className="relative h-48 w-full overflow-hidden hidden md:block">
-                  <div className="absolute top-3 right-3 z-10 bg-[#0f756d] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                  <div className="absolute top-3 right-3 z-10 bg-brand-copper text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
                     Published
                   </div>
                   <Image
@@ -206,7 +206,7 @@ export default async function DashboardPage() {
                     </div>
                     <Link
                       href={`/dashboard/properties/${prop.id}/edit`}
-                      className="p-2 text-gray-400 hover:text-[#0f756d] hover:bg-[#0f756d]/5 rounded-lg transition-colors"
+                      className="p-2 text-gray-400 hover:text-brand-copper hover:bg-brand-copper/5 rounded-lg transition-colors"
                     >
                       <Edit2 className="w-5 h-5" />
                     </Link>
@@ -224,7 +224,7 @@ export default async function DashboardPage() {
                     </div>
                     <Link
                       href={`/dashboard/properties/${prop.id}/edit`}
-                      className="text-xs font-bold text-[#0f756d]"
+                      className="text-xs font-bold text-brand-copper"
                     >
                       Edit
                     </Link>
@@ -233,13 +233,13 @@ export default async function DashboardPage() {
               </div>
             ))
           ) : (
-            <div className="col-span-1 md:col-span-3 py-12 text-center bg-white dark:bg-[#1a2c2b] rounded-xl border border-dashed border-gray-300">
+            <div className="col-span-1 md:col-span-3 py-12 text-center bg-white dark:bg-brand-void rounded-xl border border-dashed border-gray-300">
               <p className="text-gray-500">
                 No properties found. Add your first property!
               </p>
               <Link
                 href="/dashboard/properties/new"
-                className="mt-4 inline-block bg-[#0f756d] text-white px-4 py-2 rounded-lg text-sm font-bold"
+                className="mt-4 inline-block bg-brand-copper text-white px-4 py-2 rounded-lg text-sm font-bold"
               >
                 Create Property
               </Link>

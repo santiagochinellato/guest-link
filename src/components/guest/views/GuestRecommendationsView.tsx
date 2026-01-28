@@ -21,7 +21,7 @@ export function GuestRecommendationsView({
     <div className="space-y-6 animate-in slide-in-from-right duration-300">
       <div className="space-y-2">
         <h3 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-3">
-          <span className="p-2 bg-[#0f756d]/10 rounded-xl text-[#0f756d]">
+          <span className="p-2 bg-brand-copper/10 rounded-xl text-brand-copper">
             <BookOpen className="w-6 h-6" />
           </span>
           Recomendaciones
@@ -42,8 +42,8 @@ export function GuestRecommendationsView({
               className={cn(
                 "snap-start px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all border shadow-sm flex items-center gap-2",
                 activeCategory === cat
-                  ? "bg-[#0f756d] text-white border-[#0f756d] ring-4 ring-[#0f756d]/10 scale-105"
-                  : "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-gray-300 border-gray-100 dark:border-neutral-700 hover:border-[#0f756d]/50 hover:bg-gray-50",
+                  ? "bg-brand-copper text-white border-brand-copper ring-4 ring-brand-copper/10 scale-105"
+                  : "bg-white dark:bg-neutral-800 text-neutral-600 dark:text-gray-300 border-gray-100 dark:border-neutral-700 hover:border-brand-copper/50 hover:bg-gray-50",
               )}
             >
               {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -88,7 +88,7 @@ export function GuestRecommendationsView({
                       href={place.googleMapsLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="size-12 rounded-2xl bg-[#0f756d]/5 text-[#0f756d] flex items-center justify-center flex-shrink-0 hover:bg-[#0f756d] hover:text-white transition-all shadow-sm group-hover:scale-110"
+                      className="size-12 rounded-2xl bg-brand-copper/5 text-brand-copper flex items-center justify-center flex-shrink-0 hover:bg-brand-copper hover:text-white transition-all shadow-sm group-hover:scale-110"
                     >
                       <ExternalLink className="w-6 h-6" />
                     </a>

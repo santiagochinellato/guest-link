@@ -29,11 +29,11 @@ export default function LoginPage() {
         <div className="absolute bottom-10 right-10 left-10 p-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white shadow-2xl">
           <blockquote className="space-y-2">
             <p className="text-lg font-medium leading-relaxed">
-              &ldquo;GuestHub ha transformado completamente la forma en que
+              &ldquo; Hostly ha transformado completamente la forma en que
               gestionamos la experiencia de nuestros huéspedes.&rdquo;
             </p>
             <footer className="text-sm font-medium opacity-80">
-              — Equipo de GuestHub
+              — Equipo de Hostly
             </footer>
           </blockquote>
         </div>

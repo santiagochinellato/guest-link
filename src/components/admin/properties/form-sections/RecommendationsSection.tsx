@@ -69,7 +69,7 @@ export function RecommendationsSection({
       label: "Restaurantes",
       icon: Utensils,
       color: "text-blue-600",
-      bg: "bg-blue-50/50",
+      bg: "bg-transparent",
       border: "border-blue-500",
     },
     {
@@ -77,7 +77,7 @@ export function RecommendationsSection({
       label: "Atracciones",
       icon: Camera,
       color: "text-purple-600",
-      bg: "bg-purple-50/50",
+      bg: "bg-transparent",
       border: "border-purple-500",
     },
     {
@@ -85,7 +85,7 @@ export function RecommendationsSection({
       label: "Tiendas",
       icon: ShoppingBag,
       color: "text-pink-600",
-      bg: "bg-pink-50/50",
+      bg: "bg-transparent",
       border: "border-pink-500",
     },
     {
@@ -93,7 +93,7 @@ export function RecommendationsSection({
       label: "Kids",
       icon: Baby,
       color: "text-yellow-600",
-      bg: "bg-yellow-50/50",
+      bg: "bg-transparent",
       border: "border-yellow-500",
     },
     {
@@ -101,7 +101,7 @@ export function RecommendationsSection({
       label: "Bares",
       icon: Beer,
       color: "text-orange-600",
-      bg: "bg-orange-50/50",
+      bg: "bg-transparent",
       border: "border-orange-500",
     },
     {
@@ -109,7 +109,7 @@ export function RecommendationsSection({
       label: "Outdoors",
       icon: Mountain,
       color: "text-emerald-600",
-      bg: "bg-emerald-50/50",
+      bg: "bg-transparent",
       border: "border-emerald-500",
     },
   ];
@@ -130,7 +130,7 @@ export function RecommendationsSection({
           label: cat.name,
           icon: Tag,
           color: "text-gray-600",
-          bg: "bg-gray-50",
+          bg: "bg-gray-50 dark:bg-transparent",
           border: "border-gray-500",
         }));
 
@@ -163,7 +163,7 @@ export function RecommendationsSection({
           label: type.charAt(0).toUpperCase() + type.slice(1),
           icon: Tag,
           color: "text-gray-600",
-          bg: "bg-gray-50",
+          bg: "bg-gray-50 dark:bg-transparent",
           border: "border-gray-500",
         }));
         setCategoriesList((prev) => {
@@ -208,7 +208,7 @@ export function RecommendationsSection({
       label: newCategoryName,
       icon: Tag,
       color: "text-gray-600",
-      bg: "bg-gray-50",
+      bg: "bg-gray-50 dark:bg-transparent",
       border: "border-gray-500",
     };
 
@@ -356,7 +356,7 @@ export function RecommendationsSection({
                           },
                         });
                       }}
-                      className="flex-1 px-3 py-2.5 text-xs font-medium text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors flex items-center justify-center gap-2 border border-teal-200 dark:border-teal-800"
+                      className="flex-1 px-3 py-2.5 text-xs font-medium text-brand-copper dark:text-brand-copper hover:bg-brand-copper/10 dark:hover:bg-brand-copper/20 rounded-lg transition-colors flex items-center justify-center gap-2 border border-brand-copper/20 dark:border-brand-copper/30"
                     >
                       <Sparkles className="w-4 h-4" />
                       Editar Keywords
@@ -389,7 +389,7 @@ export function RecommendationsSection({
                           description: "",
                         })
                       }
-                      className="w-full px-4 py-3 text-sm font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 rounded-xl flex items-center justify-center gap-2"
+                      className="w-full px-4 py-3 text-sm font-semibold text-brand-copper bg-brand-copper/10 dark:bg-brand-copper/20 border border-brand-copper/20 dark:border-brand-copper/30 rounded-xl flex items-center justify-center gap-2"
                     >
                       <Plus className="w-4 h-4" /> Agregar Lugar
                     </button>
@@ -474,9 +474,9 @@ export function RecommendationsSection({
             <div
               key={cat.id}
               className={cn(
-                "p-4 border rounded-xl transition-all hover:bg-gray-50 dark:hover:bg-neutral-800 flex items-center gap-3 relative overflow-hidden group",
+                "p-4 border rounded-xl transition-all hover:bg-gray-50 dark:hover:bg-transparent flex items-center gap-3 relative overflow-hidden group",
                 activeCategory === cat.id
-                  ? `${cat.border} ${cat.bg} dark:bg-opacity-10 dark:border-opacity-50`
+                  ? `${cat.border} dark:border-opacity-50`
                   : "border-gray-200 dark:border-neutral-800",
               )}
             >
@@ -542,7 +542,7 @@ export function RecommendationsSection({
                       },
                     });
                   }}
-                  className="px-3 py-1.5 text-xs font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium text-brand-copper hover:text-brand-copper dark:text-brand-copper dark:hover:text-brand-copper hover:bg-brand-copper/10 dark:hover:bg-brand-copper/20 rounded-lg transition-colors"
                 >
                   + Add Keywords
                 </button>
@@ -571,7 +571,7 @@ export function RecommendationsSection({
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               placeholder="Nombre categoría..."
-              className="w-full text-sm bg-white dark:bg-neutral-900 px-3 py-2 rounded-lg border border-gray-200 dark:border-neutral-700 outline-none focus:border-blue-500"
+              className="w-full text-sm bg-white dark:bg-neutral-900 px-3 py-2 rounded-lg border border-gray-200 dark:border-neutral-700 outline-none focus:border-brand-copper"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -600,7 +600,7 @@ export function RecommendationsSection({
           <button
             type="button"
             onClick={() => setIsAddingCategory(true)}
-            className="p-4 border border-dashed border-gray-300 dark:border-neutral-700 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-all gap-1 h-full min-h-[88px]"
+            className="p-4 border border-dashed border-gray-300 dark:border-neutral-700 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-transparent transition-all gap-1 h-full min-h-[88px]"
           >
             <PlusCircle className="w-6 h-6" />
             <span className="text-xs font-semibold">Nueva Categoría</span>
@@ -642,7 +642,7 @@ export function RecommendationsSection({
                   description: "",
                 })
               }
-              className="px-4 py-2.5 text-sm font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors flex items-center justify-center gap-2"
+              className="px-4 py-2.5 text-sm font-semibold text-brand-copper bg-brand-copper/10 dark:bg-brand-copper/20 border border-brand-copper/20 dark:border-brand-copper/30 rounded-xl hover:bg-brand-copper/20 dark:hover:bg-brand-copper/30 transition-colors flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" /> Agregar Lugar
             </button>
@@ -661,7 +661,7 @@ export function RecommendationsSection({
                 <div className="md:col-span-3 pr-6 md:pr-0">
                   <input
                     {...register(`recommendations.${index}.title` as const)}
-                    className="w-full text-sm font-semibold bg-transparent border-b border-gray-200 focus:border-blue-500 outline-none pb-1"
+                    className="w-full text-sm font-semibold bg-transparent border-b border-gray-200 focus:border-brand-copper outline-none pb-1"
                     placeholder="Nombre del Lugar"
                   />
                   <input
@@ -677,7 +677,7 @@ export function RecommendationsSection({
                     {...register(
                       `recommendations.${index}.formattedAddress` as const,
                     )}
-                    className="w-full text-sm bg-transparent border-b border-gray-200 focus:border-blue-500 outline-none pb-1"
+                    className="w-full text-sm bg-transparent border-b border-gray-200 focus:border-brand-copper outline-none pb-1"
                     placeholder="Dirección o Zona"
                   />
                 </div>
@@ -686,7 +686,7 @@ export function RecommendationsSection({
                     {...register(
                       `recommendations.${index}.googleMapsLink` as const,
                     )}
-                    className="w-full text-sm text-blue-500 bg-transparent border-b border-gray-200 focus:border-blue-500 outline-none pb-1"
+                    className="w-full text-sm text-brand-copper bg-transparent border-b border-gray-200 focus:border-brand-copper outline-none pb-1"
                     placeholder="https://maps..."
                   />
                 </div>

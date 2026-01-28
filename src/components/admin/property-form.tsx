@@ -191,7 +191,7 @@ export function PropertyForm({
               handleSubmit(onSubmit, onError)();
             }}
             disabled={isSaving}
-            className="bg-[#0f756d] hover:bg-[#0a554f] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-[#0f756d]/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+            className="bg-brand-copper hover:bg-brand-copper/90 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-brand-copper/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
           >
             {isSaving ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -217,14 +217,14 @@ export function PropertyForm({
               className={cn(
                 "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap border dark:border-transparent flex-shrink-0",
                 activeTab === tab.id
-                  ? "bg-[#0f756d]/10 border-[#0f756d]/20 text-[#0f756d]"
+                  ? "bg-brand-copper/10 border-brand-copper/20 text-brand-copper"
                   : "bg-white dark:bg-neutral-900 text-gray-600 dark:text-gray-400 border-gray-200 hover:bg-gray-50 dark:hover:bg-neutral-800",
               )}
             >
               <tab.icon
                 className={cn(
                   "w-4 h-4",
-                  activeTab === tab.id ? "text-[#0f756d]" : "text-gray-500",
+                  activeTab === tab.id ? "text-brand-copper" : "text-gray-500",
                 )}
               />
               {tab.label}
@@ -284,7 +284,7 @@ export function PropertyForm({
             handleSubmit(onSubmit, onError)();
           }}
           disabled={isSaving}
-          className="flex-1 bg-[#0f756d] hover:bg-[#0a554f] text-white px-4 py-3 rounded-xl font-bold shadow-lg shadow-[#0f756d]/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-sm"
+          className="flex-1 bg-brand-copper hover:bg-brand-copper/90 text-white px-4 py-3 rounded-xl font-bold shadow-lg shadow-brand-copper/20 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 text-sm"
         >
           {isSaving ? (
             <Loader2 className="w-5 h-5 animate-spin" />

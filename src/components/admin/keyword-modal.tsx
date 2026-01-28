@@ -192,7 +192,7 @@ export function KeywordModal({
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-600/20 rounded-xl transition-all active:scale-95"
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20 rounded-xl transition-all active:scale-95"
           >
             Guardar Cambios
           </button>

@@ -44,7 +44,7 @@ export function MobileBottomNav() {
                 className={cn(
                   "flex flex-col items-center justify-center w-full h-full gap-1",
                   isActive
-                    ? "text-[#0f756d]"
+                    ? "text-brand-copper"
                     : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200",
                 )}
               >
@@ -97,7 +97,7 @@ export function MobileBottomNav() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-0 right-0 z-[70] bg-white dark:bg-[#112120] rounded-t-3xl border-t border-gray-200 dark:border-gray-800 p-6 md:hidden pb-10"
+              className="fixed bottom-0 left-0 right-0 z-[70] bg-white dark:bg-brand-void rounded-t-3xl border-t border-gray-200 dark:border-gray-800 p-6 md:hidden pb-10"
             >
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold">Menu</h3>
@@ -123,7 +123,7 @@ export function MobileBottomNav() {
                     onClick={() =>
                       setTheme(theme === "dark" ? "light" : "dark")
                     }
-                    className="text-sm font-bold text-[#0f756d]"
+                    className="text-sm font-bold text-brand-copper"
                   >
                     Switch to {theme === "dark" ? "Light" : "Dark"}
                   </button>

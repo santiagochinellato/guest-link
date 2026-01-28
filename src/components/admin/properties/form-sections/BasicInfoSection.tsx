@@ -94,7 +94,7 @@ export function BasicInfoSection() {
           </label>
           <input
             {...register("name")}
-            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 transition-all"
+            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all"
             placeholder="ej. Casa Azul - Vista al Mar"
           />
           {errors.name && (
@@ -112,7 +112,7 @@ export function BasicInfoSection() {
             </span>
             <input
               {...register("slug")}
-              className="w-full pl-48 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none font-mono text-sm focus:border-blue-500 transition-all"
+              className="w-full pl-48 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none font-mono text-sm focus:border-brand-copper transition-all"
             />
           </div>
           {errors.slug && (
@@ -150,21 +150,21 @@ export function BasicInfoSection() {
                   <label
                     className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
                       isUploading
-                        ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                        : "border-gray-300 dark:border-neutral-700 hover:border-blue-500/50 hover:bg-gray-50 dark:hover:bg-neutral-800/50"
+                        ? "border-brand-copper bg-brand-copper/5 dark:bg-brand-copper/10"
+                        : "border-gray-300 dark:border-neutral-700 hover:border-brand-copper/50 hover:bg-gray-50 dark:hover:bg-neutral-800/50"
                     }`}
                   >
                     {isUploading ? (
                       <>
-                        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                        <p className="text-sm text-blue-600 font-medium">
+                        <Loader2 className="w-8 h-8 text-brand-copper animate-spin" />
+                        <p className="text-sm text-brand-copper font-medium">
                           Subiendo imagen...
                         </p>
                       </>
                     ) : (
                       <>
                         <Upload className="w-8 h-8 text-gray-400" />
-                        <span className="text-sm text-blue-600 font-medium hover:underline">
+                        <span className="text-sm text-brand-copper font-medium hover:underline">
                           Subir imagen desde tu PC
                         </span>
                         <p className="text-xs text-gray-400">
@@ -200,7 +200,7 @@ export function BasicInfoSection() {
                     <input
                       {...register("coverImageUrl")}
                       placeholder="https://images.unsplash.com/..."
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 text-sm"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper text-sm"
                     />
                     {watchCoverImage && !isValidImageUrl(watchCoverImage) && (
                       <p className="text-amber-500 text-xs">
@@ -216,22 +216,22 @@ export function BasicInfoSection() {
                 {" "}
                 <div className="w-full">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-1">
-                    <Clock className="w-4 h-4 text-blue-500" /> Check-in
+                    <Clock className="w-4 h-4 text-brand-copper" /> Check-in
                   </label>
                   <input
                     type="time"
                     {...register("checkInTime")}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper"
                   />
                 </div>
                 <div className="w-full">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-1">
-                    <Clock className="w-4 h-4 text-orange-500" /> Check-out
+                    <Clock className="w-4 h-4 text-brand-copper" /> Check-out
                   </label>
                   <input
                     type="time"
                     {...register("checkOutTime")}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper"
                   />
                 </div>
               </div>
@@ -246,7 +246,7 @@ export function BasicInfoSection() {
                     </label>
                     <input
                       {...register("hostName")}
-                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 transition-all"
+                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all"
                       placeholder="Ej. Santiago"
                     />
                   </div>
@@ -256,7 +256,7 @@ export function BasicInfoSection() {
                     </label>
                     <input
                       {...register("hostPhone")}
-                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-blue-500 transition-all"
+                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all"
                       placeholder="+54 9 11 ..."
                     />
                     <p className="text-xs text-gray-400 mt-1">

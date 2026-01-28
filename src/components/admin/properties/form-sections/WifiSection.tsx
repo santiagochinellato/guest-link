@@ -38,7 +38,7 @@ export function WifiSection() {
     setValue("wifiQrCode", accessUrl);
     toast.success("¡Link de Acceso generado!", {
       description: "El QR ahora dirigirá a los huéspedes a tu guía digital.",
-      icon: <Link2 className="w-4 h-4 text-blue-500" />,
+      icon: <Link2 className="w-4 h-4 text-brand-copper" />,
     });
   };
 
@@ -55,7 +55,7 @@ export function WifiSection() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4 p-6 bg-gray-50 dark:bg-neutral-800/20 rounded-2xl border border-gray-100 dark:border-neutral-800">
           <div className="flex items-center gap-2 mb-2">
-            <Wifi className="w-5 h-5 text-[#0f756d]" />
+            <Wifi className="w-5 h-5 text-brand-copper" />
             <span className="font-bold">Datos de WiFi</span>
           </div>
 
@@ -66,7 +66,7 @@ export function WifiSection() {
             <input
               {...register("wifiSsid")}
               placeholder="Ej. MiCasa_5G"
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 outline-none focus:border-[#0f756d] transition-all"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 outline-none focus:border-brand-copper transition-all"
             />
           </div>
 
@@ -77,24 +77,24 @@ export function WifiSection() {
             <input
               {...register("wifiPassword")}
               placeholder="Contraseña de la red"
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 outline-none focus:border-[#0f756d] font-mono transition-all"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 outline-none focus:border-brand-copper font-mono transition-all"
             />
           </div>
 
           <button
             type="button"
             onClick={generateWifiQr}
-            className="w-full py-3 bg-white dark:bg-neutral-800 border border-[#0f756d]/30 text-[#0f756d] rounded-xl font-bold hover:bg-[#0f756d]/5 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-white dark:bg-neutral-800 border border-brand-copper/30 text-brand-copper rounded-xl font-bold hover:bg-brand-copper/5 transition-colors flex items-center justify-center gap-2"
           >
             <Wifi className="w-4 h-4" />
             Generar QR de WiFi
           </button>
         </div>
 
-        <div className="space-y-4 p-6 bg-[#0f756d]/5 rounded-2xl border border-[#0f756d]/10 flex flex-col justify-between">
+        <div className="space-y-4 p-6 bg-brand-copper/5 rounded-2xl border border-brand-copper/10 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Link2 className="w-5 h-5 text-[#0f756d]" />
+              <Link2 className="w-5 h-5 text-brand-copper" />
               <span className="font-bold">Link de Invitados</span>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -109,7 +109,7 @@ export function WifiSection() {
           <button
             type="button"
             onClick={generateAccessLinkQr}
-            className="w-full py-3 bg-[#0f756d] text-white rounded-xl font-bold hover:opacity-90 transition-opacity shadow-lg shadow-[#0f756d]/20 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-brand-copper text-white rounded-xl font-bold hover:opacity-90 transition-opacity shadow-lg shadow-brand-copper/20 flex items-center justify-center gap-2"
           >
             <QrCode className="w-4 h-4" />
             Generar QR de Acceso

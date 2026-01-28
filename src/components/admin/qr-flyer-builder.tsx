@@ -37,7 +37,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
       showPassword: true,
     },
     branding: {
-      logo: initialData?.coverImageUrl || "/GUESTHUBHORIZONTALCOLOR.webp",
+      logo: initialData?.coverImageUrl || "/hostlyHorizontal.webp",
       logoPosition: "center",
       logoSize: "md",
       qrStyle: "square",
@@ -45,7 +45,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
       embedLogoInQr: false,
     },
     design: {
-      primaryColor: "#0f756d", // Brand Teal
+      primaryColor: "#D97706", // Brand Copper
       secondaryColor: "#1e293b",
       backgroundColor: "#ffffff",
       font: "inter",
@@ -68,7 +68,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
   const { handleExport, isExporting } = useFlyerExport({ qrRef, config });
 
   return (
-    <div className="flex flex-col md:flex-row bg-[#f6f8f8] dark:bg-[#112120] rounded-xl shadow border border-slate-200 dark:border-slate-800 h-auto md:h-[800px] overflow-hidden">
+    <div className="flex flex-col md:flex-row bg-[#f6f8f8] dark:bg-brand-void rounded-xl shadow border border-slate-200 dark:border-slate-800 h-auto md:h-[800px] overflow-hidden">
       <div className="w-full md:w-auto border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 h-[400px] md:h-full overflow-y-auto shrink-0">
         <Sidebar
           config={config}

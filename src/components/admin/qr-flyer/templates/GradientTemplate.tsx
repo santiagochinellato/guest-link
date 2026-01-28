@@ -72,7 +72,7 @@ export const GradientTemplate: React.FC<TemplateProps> = ({
 }) => {
   const { content, branding, design } = config;
   const isHorizontal = design.orientation === "horizontal";
-  const primaryColor = design.primaryColor || "#0f756d";
+  const primaryColor = design.primaryColor || "#D97706";
 
   // Ensure high contrast gradient with a dark overlay
   const backgroundStyle = {

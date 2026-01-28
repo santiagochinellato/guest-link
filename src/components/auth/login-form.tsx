@@ -48,8 +48,8 @@ export function LoginForm() {
             } max-w-[160px] max-h-[160px] hover:scale-105`}
           >
             <Image
-              src="/GUESTHUBVERTICALCOLOR.webp"
-              alt="GuestHub Logo"
+              src="/hostlyVertical.webp"
+              alt="Hostly Logo"
               fill
               className="object-contain"
               priority
