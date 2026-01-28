@@ -23,7 +23,7 @@ export const FlyerPreview = ({ config, qrRef }: FlyerPreviewProps) => {
   const containerStyles = cn(
     "relative flex flex-col items-center shadow-lg transition-all bg-white overflow-hidden",
     design.orientation === "horizontal"
-      ? "w-[842px] h-[595px]"
+      ? "w-[842px] h-[595px] justify-center flex-row"
       : "w-[595px] h-[842px]",
     fontClass,
   );

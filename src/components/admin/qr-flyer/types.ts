@@ -3,6 +3,7 @@ export interface FlyerConfig {
     title: string;
     subtitle: string;
     welcomeMessage: string;
+    welcomeMessageEn: string;
     networkName: string;
     networkPassword?: string;
     guideUrl: string;

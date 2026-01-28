@@ -1,200 +1,208 @@
-import { Wifi } from "lucide-react";
-import { FlyerConfig } from "../types";
+import React from "react";
+
+import { Wifi, Smartphone, Lock } from "lucide-react";
 import { QrCode } from "../QrCode";
+import { FlyerConfig } from "../types";
 import { cn } from "@/lib/utils";
 
 interface TemplateProps {
   config: FlyerConfig;
-  containerStyles: string;
-  qrRef: React.RefObject<HTMLDivElement>;
+  containerStyles?: string;
+  qrRef?: React.RefObject<HTMLDivElement>;
 }
 
-export function MinimalTemplate({
+// Helper Components
+const QrSection = ({
+  size = 260,
+  content,
+  branding,
+  primaryColor,
+}: {
+  size?: number;
+  content: FlyerConfig["content"];
+  branding: FlyerConfig["branding"];
+  primaryColor: string;
+}) => (
+  <div className="flex flex-col items-center justify-center gap-2">
+    <div
+      className="h-15 w-[120px] opacity-90"
+      style={{
+        maskImage: 'url("/guestText.svg")',
+        WebkitMaskImage: 'url("/guestText.svg")',
+        maskSize: "contain",
+        WebkitMaskSize: "contain",
+        maskRepeat: "no-repeat",
+        WebkitMaskRepeat: "no-repeat",
+        maskPosition: "center",
+        WebkitMaskPosition: "center",
+        backgroundColor: primaryColor,
+        aspectRatio: "1009 / 800",
+      }}
+    />
+    <div className="bg-white p-6 shadow-sm border border-gray-100 rounded-2xl">
+      <QrCode
+        url={content.guideUrl}
+        size={size}
+        branding={branding}
+        primaryColor={primaryColor}
+        className="block"
+      />
+    </div>
+    <div className="mt-6 flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400">
+      <Smartphone size={14} />
+      <span>Scan to connect</span>
+    </div>
+  </div>
+);
+
+const NetworkInfo = ({
+  className,
+  content,
+}: {
+  className?: string;
+  content: FlyerConfig["content"];
+}) => (
+  <div className={cn("flex flex-col gap-6 w-full max-w-md", className)}>
+    <div>
+      <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2 flex items-center gap-2">
+        <Wifi size={14} className="text-gray-900" /> Red WiFi
+      </p>
+      <p className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words">
+        {content.networkName}
+      </p>
+    </div>
+
+    {content.showPassword && content.networkPassword && (
+      <div>
+        <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2 flex items-center gap-2">
+          <Lock size={14} className="text-gray-900" /> Contraseña
+        </p>
+        <div className="relative inline-block w-full">
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words">
+            {content.networkPassword}
+          </p>
+        </div>
+      </div>
+    )}
+  </div>
+);
+
+export const MinimalTemplate: React.FC<TemplateProps> = ({
   config,
   containerStyles,
   qrRef,
-}: TemplateProps) {
+}) => {
   const { content, branding, design } = config;
   const isHorizontal = design.orientation === "horizontal";
+  const primaryColor = design.primaryColor || "#000000";
 
-  return (
-    <div ref={qrRef} className={containerStyles}>
-      {isHorizontal ? (
-        // Horizontal Layout
-        <div className="flex w-full h-full">
-          {/* Left Side: Image */}
-          <div className="w-[40%] h-full relative overflow-hidden bg-[#f1f5f9]">
-            {branding.logo ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={branding.logo}
-                alt="Header"
-                className="w-full h-full object-cover"
-                crossOrigin="anonymous"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-[#94a3b8]">
-                Image
+  if (isHorizontal) {
+    // HORIZONTAL CLEAN (842x595)
+    return (
+      <div
+        ref={qrRef}
+        className={cn(
+          "w-full h-full flex bg-white text-gray-900 font-sans flex overflow-hidden",
+          containerStyles,
+        )}
+      >
+        <div className="flex justify-center items-center">
+          {/* Left Col: Welcome & Context (60%) */}
+          <div className="w-[60%] h-full p-10 flex flex-col justify-center relative z-10">
+            <div>
+              <h1 className="text-5xl font-bold leading-none tracking-tight text-gray-900 mb-4 max-w-md">
+                {content.title || "Bienvenido"}
+              </h1>
+              <div className="flex flex-col gap-2">
+                <p className="text-gray-500 leading-normal text-lg max-w-md font-medium">
+                  {content.welcomeMessage ||
+                    "Escanea el código QR para acceder a Internet y a nuestra guía local."}
+                </p>
+                <p className="text-gray-500 leading-normal text-sm max-w-md font-medium">
+                  *
+                  {content.welcomeMessageEn ||
+                    "Scan this code to access the property guide, WiFi, and local recommendations."}
+                </p>
               </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#00000080] to-transparent" />
-            <div className="absolute bottom-8 left-8 text-[#ffffff]">
-              <div className="bg-[#ffffffe6] text-[#0f172a] backdrop-blur-md px-4 py-2 rounded-lg inline-block mb-3 shadow-lg">
-                <span className="font-bold tracking-widest text-xs uppercase">
-                  Welcome
-                </span>
-              </div>
-              <h2 className="text-3xl font-extrabold leading-tight drop-shadow-md">
-                {content.title}
-              </h2>
+            </div>
+
+            <div className="pt-6 border-t border-gray-100">
+              <NetworkInfo content={content} className="max-w-md" />
             </div>
           </div>
 
-          {/* Right Side: Content */}
-          <div className="w-[60%] h-full p-12 flex flex-col items-center justify-center text-center">
-            <div
-              className="w-12 h-1 rounded-full mb-6"
-              style={{ backgroundColor: design.primaryColor }}
+          {/* Right Col: Pure QR Focus (40%) */}
+          <div className="w-[40%] h-full bg-[#fafafa] flex items-center justify-center p-8 relative border-l border-gray-100/50">
+            <QrSection
+              size={220}
+              content={content}
+              branding={branding}
+              primaryColor={primaryColor}
             />
-            <p className="text-[#64748b] font-medium text-lg mb-8 max-w-[90%] leading-relaxed">
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // VERTICAL CLEAN (595x842)
+  return (
+    <div
+      ref={qrRef}
+      className={cn(
+        "w-full h-full bg-white text-gray-900 font-sans flex flex-col relative overflow-hidden p-12",
+        containerStyles,
+      )}
+    >
+      {/* Header */}
+      {/* Main Content (Hero) */}
+      <main className="flex-1 flex flex-col items-center justify-start w-full">
+        <div className="mb-10 text-center max-w-md mx-auto">
+          <h1 className="text-4xl font-bold mb-4 tracking-tight text-gray-900 leading-tight">
+            {content.title || "Conéctate"}
+          </h1>
+          <div className="flex flex-col gap-2">
+            <p className="text-gray-500 text-lg leading-relaxed">
               {content.welcomeMessage}
             </p>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              *{content.welcomeMessageEn}
+            </p>
+          </div>
+        </div>
 
-            <div className="flex flex-col items-center gap-8 mb-8">
-              <div className="relative p-3 bg-[#ffffff] rounded-2xl shadow-xl border border-[#f1f5f9]">
-                <QrCode
-                  url={content.guideUrl}
-                  branding={branding}
-                  primaryColor={design.primaryColor}
-                  size={160}
-                />
-              </div>
-              <div className="text-left space-y-6">
-                <div>
-                  <p className="text-xs text-[#94a3b8] font-bold uppercase tracking-wider mb-1 text-center">
-                    Wi-Fi Network
-                  </p>
-                  <div className="flex items-center gap-3">
-                    {/* <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#f1f5f9] text-[#475569]">
-                      <Wifi className="w-4 h-4" />
-                    </div> */}
-                    <p className="text-lg font-bold text-[#1e293b] text-center">
-                      {content.networkName}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-center">
-                  <p className="text-xs text-[#94a3b8] font-bold uppercase tracking-wider mb-1 text-center">
-                    Password
-                  </p>
-                  <p className="text-lg font-mono font-bold text-[#1e293b] bg-[#f8fafc] px-3 py-1 rounded border border-[#f1f5f9] inline-block text-center">
-                    {content.showPassword
-                      ? content.networkPassword
-                      : "••••••••"}
-                  </p>
-                </div>
-              </div>
-            </div>
+        <QrSection
+          size={260}
+          content={content}
+          branding={branding}
+          primaryColor={primaryColor}
+        />
+      </main>
 
-            <div className="mt-auto pt-6 border-t border-[#f1f5f9] w-full text-center">
-              <p className="text-[#94a3b8] text-sm font-medium">
-                Scan to view the full digital guide
+      {/* Footer / Network Info */}
+      <footer className="w-full pt-2 border-t border-gray-100 ">
+        <div className="flex flex-row items-start justify-between gap-10">
+          <div className="flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2">
+              Red WiFi
+            </p>
+            <p className="text-xl font-bold text-gray-900 truncate">
+              {content.networkName}
+            </p>
+          </div>
+
+          {content.showPassword && content.networkPassword && (
+            <div className="flex-1 text-right">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2">
+                Contraseña
+              </p>
+              <p className="text-xl font-bold text-gray-900 truncate">
+                {content.networkPassword}
               </p>
             </div>
-          </div>
-          <div
-            className="absolute right-0 top-0 bottom-0 w-2"
-            style={{ backgroundColor: design.primaryColor }}
-          />
+          )}
         </div>
-      ) : (
-        // Vertical Layout (Original)
-        <>
-          <div className="w-full h-[35%] relative overflow-hidden">
-            {branding.logo ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={branding.logo}
-                alt="Header"
-                className="w-full h-full object-cover"
-                crossOrigin="anonymous"
-              />
-            ) : (
-              <div className="w-full h-full bg-[#e2e8f0] flex items-center justify-center text-[#94a3b8]">
-                Header Image
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0000004d] to-transparent" />
-            <div className="absolute top-8 left-1/2 -translate-x-1/2 bg-[#fffffff2] backdrop-blur-sm px-6 py-3 rounded-xl shadow-lg flex items-center gap-2">
-              <span className="font-bold text-[#1e293b] tracking-tight text-lg uppercase">
-                GUESTHUB
-              </span>
-            </div>
-          </div>
-
-          <div className="flex-1 px-12 py-10 flex flex-col items-center w-full text-center">
-            <div
-              className="w-16 h-1 rounded-full mb-8"
-              style={{ backgroundColor: design.primaryColor }}
-            />
-
-            <h2 className="text-5xl font-extrabold text-[#0f172a] mb-4 leading-tight">
-              {content.title}
-            </h2>
-            <p className="text-[#64748b] font-medium text-lg mb-10 max-w-[80%]">
-              {content.welcomeMessage}
-            </p>
-
-            <div className="relative p-3 bg-[#ffffff] rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-[#f1f5f9] mb-8">
-              <QrCode
-                url={content.guideUrl}
-                branding={branding}
-                primaryColor={design.primaryColor}
-                size={200}
-                className="rounded-2xl overflow-hidden"
-              />
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#0f172a] text-[#ffffff] text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-md whitespace-nowrap">
-                Scan for Guide
-              </div>
-            </div>
-
-            <div className="mt-auto w-full bg-[#f8fafc] border border-[#f1f5f9] rounded-2xl p-6 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-4">
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center"
-                  style={{
-                    backgroundColor: `${design.primaryColor}20`,
-                    color: design.primaryColor,
-                  }}
-                >
-                  <Wifi className="w-6 h-6" />
-                </div>
-                <div className="text-left">
-                  <p className="text-xs text-[#94a3b8] font-bold uppercase tracking-wider">
-                    Wi-Fi Network
-                  </p>
-                  <p className="text-lg font-bold text-[#1e293b]">
-                    {content.networkName}
-                  </p>
-                </div>
-              </div>
-              <div className="h-10 w-px bg-[#e2e8f0]"></div>
-              <div className="text-left pr-4">
-                <p className="text-xs text-[#94a3b8] font-bold uppercase tracking-wider">
-                  Password
-                </p>
-                <p className="text-lg font-mono font-bold text-[#1e293b]">
-                  {content.showPassword ? content.networkPassword : "••••••••"}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div
-            className="w-full h-3"
-            style={{ backgroundColor: design.primaryColor }}
-          />
-        </>
-      )}
+      </footer>
     </div>
   );
-}
+};

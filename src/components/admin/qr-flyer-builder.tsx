@@ -26,6 +26,8 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
       title: initialData?.name || "Welcome Home",
       subtitle: "Scan to Connect",
       welcomeMessage:
+        "Escanea el código QR para acceder a la guía de la propiedad, WiFi y recomendaciones locales.",
+      welcomeMessageEn:
         "Scan this code to access the property guide, WiFi, and local recommendations.",
       networkName: initialData?.wifiSsid || "Guest-WiFi",
       networkPassword: initialData?.wifiPassword || "password123",
@@ -35,9 +37,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
       showPassword: true,
     },
     branding: {
-      logo:
-        initialData?.coverImageUrl ||
-        "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2942&auto=format&fit=crop",
+      logo: initialData?.coverImageUrl || "/GUESTHUBHORIZONTALCOLOR.webp",
       logoPosition: "center",
       logoSize: "md",
       qrStyle: "dots",
