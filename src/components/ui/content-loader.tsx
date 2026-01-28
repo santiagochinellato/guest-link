@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { HostlyLogoVertical } from "@/components/ui/branding/HostlyLogo";
 
 interface ContentLoaderProps {
   text?: string;
@@ -28,26 +28,7 @@ export function ContentLoader({
 
         {/* Logo Branding - Slightly smaller than full screen loader */}
         <div className="relative animate-pulse">
-          <div className="block dark:hidden">
-            <Image
-              src="/GUESTHUBVERTICALCOLOR.webp"
-              alt="GuestHub"
-              width={120}
-              height={120}
-              className={cn("w-24 h-auto", classNameImage)}
-              priority
-            />
-          </div>
-          <div className="hidden dark:block">
-            <Image
-              src="/GUESTHUBVERTICALTOTALWHITE.webp"
-              alt="GuestHub"
-              width={120}
-              height={120}
-              className={cn("w-24 h-auto", classNameImage)}
-              priority
-            />
-          </div>
+          <HostlyLogoVertical className="w-[120px] h-auto text-brand-copper dark:text-white" />
         </div>
       </div>
 

@@ -1,8 +1,9 @@
 import React from "react";
-import { Wifi, CheckCircle2, ScanLine } from "lucide-react";
+import { Wifi, ScanLine, CheckCircle2 } from "lucide-react";
 import { QrCode } from "../QrCode";
 import { FlyerConfig } from "../types";
 import { cn } from "@/lib/utils";
+import { HostlyLogoVertical } from "@/components/ui/branding/HostlyLogo";
 
 // Helper Components
 const MainCard = ({
@@ -101,22 +102,11 @@ export const CardTemplate: React.FC<TemplateProps> = ({
         {/* Left: Main QR Card (Hero) */}
         <div className="w-[45%] h-full flex flex-col relative z-10">
           <MainCard className="h-full flex flex-col items-center justify-center p-6 relative ring-1 ring-gray-900/5">
-            <div
-              className="h-30 w-[200px]"
-              style={{
-                maskImage: 'url("/guestText.svg")',
-                WebkitMaskImage: 'url("/guestText.svg")',
-                maskSize: "contain",
-                WebkitMaskSize: "contain",
-                maskRepeat: "no-repeat",
-                WebkitMaskRepeat: "no-repeat",
-                maskPosition: "center",
-                WebkitMaskPosition: "center",
-                backgroundColor: primaryColor,
-                aspectRatio: "1009 / 800",
-              }}
-            />
-            <div className="flex-1 flex items-center justify-center w-full">
+            <div className="flex-1 flex flex-col items-center justify-center w-full">
+              <HostlyLogoVertical
+                className="h-40 w-[200px]"
+                style={{ color: primaryColor }}
+              />
               <QrCode
                 url={content.guideUrl}
                 size={240}
@@ -201,20 +191,9 @@ export const CardTemplate: React.FC<TemplateProps> = ({
       <div className="flex-grow flex flex-col items-center justify-center relative z-10 w-full min-h-0">
         <MainCard className="p-4 shadow-2xl w-full max-w-[280px] aspect-[4/5] flex flex-col items-center justify-between ring-1 ring-gray-900/5 bg-white">
           <div className="flex-grow flex flex-col items-center justify-center">
-            <div
-              className="h-15 w-[120px]"
-              style={{
-                maskImage: 'url("/guestText.svg")',
-                WebkitMaskImage: 'url("/guestText.svg")',
-                maskSize: "contain",
-                WebkitMaskSize: "contain",
-                maskRepeat: "no-repeat",
-                WebkitMaskRepeat: "no-repeat",
-                maskPosition: "center",
-                WebkitMaskPosition: "center",
-                backgroundColor: primaryColor,
-                aspectRatio: "1009 / 800",
-              }}
+            <HostlyLogoVertical
+              className="h-20 w-[120px]"
+              style={{ color: primaryColor }}
             />
             <QrCode
               url={content.guideUrl}

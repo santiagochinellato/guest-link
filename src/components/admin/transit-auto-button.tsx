@@ -10,7 +10,7 @@ interface TransitAutoButtonProps {
   propertyId: number;
   city?: string;
   className?: string;
-  onComplete?: () => void;
+  onComplete?: (data?: any[]) => void;
 }
 
 export function TransitAutoButton({
@@ -26,9 +26,11 @@ export function TransitAutoButton({
       const result = await populateTransitSmart(propertyId, city);
       if (result.success) {
         toast.success(
-          result.message || `Se agregaron ${result.count} líneas de transporte`,
+          result.message || `Se detectaron ${result.count} opciones`,
         );
-        if (onComplete) onComplete();
+        if (onComplete) {
+          onComplete(result.data);
+        }
       } else {
         toast.error("Error: " + result.error);
       }

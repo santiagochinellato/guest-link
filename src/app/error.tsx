@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Image from "next/image";
+import { HostlyLogoVertical } from "@/components/ui/branding/HostlyLogo";
 import { AlertCircle, RefreshCcw, Home } from "lucide-react";
 import Link from "next/link";
 
@@ -21,24 +22,7 @@ export default function Error({
       <div className="max-w-md w-full text-center space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Branding */}
         <div className="flex justify-center">
-          <div className="block dark:hidden">
-            <Image
-              src="/GUESTHUBVERTICALCOLOR.webp"
-              alt="GuestHub"
-              width={100}
-              height={100}
-              className="w-20 md:w-24 h-auto"
-            />
-          </div>
-          <div className="hidden dark:block">
-            <Image
-              src="/GUESTHUBVERTICALTOTALWHITE.webp"
-              alt="GuestHub"
-              width={100}
-              height={100}
-              className="w-20 md:w-24 h-auto"
-            />
-          </div>
+          <HostlyLogoVertical className="w-[100px] h-auto text-brand-copper dark:text-white" />
         </div>
 
         <div className="space-y-6">

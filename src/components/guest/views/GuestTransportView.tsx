@@ -1,6 +1,6 @@
 "use client";
 
-import { TramFront } from "lucide-react";
+import { TramFront, MapPinned } from "lucide-react";
 
 interface GuestTransportViewProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,9 +40,18 @@ export function GuestTransportView({ transport }: GuestTransportViewProps) {
                       {item.name}
                     </h4>
                   </div>
+                  {item.website && (
+                    <button
+                      onClick={() => window.open(item.website, "_blank")}
+                      className="text-xs flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold hover:underline"
+                    >
+                      <MapPinned className="w-3 h-3" />
+                      Ver ruta en mapa
+                    </button>
+                  )}
                 </div>
               </div>
-              <p className="text-sm text-neutral-500 leading-relaxed">
+              <p className="text-sm text-neutral-500 leading-relaxed whitespace-pre-wrap">
                 {item.description}
               </p>
             </div>

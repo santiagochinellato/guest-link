@@ -16,7 +16,7 @@ if (!connectionString) {
 // postgres.js maneja mejor SSL con Supabase que node-postgres
 // ssl: 'require' funciona correctamente con certificados de Supabase
 const queryClient = postgres(connectionString, {
-  ssl: 'require',
+  ssl: process.env.NODE_ENV === "production" ? 'require' : false,
   max: process.env.NODE_ENV === "production" ? 10 : 1, // Reducido para evitar MaxClientsInSessionMode
   prepare: false, // Requerido para connection pooling de Supabase
   idle_timeout: 20, // Cerrar conexiones inactivas tras 20s

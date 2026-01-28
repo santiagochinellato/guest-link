@@ -29,6 +29,7 @@ export const TransportInfoSchema = z.object({
   name: z.string().min(1, "Provider name is required"),
   type: z.string().min(1, "Type is required").optional().or(z.literal("")), // Relaxed
   description: z.string().optional(),
+  website: z.string().optional(),
   scheduleInfo: z.string().optional(),
   priceInfo: z.string().optional(),
 });

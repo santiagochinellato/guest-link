@@ -10,6 +10,18 @@
   --font-sans:
     var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
+
+  /* BASE: La estructura profunda */
+  --color-brand-void: #0F2A3D;       /* Tu azul original */
+  --color-brand-void-light: #1E3A52; /* Para hovers sobre el azul */
+  
+  /* ACCENT: La calidez refinada */
+  --color-brand-copper: #D97706;     /* El nuevo acento seleccionado */
+  --color-brand-copper-fg: #FFFFFF;  /* Texto sobre botones cobre */
+  
+  /* NEUTRALS: Soporte técnico */
+  --color-brand-concrete: #64748B;
+  --color-brand-paper: #F8FAFC;      /* Fondo general */
 }
 
 /* Variables Base (Modo Claro) */

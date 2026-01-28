@@ -188,3 +188,52 @@ export const transportInfoRelations = relations(transportInfo, ({ one }) => ({
     references: [properties.id],
   }),
 }));
+
+// Transport / Transit System Tables
+
+// 1. Maestro de Líneas (Ej: Línea 20, 55, 72)
+export const busLines = pgTable("bus_lines", {
+  id: serial("id").primaryKey(),
+  lineNumber: text("line_number").notNull(), // "20", "55"
+  name: text("name"), // "Terminal - Llao Llao"
+  color: text("color").default("#000000"), // Para la UI
+  mainAttractions: text("main_attractions"), // "Llao Llao, Pto Pañuelo"
+});
+
+// 2. Paradas de Colectivo (Geolocalizadas)
+export const busStops = pgTable("bus_stops", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // "Moreno y Beschedt"
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
+  isHub: boolean("is_hub").default(false), // Si es parada clave (Centro)
+});
+
+// 3. Relación Línea <-> Parada (Muchos a muchos)
+export const busRouteStops = pgTable("bus_route_stops", {
+  id: serial("id").primaryKey(),
+  lineId: integer("line_id").references(() => busLines.id),
+  stopId: integer("stop_id").references(() => busStops.id),
+  order: integer("order"), // Orden en el recorrido (1, 2, 3...)
+  direction: text("direction"), // "ida" o "vuelta"
+});
+
+// Relations for Transit System
+export const busLinesRelations = relations(busLines, ({ many }) => ({
+  routeStops: many(busRouteStops),
+}));
+
+export const busStopsRelations = relations(busStops, ({ many }) => ({
+  routeLines: many(busRouteStops),
+}));
+
+export const busRouteStopsRelations = relations(busRouteStops, ({ one }) => ({
+  line: one(busLines, {
+    fields: [busRouteStops.lineId],
+    references: [busLines.id],
+  }),
+  stop: one(busStops, {
+    fields: [busRouteStops.stopId],
+    references: [busStops.id],
+  }),
+}));

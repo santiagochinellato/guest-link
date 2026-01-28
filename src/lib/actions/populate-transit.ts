@@ -1,135 +1,84 @@
 "use server";
 
 import { db } from "@/db";
-import { properties, transportInfo } from "@/db/schema";
+import { properties } from "@/db/schema";
+import { findNearbyTransit } from "@/lib/services/transit-matcher";
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
-import {
-  findTransitRoute,
-  findGoogleTransitStations,
-} from "@/lib/services/google-places";
-import { fetchNearbyTransitStops } from "@/lib/actions/overpass";
-
-// Key destinations to test routes (Only if we find stops)
-const KEY_DESTINATIONS = ["Centro Cívico", "Terminal de Ómnibus"];
 
 export async function populateTransitSmart(
   propertyId: number,
   cityContext: string = ""
 ) {
   try {
+    console.log(`🚍 Smart Transit (Bariloche DB) for Property ${propertyId}`);
+
+    // 1. Get Property Coordinates
     const property = await db.query.properties.findFirst({
       where: eq(properties.id, propertyId),
     });
 
     if (!property?.latitude || !property?.longitude) {
-      return { success: false, error: "Coordenadas no disponibles." };
+      return { success: false, error: "Coordenadas no disponibles en la propiedad." };
     }
 
     const lat = parseFloat(property.latitude);
     const lng = parseFloat(property.longitude);
-    const city = property.city || cityContext || "";
 
-    let itemsAdded = 0;
-    const linesFound = new Set<string>();
-
-    // --- STRATEGY 1: OSM (Free & Fast) ---
-    // Search for physical stops and tagged lines
-    console.log("🔍 Layer 1: Searching OSM for transit stops...");
-    const osmStops = await fetchNearbyTransitStops(lat, lng);
-
-    for (const stop of osmStops) {
-      // If the stop has defined lines (e.g., ["20", "51"])
-      if (stop.lines.length > 0) {
-        for (const line of stop.lines) {
-          if (linesFound.has(line)) continue;
-
-          await db.insert(transportInfo).values({
-            propertyId,
-            name: `Línea ${line}`,
-            type: "bus",
-            description: `Parada cercana: ${stop.name}. Consulte horarios en la app local.`,
-          });
-          linesFound.add(line);
-          itemsAdded++;
-        }
-      }
+    if (isNaN(lat) || isNaN(lng)) {
+      return { success: false, error: "Formato de coordenadas inválido." };
     }
 
-    console.log(`✅ OSM found ${itemsAdded} lines`);
+    // 2. Run Local Triangulation Logic
+    let nearbyStops = await findNearbyTransit(lat, lng);
 
-    // --- STRATEGY 2: Google Routes (Smart Fill) ---
-    // If OSM didn't give us lines (or gave few), ask Google how to get to key destinations
-    // This "discovers" lines that OSM didn't have tagged
-    if (itemsAdded < 3) {
-      console.log("🔍 Layer 2: Trying Google Directions to key destinations...");
-      
-      const destinations = [
-        `Centro ${city}`,
-        `Terminal de Ómnibus ${city}`,
-        `Aeropuerto ${city}`,
-      ];
-
-      for (const destination of destinations) {
-        if (itemsAdded >= 5) break; // Limit to avoid too many API calls
-
-        const route = await findTransitRoute(lat, lng, destination);
-
-        if (route && !linesFound.has(route.lineName)) {
-          // Get nearby stations to find the actual stop location
-          const stations = await findGoogleTransitStations(lat, lng);
-          const nearestStop = stations.length > 0 
-            ? stations[0].name 
-            : "Parada cercana a la propiedad";
-
-          await db.insert(transportInfo).values({
-            propertyId,
-            name: `Línea ${route.lineName}`,
-            type: "bus",
-            description: `🚏 Parada: ${nearestStop}\n🚌 ${route.vehicle} hacia ${route.headsign}\n📍 Recorrido: Conecta con ${destination.replace(city, '').trim()} (${route.duration})`,
-          });
-          linesFound.add(route.lineName);
-          itemsAdded++;
-          console.log(`✅ Google Directions found Line ${route.lineName} → ${route.headsign}`);
-        }
-
-        // Small delay to avoid rate limits
-        await new Promise((r) => setTimeout(r, 500));
-      }
+    if (nearbyStops.length === 0) {
+        return {
+            success: true,
+            count: 0,
+            message: "No se encontraron paradas oficiales en el radio de 600m.",
+            data: []
+        };
     }
 
-    // --- STRATEGY 3: Google Stations (Final Fallback) ---
-    // If nothing worked, at least show "There's a stop nearby"
-    if (itemsAdded === 0) {
-      console.log("🔍 Layer 3: Searching Google Transit Stations...");
-      const stations = await findGoogleTransitStations(lat, lng);
-      
-      if (stations.length > 0) {
-        // Add up to 2 nearest stations
-        for (let i = 0; i < Math.min(2, stations.length); i++) {
-          const station = stations[i];
-          await db.insert(transportInfo).values({
-            propertyId,
-            name: station.name || "Parada de Transporte",
-            type: "bus",
-            description: `🚏 Parada de transporte público cercana\n📍 Ubicación: ${station.vicinity || "Ver en mapa"}\n💡 Consulte líneas disponibles en la app de transporte local.`,
-          });
-          itemsAdded++;
-        }
-        console.log(`✅ Google Stations found ${itemsAdded} stops`);
-      }
-    }
+    // 3. Refine Results: Take only unique stops, up to 3 maximum
+    const bestStops = nearbyStops.slice(0, 3);
+    const suggestions = [];
 
-    revalidatePath("/dashboard/properties");
+    for (const stop of bestStops) {
+        // Format lines: "20, 55, 10"
+        const lineNumbers = stop.lines.map(l => l.number).join(", ");
+        
+        // Rich description with attractions
+        const details = stop.lines.map(l => {
+            let info = `• Línea ${l.number}`;
+            if (l.attractions) info += `: Va a ${l.attractions}`;
+            else if (l.name) info += ` (${l.name})`;
+            return info;
+        }).join("\n");
+
+        const fullDescription = `📍 Parada a ${stop.distanceMeters}m (${stop.stopName})\n\n${details}`;
+        
+        // Title: "Parada de Colectivo (Líneas 20, 55)"
+        const title = `Colectivo (Líneas ${lineNumbers})`;
+
+        // Google Maps Link
+        const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${stop.latitude},${stop.longitude}&travelmode=transit`;
+
+        suggestions.push({
+            name: title,
+            type: "bus",
+            description: fullDescription,
+            website: mapUrl, // Using the 'website' field for the map link
+        });
+    }
 
     return {
       success: true,
-      count: itemsAdded,
-      message:
-        itemsAdded > 0
-          ? `Se detectaron ${itemsAdded} opciones de transporte público.`
-          : "No se detectó transporte público cercano. Intente con un radio mayor o verifique la ubicación.",
+      count: suggestions.length,
+      message: `Se detectaron ${suggestions.length} paradas cercanas.`,
+      data: suggestions
     };
+
   } catch (error: unknown) {
     console.error("Smart Transit Error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";

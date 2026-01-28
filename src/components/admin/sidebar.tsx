@@ -74,13 +74,13 @@ export function Sidebar() {
         <div
           className={cn(
             "flex items-center transition-all",
-            isCollapsed ? "justify-center" : "gap-3",
+            isCollapsed ? "justify-center" : "",
           )}
         >
           <div className="flex-shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/guestHubLogo.png"
+              src="/hostlylogo.svg"
               alt="GuestHub"
               className="w-10 h-10 object-contain"
             />
@@ -92,13 +92,13 @@ export function Sidebar() {
             )}
           >
             <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white whitespace-nowrap font-sans">
-              GUESTHUB
+              HOSTLY
             </span>
             <p
               className="text-[12px] text-gray-500 font-medium tracking-wide whitespace-nowrap"
               style={{ fontFamily: "var(--font-inter)" }}
             >
-              You stay, connected.
+              The city, simplified
             </p>
           </div>
         </div>

@@ -36,6 +36,23 @@ export function TransportSection({
             <TransitAutoButton
               propertyId={propertyId}
               city={initialCity || ""}
+              onComplete={(suggestions) => {
+                if (suggestions && suggestions.length > 0) {
+                  // 1. Remove existing "Auto-detected" bus items to prevent sloppy duplicates
+                  // (Optional: simple logic is remove all 'bus' types if user clicks the magic button)
+                  // Because indices change when removing, we filter the list and reset.
+                  // But simpler with field array is just:
+
+                  // We just append. The user can delete.
+                  // OR we can clear. Let's start with append. User satisfaction is higher if we don't delete their stuff.
+
+                  // Actually, user complained about "previous result".
+                  // Let's iterate and append.
+                  suggestions.forEach((item: any) => {
+                    appendTransport(item);
+                  });
+                }
+              }}
             />
           )}
           <button
@@ -79,6 +96,10 @@ export function TransportSection({
               {...register(`transport.${index}.description` as const)}
               placeholder="Detalles..."
               className="w-full px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 resize-none h-20"
+            />
+            <input
+              type="hidden"
+              {...register(`transport.${index}.website` as const)}
             />
             <button
               type="button"

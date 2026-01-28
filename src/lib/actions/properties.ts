@@ -129,6 +129,7 @@ export async function createProperty(data: PropertyFormData) {
             name: t.name,
             type: t.type ?? "taxi",
             description: t.description,
+            website: t.website, // Save website link
             scheduleInfo: t.scheduleInfo,
             priceInfo: t.priceInfo
           }))
@@ -250,6 +251,7 @@ export async function updateProperty(id: number, data: PropertyFormData) {
             name: t.name,
             type: t.type ?? "taxi",
             description: t.description,
+            website: t.website, // Save website link
             scheduleInfo: t.scheduleInfo,
             priceInfo: t.priceInfo
           }))

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { HostlyLogoVertical } from "@/components/ui/branding/HostlyLogo";
 import { Home } from "lucide-react";
 
 export default function NotFound() {
@@ -16,26 +17,7 @@ export default function NotFound() {
       <div className="max-w-md w-full text-center space-y-8 md:space-y-12 animate-in fade-in zoom-in duration-700 relative z-10 px-4 md:px-0">
         {/* Branding */}
         <div className="flex justify-center">
-          <div className="block dark:hidden">
-            <Image
-              src="/GUESTHUBVERTICALCOLOR.webp"
-              alt="GuestHub"
-              width={180}
-              height={180}
-              className="w-24 md:w-32 h-auto"
-              priority
-            />
-          </div>
-          <div className="hidden dark:block">
-            <Image
-              src="/GUESTHUBVERTICALTOTALWHITE.webp"
-              alt="GuestHub"
-              width={180}
-              height={180}
-              className="w-24 md:w-32 h-auto"
-              priority
-            />
-          </div>
+          <HostlyLogoVertical className="w-[180px] h-auto text-brand-copper dark:text-white" />
         </div>
 
         <div className="space-y-4 md:space-y-6">

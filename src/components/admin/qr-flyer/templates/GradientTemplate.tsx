@@ -3,6 +3,7 @@ import { Wifi, ArrowRight, ScanLine } from "lucide-react";
 import { QrCode } from "../QrCode";
 import { FlyerConfig } from "../types";
 import { cn } from "@/lib/utils";
+import { HostlyLogoVertical } from "@/components/ui/branding/HostlyLogo";
 
 // Helper Components
 const QrCard = ({
@@ -17,20 +18,9 @@ const QrCard = ({
   primaryColor: string;
 }) => (
   <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl flex flex-col items-center relative z-20 mx-auto">
-    <div
-      className="h-15"
-      style={{
-        maskImage: 'url("/guestText.svg")',
-        WebkitMaskImage: 'url("/guestText.svg")',
-        maskSize: "contain",
-        WebkitMaskSize: "contain",
-        maskRepeat: "no-repeat",
-        WebkitMaskRepeat: "no-repeat",
-        maskPosition: "center",
-        WebkitMaskPosition: "center",
-        backgroundColor: primaryColor,
-        aspectRatio: "1009 / 800",
-      }}
+    <HostlyLogoVertical
+      className="h-32 w-auto"
+      style={{ color: primaryColor }}
     />
     <QrCode
       url={content.guideUrl}

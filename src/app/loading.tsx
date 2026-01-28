@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { HostlyLogoVertical } from "@/components/ui/branding/HostlyLogo";
 
 export default function Loading() {
   return (
@@ -15,26 +16,7 @@ export default function Loading() {
 
         {/* Logo Branding */}
         <div className="relative animate-pulse">
-          <div className="block dark:hidden">
-            <Image
-              src="/GUESTHUBVERTICALCOLOR.webp"
-              alt="GuestHub"
-              width={160}
-              height={160}
-              className="w-24 md:w-36 h-auto"
-              priority
-            />
-          </div>
-          <div className="hidden dark:block">
-            <Image
-              src="/GUESTHUBVERTICALTOTALWHITE.webp"
-              alt="GuestHub"
-              width={160}
-              height={160}
-              className="w-24 md:w-36 h-auto"
-              priority
-            />
-          </div>
+          <HostlyLogoVertical className="w-[160px] h-auto text-brand-copper dark:text-white" />
         </div>
       </div>
 

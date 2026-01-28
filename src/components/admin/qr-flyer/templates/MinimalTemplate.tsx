@@ -4,6 +4,7 @@ import { Wifi, Smartphone, Lock } from "lucide-react";
 import { QrCode } from "../QrCode";
 import { FlyerConfig } from "../types";
 import { cn } from "@/lib/utils";
+import { HostlyLogoVertical } from "@/components/ui/branding/HostlyLogo";
 
 interface TemplateProps {
   config: FlyerConfig;
@@ -23,23 +24,12 @@ const QrSection = ({
   branding: FlyerConfig["branding"];
   primaryColor: string;
 }) => (
-  <div className="flex flex-col items-center justify-center gap-2">
-    <div
-      className="h-15 w-[120px] opacity-90"
-      style={{
-        maskImage: 'url("/guestText.svg")',
-        WebkitMaskImage: 'url("/guestText.svg")',
-        maskSize: "contain",
-        WebkitMaskSize: "contain",
-        maskRepeat: "no-repeat",
-        WebkitMaskRepeat: "no-repeat",
-        maskPosition: "center",
-        WebkitMaskPosition: "center",
-        backgroundColor: primaryColor,
-        aspectRatio: "1009 / 800",
-      }}
+  <div className="flex flex-col items-center justify-center gap-2 ">
+    <HostlyLogoVertical
+      className="h-32 w-auto"
+      style={{ color: primaryColor }}
     />
-    <div className="bg-white p-6 shadow-sm border border-gray-100 rounded-2xl">
+    <div className="bg-white p-6 pt-0 shadow-sm border border-gray-100 rounded-2xl">
       <QrCode
         url={content.guideUrl}
         size={size}
