@@ -300,12 +300,12 @@ export function PropertyForm({
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-neutral-900 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95">
+          <div className="bg-white dark:bg-brand-void/10 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95">
             <div className="w-16 h-16 bg-green-100 dark:bg-brand-copper/30 text-brand-copper rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-bold mb-2">¡Éxito!</h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-brand-void/80 dark:text-white/80 mb-6">
               La propiedad se ha {isEditMode ? "actualizado" : "creado"}{" "}
               correctamente.
             </p>

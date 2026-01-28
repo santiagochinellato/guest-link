@@ -28,9 +28,9 @@ export function GuestTransportView({ transport }: GuestTransportViewProps) {
           >
             <div className="flex flex-col items-start gap-4">
               <div className="flex gap-2 items-center">
-                <div className="size-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center justify-center text-blue-500 shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <TramFront className="w-7 h-7" />
-                  <span className="text-[10px] font-bold uppercase bg-gray-100 dark:bg-neutral-700 px-2.5 py-1 rounded-lg text-gray-500">
+                <div className="size-14 rounded-2xl bg-brand-void/5 dark:bg-brand-copper/5 flex flex-col items-center justify-center text-blue-500 shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <TramFront className="w-7 h-7 text-brand-copper dark:text-brand-copper/80" />
+                  <span className="text-[10px] font-bold uppercase bg-transparent dark:bg-transparent px-2.5 py-1 rounded-lg text-brand-void dark:text-brand-copper">
                     {item.type}
                   </span>
                 </div>
@@ -43,7 +43,7 @@ export function GuestTransportView({ transport }: GuestTransportViewProps) {
                   {item.website && (
                     <button
                       onClick={() => window.open(item.website, "_blank")}
-                      className="text-xs flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold hover:underline"
+                      className="text-xs flex items-center gap-1.5 text-brand-void dark:text-brand-copper/80 font-bold hover:underline"
                     >
                       <MapPinned className="w-3 h-3" />
                       Ver ruta en mapa
