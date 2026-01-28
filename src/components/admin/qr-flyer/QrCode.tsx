@@ -56,14 +56,12 @@ export const QrCode = ({
       <Canvas
         text={url}
         options={{
-          errorCorrectionLevel: "M",
-          margin: 2,
+          errorCorrectionLevel: "H",
+          margin: 4,
           scale: 4,
           width: size,
           color: {
-            dark:
-              colorOverride ||
-              (branding.qrStyle === "dots" ? primaryColor : "#000000"),
+            dark: colorOverride || branding.qrColor || "#000000",
             light: "#ffffff",
           },
         }}

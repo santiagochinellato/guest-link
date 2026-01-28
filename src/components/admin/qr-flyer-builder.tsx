@@ -40,7 +40,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
       logo: initialData?.coverImageUrl || "/GUESTHUBHORIZONTALCOLOR.webp",
       logoPosition: "center",
       logoSize: "md",
-      qrStyle: "dots",
+      qrStyle: "square",
       qrColor: "#000000",
       embedLogoInQr: false,
     },
