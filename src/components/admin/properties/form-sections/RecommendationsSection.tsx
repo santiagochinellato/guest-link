@@ -29,8 +29,10 @@ import {
   Mountain,
   MapPin,
   X,
-  MoreVertical,
   Edit,
+  Users,
+  Map as MapIcon,
+  List as ListIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -45,11 +47,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -88,13 +86,13 @@ const ICONS_MAP: Record<string, React.ElementType> = {
 };
 
 interface RecommendationsSectionProps {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any;
 }
 
 export function RecommendationsSection({
-  initialData: _,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  initialData,
 }: RecommendationsSectionProps) {
   if (!GOOGLE_MAPS_API_KEY) {
     return (
@@ -116,7 +114,7 @@ export function RecommendationsSection({
 }
 
 function RecommendationsContent() {
-  const { control, watch } = useFormContext<PropertyFormData>();
+  const { control, watch, register } = useFormContext<PropertyFormData>();
   const map = useMap();
   const placesLibrary = useMapsLibrary("places");
   const propLat = watch("latitude");
@@ -153,13 +151,16 @@ function RecommendationsContent() {
   });
 
   // --- Map & Search State ---
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [suggestedPlaces, setSuggestedPlaces] = useState<
     google.maps.places.Place[]
   >([]);
   const [selectedPlaceInfo, setSelectedPlaceInfo] =
     useState<google.maps.places.Place | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+
+  // --- UX State: View Mode & Editing ---
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const selectedPlaceIds = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -208,6 +209,9 @@ function RecommendationsContent() {
           if (p.location) bounds.extend(p.location);
         });
         map.fitBounds(bounds);
+
+        // Auto-switch to map view on mobile if search yields results
+        setViewMode("map");
       } else {
         toast("No se encontraron resultados");
       }
@@ -222,16 +226,6 @@ function RecommendationsContent() {
   // Smart Discovery: Auto-search when changing category if keywords exist
   useEffect(() => {
     if (!map || !placesLibrary || !activeCategory) return;
-
-    // Only auto-search if we explicitly want to, OR if the list is empty?
-    // User requirement: "Omnibox" is primary, but maybe we can suggest based on active category keywords.
-    // Let's rely on omnibox for explicit search, BUT provide a "Quick Search" button or auto-search.
-    // Actually, sticking to the plan: Omnibox is the main discovery tool.
-    // But let's pre-fill omnibox or trigger search if user wants.
-    // For now, let's keep it manual via Omnibox as requested, to avoid spamming searches.
-
-    // Optional: Auto-clear suggestions when swapping categories?
-    // setSuggestedPlaces([]);
   }, [activeCategory, map, placesLibrary]);
 
   const handleAddPlace = (place: google.maps.places.Place) => {
@@ -241,7 +235,7 @@ function RecommendationsContent() {
       title: place.displayName,
       formattedAddress: place.formattedAddress || "",
       googleMapsLink: place.googleMapsURI || "",
-      categoryType: activeCategory.type, // Use the slug/type of active category
+      categoryType: activeCategory.type,
       description: "",
       googlePlaceId: place.id,
       latitude: place.location.lat().toString(),
@@ -252,10 +246,16 @@ function RecommendationsContent() {
 
     toast.success("Agregado a " + activeCategory.name);
     setSelectedPlaceInfo(null);
+
+    // Auto-open Curator Modal for the newly added item
+    // The new item will be at the end of the array
+    setEditingIndex(recFields.length); // length is currently X, index of next is X
   };
 
+  const editingItem = editingIndex !== null ? recFields[editingIndex] : null;
+
   return (
-    <div className="flex flex-col h-[700px] bg-white dark:bg-neutral-950 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden animate-in fade-in">
+    <div className="flex flex-col h-[700px] bg-white dark:bg-neutral-950 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden animate-in fade-in relative">
       <div className="flex flex-col  p-4 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-950">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           Recomendaciones
@@ -266,10 +266,8 @@ function RecommendationsContent() {
       </div>
       {/* 1. TOP BAR: CATEGORY TABS */}
       <div className="min-h-14 flex items-center p-4 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-950 overflow-x-auto no-scrollbar gap-2 flex-wrap">
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {(categoryFields as any[]).map((cat, idx) => {
-          const Icon = ICONS_MAP[cat.icon] || Star;
+        {categoryFields.map((cat, idx) => {
+          const Icon = ICONS_MAP[cat.icon || "Star"] || Star;
           const isActive = idx === activeCategoryIndex;
           return (
             <button
@@ -298,9 +296,14 @@ function RecommendationsContent() {
       </div>
 
       {/* 2. MAIN CONTENT: SPLIT VIEW */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* LEFT SIDEBAR: LIST */}
-        <div className="w-1/3 min-w-[300px] border-r border-gray-100 dark:border-neutral-800 bg-gray-50/30 dark:bg-neutral-900/10 flex flex-col">
+        <div
+          className={cn(
+            "w-full lg:w-1/3 min-w-[300px] border-r border-gray-100 dark:border-neutral-800 bg-gray-50/30 dark:bg-neutral-900/10 flex flex-col transition-transform duration-300",
+            viewMode === "map" ? "hidden lg:flex" : "flex",
+          )}
+        >
           {/* Context Header */}
           <div className="p-4 flex justify-between items-center bg-white dark:bg-neutral-950/50">
             <div>
@@ -308,7 +311,7 @@ function RecommendationsContent() {
                 {activeCategory?.name}
                 <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
                   {
-                    (recFields as any[]).filter(
+                    recFields.filter(
                       (r) => r.categoryType === activeCategory?.type,
                     ).length
                   }
@@ -320,7 +323,6 @@ function RecommendationsContent() {
             </div>
 
             {/* Category Actions */}
-
             <Button
               variant="ghost"
               size="sm"
@@ -332,9 +334,8 @@ function RecommendationsContent() {
           </div>
 
           {/* Scrollable List */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {(recFields as any[]).map((field, index) => {
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar pb-20 lg:pb-3">
+            {recFields.map((field, index) => {
               if (field.categoryType !== activeCategory?.type) return null;
               return (
                 <div
@@ -363,13 +364,16 @@ function RecommendationsContent() {
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <button className="flex items-center gap-1 p-1 text-green-700 hover:text-green-600 transition-opacity bg-white dark:bg-neutral-900 rounded-md shadow-sm w-fit self-end">
+                    <button
+                      onClick={() => setEditingIndex(index)}
+                      className="flex items-center gap-1 p-1 text-green-700 hover:text-green-600 transition-opacity bg-white dark:bg-neutral-900 rounded-md shadow-sm w-fit self-end"
+                    >
                       <Edit className="w-3.5 h-3.5" />
-                      <p>Editar</p>
+                      <p className="text-xs">Editar</p>
                     </button>
                     <button
                       onClick={() => removeRec(index)}
-                      className=" h-[32px] w-[32px] flex items-center gap-1 p-2 text-red-500 hover:text-red-600 transition-opacity bg-white dark:bg-neutral-900 rounded-md shadow-sm w-fit self-end"
+                      className=" h-[24px] w-[24px] flex items-center gap-1 p-1 text-red-500 hover:text-red-600 transition-opacity bg-white dark:bg-neutral-900 rounded-md shadow-sm w-fit self-end"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -379,10 +383,8 @@ function RecommendationsContent() {
             })}
 
             {/* Empty State */}
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {(recFields as any[]).filter(
-              (r) => r.categoryType === activeCategory?.type,
-            ).length === 0 && (
+            {recFields.filter((r) => r.categoryType === activeCategory?.type)
+              .length === 0 && (
               <div className="text-center py-10 px-4">
                 <div className="w-12 h-12 bg-gray-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Search className="w-5 h-5 text-gray-400" />
@@ -391,16 +393,30 @@ function RecommendationsContent() {
                   Lista vacía
                 </h4>
                 <p className="text-[10px] text-gray-400">
-                  Usa el buscador en el mapa para encontrar y agregar lugares a
-                  esta categoría.
+                  Usa el buscador en el mapa para encontrar y agregar lugares.
                 </p>
+                <div className="mt-4 lg:hidden">
+                  <Button
+                    size="sm"
+                    onClick={() => setViewMode("map")}
+                    className="bg-brand-void text-white"
+                  >
+                    <MapIcon className="w-4 h-4 mr-2" />
+                    Ir al Mapa
+                  </Button>
+                </div>
               </div>
             )}
           </div>
         </div>
 
         {/* RIGHT: MAP AREA */}
-        <div className="flex-1 relative bg-gray-100">
+        <div
+          className={cn(
+            "flex-1 relative bg-gray-100",
+            viewMode === "list" ? "hidden lg:block w-full" : "block w-full",
+          )}
+        >
           <Map
             mapId="DEMO_MAP_ID"
             defaultCenter={center}
@@ -448,14 +464,9 @@ function RecommendationsContent() {
             })}
 
             {/* Selected Pins (Colored) */}
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {(recFields as any[]).map((field) => {
+            {recFields.map((field) => {
               if (!field.latitude || !field.longitude) return null;
 
-              // Only show pins for active category? Or all?
-              // Better to show ALL selected pins, but highlight active ones?
-              // Let's show all but dim interactive ones?
-              // For simplicity, let's show all in Brand Copper.
               const isCurrentCat = field.categoryType === activeCategory?.type;
 
               return (
@@ -510,11 +521,114 @@ function RecommendationsContent() {
           </Map>
         </div>
       </div>
+
+      {/* MOBILE FLOATING ACTION BUTTON (TOGGLE VIEW) */}
+      <div className="lg:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <button
+          onClick={() => setViewMode(viewMode === "map" ? "list" : "map")}
+          className="flex items-center gap-2 bg-brand-void text-white px-6 py-3 rounded-full shadow-xl font-semibold text-sm hover:scale-105 transition-transform"
+        >
+          {viewMode === "map" ? (
+            <>
+              <ListIcon className="w-4 h-4" />
+              Ver Lista (
+              {
+                recFields.filter((r) => r.categoryType === activeCategory?.type)
+                  .length
+              }
+              )
+            </>
+          ) : (
+            <>
+              <MapIcon className="w-4 h-4" />
+              Ver Mapa
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* CURATOR MODAL */}
+      <Dialog
+        open={editingIndex !== null}
+        onOpenChange={(open) => !open && setEditingIndex(null)}
+      >
+        {editingItem && (
+          <DialogContent className="sm:max-w-md p-0 overflow-hidden gap-0">
+            {/* Header Visual */}
+            <div className="h-32 bg-gray-100 relative flex items-center justify-center">
+              <MapPin className="w-10 h-10 text-gray-300" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                <h3 className="text-white font-bold text-lg leading-tight">
+                  {editingItem.title}
+                </h3>
+              </div>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Ratings */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 text-center">
+                  <div className="flex items-center justify-center gap-1 text-yellow-500 font-bold text-lg">
+                    {editingItem.rating || "--"}{" "}
+                    <Star className="w-4 h-4 fill-current" />
+                  </div>
+                  <p className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">
+                    Google
+                  </p>
+                </div>
+                <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3 text-center">
+                  <div className="flex items-center justify-center gap-1 text-blue-600 font-bold text-lg">
+                    New <Users className="w-4 h-4" />
+                  </div>
+                  <p className="text-[10px] uppercase text-blue-400 font-bold tracking-wider">
+                    Guest Score
+                  </p>
+                </div>
+              </div>
+
+              {/* Textarea */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-gray-700">
+                  Tu reseña personal
+                </Label>
+                <Textarea
+                  {...register(
+                    `recommendations.${editingIndex as number}.description`,
+                  )}
+                  placeholder="Cuéntale a tus huéspedes por qué este lugar es especial..."
+                  className="bg-gray-50 border-gray-200 focus:bg-white resize-none"
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="p-4 bg-gray-50 border-t flex flex-row gap-2 justify-between items-center w-full sm:justify-between">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (editingIndex !== null) {
+                    removeRec(editingIndex);
+                    setEditingIndex(null);
+                  }
+                }}
+                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Eliminar
+              </Button>
+              <Button
+                onClick={() => setEditingIndex(null)}
+                className="bg-brand-void text-white hover:bg-brand-void/90"
+              >
+                Guardar y Cerrar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 }
-
-// --- SUB-COMPONENTS ---
 
 function Omnibox({
   onSearch,

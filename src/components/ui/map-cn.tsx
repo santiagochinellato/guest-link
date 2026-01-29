@@ -4,7 +4,6 @@ import * as React from "react";
 import Map, {
   NavigationControl,
   Marker,
-  Popup,
   ViewState,
   MapRef,
 } from "react-map-gl/maplibre";
@@ -68,7 +67,9 @@ export function MapCN({
           zoom: 13,
           ...initialViewState,
         }}
-        {...(viewState ? { viewState, onMove } : {})}
+        {...(viewState
+          ? { viewState: { ...viewState, width: 0, height: 0 }, onMove }
+          : {})}
         style={{ width: "100%", height: "100%" }}
         mapStyle={MAP_STYLE}
         onClick={(e) => onMapClick?.({ lngLat: e.lngLat })}

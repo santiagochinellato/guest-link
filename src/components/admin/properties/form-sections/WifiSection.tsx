@@ -82,7 +82,7 @@ export function WifiSection() {
                       : ssid || "Tu Red"
                     : "Sin Configurar"}
                 </h3>
-                {password && !wifiQrCode.startsWith("http") && (
+                {password && wifiQrCode && !wifiQrCode.startsWith("http") && (
                   <p className="font-mono text-sm opacity-60">
                     Pass: {password}
                   </p>

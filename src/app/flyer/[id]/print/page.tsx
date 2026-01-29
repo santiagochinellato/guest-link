@@ -1,33 +1,36 @@
 import { db } from "@/db";
-import { properties, houseRules } from "@/db/schema";
+import { properties } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { FlyerPreview } from "@/components/admin/qr-flyer/FlyerPreview";
 import { FlyerConfig } from "@/components/admin/qr-flyer/types";
-import { headers } from "next/headers";
 
 // Force valid config for printing
 const DEFAULT_CONFIG: FlyerConfig = {
   content: {
-    title: "Wifi",
-    wifiSsid: "",
-    wifiPassword: "",
-    customMessage: "",
-    showRules: true,
+    title: "Conéctate al WiFi",
+    subtitle: "Escanea el código para conectarte",
+    welcomeMessage: "¡Bienvenido! Esperamos que disfrutes tu estadía.",
+    welcomeMessageEn: "Welcome! We hope you enjoy your stay.",
+    networkName: "",
+    networkPassword: "",
+    guideUrl: "https://guest-link.com",
+    showPassword: true,
+  },
+  branding: {
+    logoPosition: "center",
+    logoSize: "md",
+    qrStyle: "rounded",
+    qrColor: "#000000",
+    embedLogoInQr: true,
   },
   design: {
     layout: "minimal",
     primaryColor: "#0F2A3D",
+    secondaryColor: "#DCA54C",
+    backgroundColor: "#FFFFFF",
     font: "inter",
     orientation: "vertical",
-    showLogo: true,
-    showBorder: true,
-  },
-  qr: {
-    dotsType: "rounded",
-    cornersSquareType: "extra-rounded",
-    cornersDotType: "dot",
-    image: "/icons/wifi.svg",
   },
 };
 
@@ -43,9 +46,7 @@ export default async function PrintFlyerPage({
 
   const property = await db.query.properties.findFirst({
     where: eq(properties.id, propertyId),
-    with: {
-      houseRules: true,
-    },
+    // houseRules is a column, not a relation
   });
 
   if (!property) return notFound();
@@ -57,10 +58,9 @@ export default async function PrintFlyerPage({
     content: {
       ...DEFAULT_CONFIG.content,
       title: `Bienvenido a ${property.name}`,
-      wifiSsid: property.wifiSsid || "",
-      wifiPassword: property.wifiPassword || "",
-      // @ts-expect-error JSON parsing
-      rules: property.houseRules?.rulesAllowed || [],
+      networkName: property.wifiSsid || "",
+      networkPassword: property.wifiPassword || "",
+      guideUrl: `https://guest-link.com/stay/${property.slug}`,
     },
   };
 

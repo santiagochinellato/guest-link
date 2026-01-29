@@ -85,6 +85,11 @@ export const PropertyFormSchema = z.object({
   
   // Status
   status: z.enum(["active", "draft", "archived"]).optional(),
+
+  // Access & Parking
+  accessInstructions: z.string().optional(),
+  hasParking: z.boolean().optional(),
+  parkingDetails: z.string().optional(),
 });
 
 export type PropertyFormData = z.infer<typeof PropertyFormSchema>;
