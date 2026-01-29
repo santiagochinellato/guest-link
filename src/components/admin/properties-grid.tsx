@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+
 import {
   Search,
   MapPin,
@@ -16,7 +16,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PropertyActionsMenu } from "@/components/admin/property-actions-menu";
+import { PropertyCardActions } from "@/components/admin/property-card-actions";
 import { cn } from "@/lib/utils";
 
 interface Property {
@@ -119,16 +119,6 @@ export function PropertiesGrid({ initialProperties }: PropertiesGridProps) {
                   >
                     {prop.status || "Draft"}
                   </span>
-                </div>
-
-                {/* Floating Action Menu (Desktop Hover) */}
-                <div className="absolute top-3 right-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-                  <div className="bg-white/90 dark:bg-black/50 backdrop-blur-md rounded-full shadow-sm p-0.5">
-                    <PropertyActionsMenu
-                      propertyId={prop.id}
-                      slug={prop.slug}
-                    />
-                  </div>
                 </div>
 
                 {/* Secciones Configuradas */}
@@ -237,19 +227,13 @@ export function PropertiesGrid({ initialProperties }: PropertiesGridProps) {
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-neutral-800">
                   <div className="flex flex-col">
-                    <span className="text-[12px] uppercase font-bold text-brand-void dark:text-white tracking-wider">
-                      Public Link
+                    <span className="text-[12px] uppercase font-bold text-brand-void dark:text-white tracking-wider mb-2">
+                      Actions
                     </span>
-                    <Link
-                      href={`/stay/${prop.slug}`}
-                      target="_blank"
-                      className="text-xs font-medium text-brand-copper hover:underline font-mono"
-                    >
-                      /{prop.slug}
-                    </Link>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {/* You could add views count or other metrics here */}
+                    <PropertyCardActions
+                      propertyId={prop.id}
+                      slug={prop.slug}
+                    />
                   </div>
                 </div>
               </div>

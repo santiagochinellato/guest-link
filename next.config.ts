@@ -15,6 +15,16 @@ const nextConfig: NextConfig = {
         hostname: 'lqkxpikgmrgadfynorny.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        pathname: '/**',
+      },
     ],
   },
 };

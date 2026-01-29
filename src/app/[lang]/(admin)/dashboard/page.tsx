@@ -1,15 +1,7 @@
-import {
-  TrendingUp,
-  Eye,
-  Home,
-  Scan,
-  MapPin,
-  Edit2,
-  QrCode,
-} from "lucide-react";
+import { TrendingUp, Eye, Home, Scan } from "lucide-react";
 import Link from "next/link";
 import { getProperties } from "@/lib/actions/properties";
-import Image from "next/image";
+import { PropertiesGrid } from "@/components/admin/properties-grid";
 
 export default async function DashboardPage() {
   const result = await getProperties();
@@ -23,15 +15,8 @@ export default async function DashboardPage() {
   // qrScans is not yet supported in DB
   const totalScans = 0;
 
-  // MOCK Images for demo purposes if real properties don't have images
-  const MOCK_IMAGES = [
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuBIbq2hY8lu-KIfuzp18Z2NM44OcMQe-quz4whEhr_bqm2ueqNxkdss-5jFC6gllOe-y4pN0BrrHvCsmxN7mNEyTgFHu7NXJ-d3n8ez1FsYn-yfZ46fTWar8B6t1-WQSFyisnRK1rsVQNnByWJ2kTbLVz84w0XZOfOuBJR3qjmxiLcS_XZ3zZ1QbHjw6g4IQQ0g2hL1qIojifELz0MotGn_scGYmsFDUbkvN1FUq8NC5e5ck-TqjMa6IVwcbAjMBDoO5r0XN7Bs7_Y",
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuDlSNqRGRsKgL7yRH4GTjQjzliYVcpXW63XA5AnBgO3E1dzlARAzJCo3WkRoJgDtw2Rv1pfdx5kstArvNCD_GwKnFBmEx-TRh5km-GEqbDIoBvrJTa-KRam-cKdz0dDtFSGcugkF7Jjmmobf8bT_GgNwsoO2j_Pc0ZD_re-mA8zEhg1X_KB7OKW-Kp-iY7kx5pCoTcuGWFRZ-lb0R6BbTFZkTmUaEACxBMMxU7isGfHE5Dg71rSJUtnHpRtV2GvFGFx4I5KanMRdAo",
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuBI6sFoTEPka7DLenvuzmosrsFPWvydvzf86jnJgoN6sH4JOh0yROZektUQK_xObTqQkq4ny_ZUCKv4kyvGlpPNv_8bN08M62y2JUMkaqvB-2-i0fsTFDpwBXYFW2Bj75RsuM8SBgrdnHh1GFV1Qq0CbvLjF96mnur1C8WolxlgyMcpbNszPxiXI3XnUD5lH0IPaADyGsAHbX0kThHklxlwXyXnZK1gqE0lOmvfj8BsgcnNIhU2yMn6JvKuH2PZlP-x3bDon4QbpPM",
-  ];
-
   return (
-    <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-8">
+    <div className=" mx-auto px-8 py-6 flex flex-col gap-8">
       {/* Header Section */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
@@ -42,13 +27,6 @@ export default async function DashboardPage() {
             Dashboard
           </h1>
         </div>
-        <Link
-          href="/dashboard/properties/new"
-          className="bg-brand-void hover:bg-brand-void/90 dark:bg-brand-copper dark:hover:bg-brand-copper/90 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all flex items-center gap-2"
-        >
-          <Home className="w-5 h-5" />
-          <span>Agregar Propiedad</span>
-        </Link>
       </header>
 
       {/* Stats Section */}
@@ -124,128 +102,14 @@ export default async function DashboardPage() {
             Your Properties
           </h3>
           <Link
-            href="/dashboard/properties"
-            className="text-sm font-semibold text-brand-void hover:text-brand-void/90 flex items-center gap-1 dark:text-white"
+            href="/dashboard/properties/new"
+            className="bg-brand-void hover:bg-brand-void/90 dark:bg-brand-copper dark:hover:bg-brand-copper/90 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all flex items-center gap-2"
           >
-            VER TODO
-            <span className="text-lg">→</span>
+            <Home className="w-5 h-5" />
+            <span>Agregar Propiedad</span>
           </Link>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {properties.length > 0 ? (
-            properties.map((prop, idx) => (
-              <div
-                key={prop.id}
-                className="group bg-white dark:bg-brand-void rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-md transition-all flex md:flex-col h-full items-center md:items-stretch"
-              >
-                {/* Desktop Image */}
-                <div className="relative h-48 w-full overflow-hidden hidden md:block">
-                  <div className="absolute top-3 right-3 z-10 bg-brand-void text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-                    Published
-                  </div>
-                  <Image
-                    src={
-                      prop.coverImageUrl ||
-                      MOCK_IMAGES[idx % MOCK_IMAGES.length]
-                    }
-                    alt={prop.name}
-                    width={500}
-                    height={300}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </div>
-
-                {/* Mobile Thumbnail */}
-                <div className="w-20 h-20 md:hidden p-2 flex-shrink-0">
-                  <Image
-                    src={
-                      prop.coverImageUrl ||
-                      MOCK_IMAGES[idx % MOCK_IMAGES.length]
-                    }
-                    alt={prop.name}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-
-                <div className="p-4 md:p-5 flex flex-col flex-1 gap-2 md:gap-4 justify-center md:justify-start w-full">
-                  <div>
-                    <h4 className="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
-                      {prop.name}
-                    </h4>
-                    <p className="text-xs md:text-sm text-gray-500 dark:text-white flex items-center gap-1">
-                      <MapPin className="w-3 h-3 md:w-4 md:h-4 text-gray-400 dark:text-white" />
-                      {prop.wifiSsid ? "Wifi Setup" : "No Wifi"}
-                    </p>
-                  </div>
-
-                  {/* Desktop Actions */}
-                  <div className="mt-auto hidden md:flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center gap-4">
-                      <div
-                        className="flex items-center gap-1.5"
-                        title="Total Views"
-                      >
-                        <Eye className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                          {prop.views || 0}
-                        </span>
-                      </div>
-                      <div
-                        className="flex items-center gap-1.5"
-                        title="QR Scans"
-                      >
-                        <QrCode className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                          {0}
-                        </span>
-                      </div>
-                    </div>
-                    <Link
-                      href={`/dashboard/properties/${prop.id}/edit`}
-                      className="p-2 text-gray-400 hover:text-brand-copper hover:bg-brand-copper/5 rounded-lg transition-colors"
-                    >
-                      <Edit2 className="w-5 h-5" />
-                    </Link>
-                  </div>
-
-                  {/* Mobile Actions/Stats */}
-                  <div className="md:hidden flex items-center justify-between mt-1">
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" /> {prop.views || 0}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <QrCode className="w-3 h-3" /> {0}
-                      </span>
-                    </div>
-                    <Link
-                      href={`/dashboard/properties/${prop.id}/edit`}
-                      className="text-xs font-bold text-brand-copper"
-                    >
-                      Edit
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-1 md:col-span-3 py-12 text-center bg-white dark:bg-brand-void rounded-xl border border-dashed border-gray-300">
-              <p className="text-gray-500">
-                No properties found. Add your first property!
-              </p>
-              <Link
-                href="/dashboard/properties/new"
-                className="mt-4 inline-block bg-brand-copper text-white px-4 py-2 rounded-lg text-sm font-bold"
-              >
-                Create Property
-              </Link>
-            </div>
-          )}
-        </div>
+        <PropertiesGrid initialProperties={properties as any} />
       </section>
     </div>
   );

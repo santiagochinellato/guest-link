@@ -20,7 +20,7 @@ import { signOut } from "next-auth/react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Propiedades", href: "/dashboard/properties", icon: Building2 },
+
   // { label: "Analytics", href: "/dashboard/analytics", icon: BarChart2 },
   // { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
