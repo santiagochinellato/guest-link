@@ -15,6 +15,8 @@ export const RecommendationSchema = z.object({
   googlePlaceId: z.string().optional(),
   externalSource: z.enum(["manual", "google", "osm"]).optional(),
   geometry: z.any().optional(),
+  latitude: z.string().optional(),
+  longitude: z.string().optional(),
 });
 
 export const EmergencyContactSchema = z.object({

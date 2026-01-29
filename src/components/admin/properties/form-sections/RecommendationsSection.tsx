@@ -1,34 +1,86 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
+import {
+  APIProvider,
+  Map,
+  AdvancedMarker,
+  InfoWindow,
+  useMap,
+  useMapsLibrary,
+  Pin,
+} from "@vis.gl/react-google-maps";
+import { PropertyFormData } from "@/lib/schemas";
+import { cn } from "@/lib/utils";
 import {
   Utensils,
   Camera,
   ShoppingBag,
-  Mountain,
+  Plus,
+  Trash2,
+  Search,
+  Star,
+  Navigation,
   Baby,
   Beer,
-  Tag,
-  ChevronDown,
-  Sparkles,
-  Trash2,
-  Plus,
-  PlusCircle,
-  X,
+  Mountain,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { PropertyFormData } from "@/lib/schemas";
-import { AutoFillButton } from "@/components/admin/auto-fill-button";
-import { KeywordModal } from "@/components/admin/keyword-modal";
-import {
-  updateCategoryKeywords,
-  createCategory,
-  deleteCategory,
-} from "@/lib/actions/categories";
+import { toast } from "sonner";
 
-import { MapCN } from "@/components/ui/map-cn";
-// Remove old dynamic import
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+
+// Categories Configuration
+const CATEGORIES = [
+  {
+    id: "gastronomy",
+    label: "Gastronomía",
+    icon: Utensils,
+    types: ["restaurant", "cafe", "bar", "bakery"],
+    color: "bg-orange-500",
+    text: "text-orange-500",
+  },
+  {
+    id: "sights",
+    label: "Atracciones",
+    icon: Camera,
+    types: ["tourist_attraction", "museum", "park", "church"],
+    color: "bg-purple-500",
+    text: "text-purple-500",
+  },
+  {
+    id: "shops",
+    label: "Compras",
+    icon: ShoppingBag,
+    types: ["shopping_mall", "store", "supermarket"],
+    color: "bg-pink-500",
+    text: "text-pink-500",
+  },
+  {
+    id: "nightlife",
+    label: "Bares y Clubs",
+    icon: Beer,
+    types: ["bar", "night_club", "casino"],
+    color: "bg-indigo-500",
+    text: "text-indigo-500",
+  },
+  {
+    id: "kids",
+    label: "Para Niños",
+    icon: Baby,
+    types: ["amusement_park", "aquarium", "zoo"],
+    color: "bg-yellow-500",
+    text: "text-yellow-500",
+  },
+  {
+    id: "outdoors",
+    label: "Aire Libre",
+    icon: Mountain,
+    types: ["campground", "rv_park", "hiking_area"],
+    color: "bg-emerald-500",
+    text: "text-emerald-500",
+  },
+];
 
 interface RecommendationsTabProps {
   initialData: {
@@ -44,787 +96,358 @@ interface RecommendationsTabProps {
 export function RecommendationsSection({
   initialData,
 }: RecommendationsTabProps) {
-  const { control, register, watch } = useFormContext<PropertyFormData>();
+  if (!GOOGLE_MAPS_API_KEY) {
+    return (
+      <div className="p-6 bg-red-50 text-red-600 rounded-xl">
+        Error: Falta la API Key de Google Maps (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
+      </div>
+    );
+  }
 
-  // Watch lat/lng from form as updated by LocationSection
+  return (
+    <APIProvider
+      apiKey={GOOGLE_MAPS_API_KEY}
+      libraries={["places", "marker"]}
+      version="beta"
+    >
+      <RecommendationsContent initialData={initialData} />
+    </APIProvider>
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function RecommendationsContent({ initialData }: RecommendationsTabProps) {
+  const { control, watch } = useFormContext<PropertyFormData>();
+  const map = useMap();
+  const placesLibrary = useMapsLibrary("places");
   const propLat = watch("latitude");
   const propLng = watch("longitude");
 
+  // State
+  const [activeCategory, setActiveCategory] = useState("gastronomy");
+  const [suggestedPlaces, setSuggestedPlaces] = useState<
+    google.maps.places.Place[]
+  >([]);
+  const [selectedPlaceInfo, setSelectedPlaceInfo] =
+    useState<google.maps.places.Place | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+
   const {
     fields: recFields,
-    append: appendRec,
-    remove: removeRec,
+    append,
+    remove,
   } = useFieldArray({
     control,
     name: "recommendations",
   });
 
-  const handleMapAdd = (lat: number, lng: number) => {
-    // Suggest adding new place
-    // reverse geocoding happens here or simply open "New"
-    appendRec({
-      title: "Nuevo Marcador",
-      formattedAddress: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-      googleMapsLink: `https://www.google.com/maps?q=${lat},${lng}`,
-      categoryType: activeCategory,
-      description: "",
-      // Store raw geometry if supported by schema
-      // geometry: { location: { lat, lng } }
-    });
-  };
-
-  // Prepare markers
-  const markers = recFields
+  // Derived state for existing markers
+  const selectedPlaceIds = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((f: any) => {
-      // Try to parse googleMapsLink which format is usually "https://...q=lat,lng"
-      if (f.googleMapsLink) {
-        const match = f.googleMapsLink.match(
-          /q=([-+]?\d+\.\d+),([-+]?\d+\.\d+)/,
-        );
-        if (match) {
-          return {
-            id: f.id || Math.random().toString(),
-            latitude: parseFloat(match[1]),
-            longitude: parseFloat(match[2]),
-            title: f.title || "Marcador",
-          };
-        }
-      }
-      return null;
-    })
-    .filter(Boolean); // Placeholder logic
+    return new Set(recFields.map((f: any) => f.googlePlaceId));
+  }, [recFields]);
 
-  // Valid Center
-  const mapCenter: [number, number] | null =
-    propLat && propLng ? [parseFloat(propLat), parseFloat(propLng)] : null;
-
-  // ... (rest of component state)
-
-  // Local State for Categories
-  const [activeCategory, setActiveCategory] = useState<string>("gastronomy");
-  // ...
-
-  const [keywordModal, setKeywordModal] = useState<{
-    isOpen: boolean;
-    category: {
-      id: string;
-      name: string;
-      type: string;
-      searchKeywords?: string | null;
-    } | null;
-  }>({ isOpen: false, category: null });
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [isAddingCategory, setIsAddingCategory] = useState(false);
-
-  // Default Categories Configuration
-  const defaultCategories = [
-    {
-      id: "gastronomy",
-      label: "Restaurantes",
-      icon: Utensils,
-      color: "text-blue-600",
-      bg: "bg-transparent",
-      border: "border-blue-500",
-    },
-    {
-      id: "sights",
-      label: "Atracciones",
-      icon: Camera,
-      color: "text-purple-600",
-      bg: "bg-transparent",
-      border: "border-purple-500",
-    },
-    {
-      id: "shops",
-      label: "Tiendas",
-      icon: ShoppingBag,
-      color: "text-pink-600",
-      bg: "bg-transparent",
-      border: "border-pink-500",
-    },
-    {
-      id: "kids",
-      label: "Kids",
-      icon: Baby,
-      color: "text-yellow-600",
-      bg: "bg-transparent",
-      border: "border-yellow-500",
-    },
-    {
-      id: "bars",
-      label: "Bares",
-      icon: Beer,
-      color: "text-orange-600",
-      bg: "bg-transparent",
-      border: "border-orange-500",
-    },
-    {
-      id: "outdoors",
-      label: "Outdoors",
-      icon: Mountain,
-      color: "text-emerald-600",
-      bg: "bg-transparent",
-      border: "border-emerald-500",
-    },
-  ];
-
-  const [categoriesList, setCategoriesList] = useState(defaultCategories);
-
-  // Initialize categories with custom ones from database
+  // Handle Category Change & Smart Discovery
   useEffect(() => {
-    // Load categories from database if available
-    if (initialData.categories && Array.isArray(initialData.categories)) {
-      const existingTypes = new Set(defaultCategories.map((c) => c.id));
-      const customCatsFromDB = initialData.categories
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((cat: any) => !existingTypes.has(cat.type))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((cat: any) => ({
-          id: cat.type,
-          label: cat.name,
-          icon: Tag,
-          color: "text-gray-600",
-          bg: "bg-gray-50 dark:bg-transparent",
-          border: "border-gray-500",
-        }));
+    if (!map || !placesLibrary || !propLat || !propLng) return;
 
-      if (customCatsFromDB.length > 0) {
-        setCategoriesList((prev) => {
-          const currentIds = new Set(prev.map((p) => p.id));
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const uniqueToAdd = customCatsFromDB.filter(
-            (c: any) => !currentIds.has(c.id),
-          );
-          return [...prev, ...uniqueToAdd];
-        });
-      }
-    }
-    // Fallback: check recommendations for custom categories
-    else if (initialData.recommendations) {
-      const existingTypes = new Set(defaultCategories.map((c) => c.id));
-      const customFound = new Set<string>();
+    const fetchSuggestions = async () => {
+      setIsSearching(true);
+      setSuggestedPlaces([]);
+      setSelectedPlaceInfo(null); // Close info window
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      initialData.recommendations.forEach((rec: any) => {
-        if (rec.categoryType && !existingTypes.has(rec.categoryType)) {
-          customFound.add(rec.categoryType);
+      try {
+        const center = { lat: parseFloat(propLat), lng: parseFloat(propLng) };
+        const categoryConfig = CATEGORIES.find((c) => c.id === activeCategory);
+
+        if (!categoryConfig) return;
+
+        // Use Place.searchNearby (New Places API)
+        const { Place, SearchNearbyRankPreference } = placesLibrary;
+
+        const request = {
+          fields: [
+            "displayName",
+            "location",
+            "formattedAddress",
+            "googleMapsURI",
+            "id",
+            "types",
+          ],
+          locationRestriction: {
+            center: center,
+            radius: 1500, // 1.5km
+          },
+          includedPrimaryTypes: categoryConfig.types,
+          maxResultCount: 15,
+          rankPreference: SearchNearbyRankPreference.POPULARITY,
+        };
+
+        // @ts-expect-error - searchNearby types might be tricky in beta
+        const { places } = await Place.searchNearby(request);
+
+        if (places && places.length > 0) {
+          // Filter out already selected places if desired?
+          // Better to show them but visually distinct.
+          setSuggestedPlaces(places);
         }
-      });
-
-      if (customFound.size > 0) {
-        const newCustomCats = Array.from(customFound).map((type) => ({
-          id: type,
-          label: type.charAt(0).toUpperCase() + type.slice(1),
-          icon: Tag,
-          color: "text-gray-600",
-          bg: "bg-gray-50 dark:bg-transparent",
-          border: "border-gray-500",
-        }));
-        setCategoriesList((prev) => {
-          const currentIds = new Set(prev.map((p) => p.id));
-          const uniqueToAdd = newCustomCats.filter(
-            (c) => !currentIds.has(c.id),
-          );
-          return [...prev, ...uniqueToAdd];
-        });
+      } catch (error) {
+        console.error("Error fetching places:", error);
+        toast.error("Error buscando lugares cercanos.");
+      } finally {
+        setIsSearching(false);
       }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData.categories, initialData.recommendations]);
-
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    if (!initialData.id) {
-      alert(
-        "Debes guardar la propiedad primero antes de agregar categorías personalizadas.",
-      );
-      return;
-    }
-
-    const id = newCategoryName.toLowerCase().trim().replace(/\s+/g, "_");
-
-    // Check if exists
-    if (categoriesList.find((c) => c.id === id)) {
-      alert("Esta categoría ya existe.");
-      return;
-    }
-
-    // Save to database
-    const result = await createCategory(initialData.id, id, newCategoryName);
-
-    if (!result.success) {
-      alert("Error al crear la categoría. Intenta nuevamente.");
-      return;
-    }
-
-    const newCat = {
-      id,
-      label: newCategoryName,
-      icon: Tag,
-      color: "text-gray-600",
-      bg: "bg-gray-50 dark:bg-transparent",
-      border: "border-gray-500",
     };
 
-    setCategoriesList([...categoriesList, newCat]);
-    setActiveCategory(id);
-    setNewCategoryName("");
-    setIsAddingCategory(false);
+    fetchSuggestions();
+  }, [activeCategory, map, placesLibrary, propLat, propLng]);
 
-    // Reload page to ensure category persists and shows in all views
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
+  // Actions
+  const handleAddPlace = (place: google.maps.places.Place) => {
+    if (!place.location || !place.displayName) return;
+
+    append({
+      title: place.displayName,
+      formattedAddress: place.formattedAddress || "",
+      googleMapsLink: place.googleMapsURI || "",
+      categoryType: activeCategory,
+      description: "",
+      googlePlaceId: place.id,
+      latitude: place.location.lat().toString(),
+      longitude: place.location.lng().toString(),
+    });
+
+    toast.success("Lugar agregado a la guía");
+    setSelectedPlaceInfo(null);
   };
 
-  const handleDeleteCategory = async (categoryId: string) => {
-    // Find the category in the database
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const categoryFromDB = initialData.categories?.find(
-      (cat: any) => cat.type === categoryId,
-    );
-
-    // Prevent deletion of system categories
-    if (categoryFromDB?.isSystemCategory) {
-      alert("No se pueden eliminar categorías del sistema.");
-      return;
-    }
-
-    if (
-      !confirm(
-        "¿Estás seguro de eliminar esta categoría? Se eliminarán también todas sus recomendaciones.",
-      )
-    ) {
-      return;
-    }
-
-    // If it's a custom category from DB, delete it
-    if (categoryFromDB?.id) {
-      const result = await deleteCategory(categoryFromDB.id);
-      if (!result.success) {
-        alert("Error al eliminar la categoría");
-        return;
-      }
-    }
-
-    // Remove from local state
-    setCategoriesList(categoriesList.filter((c) => c.id !== categoryId));
-
-    // If it was the active category, switch to first one
-    if (activeCategory === categoryId) {
-      setActiveCategory(categoriesList[0]?.id || "");
-    }
-
-    // Reload to ensure consistency
-    setTimeout(() => {
-      window.location.reload();
-    }, 300);
+  const handleRemovePlace = (index: number) => {
+    remove(index);
+    toast.success("Lugar eliminado");
   };
+
+  // Center Map on Property initially
+  const center = useMemo(() => {
+    if (propLat && propLng) {
+      return { lat: parseFloat(propLat), lng: parseFloat(propLng) };
+    }
+    return { lat: 40.416, lng: -3.703 }; // Default Madrid
+  }, [propLat, propLng]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-4">
-        <div>
-          <h3 className="text-xl font-semibold">Recomendaciones Locales</h3>
-          <p className="text-sm text-brand-void dark:text-white">
-            Gestiona lugares destacados.
+    <div className="grid grid-cols-1 lg:grid-cols-3 h-[700px] gap-6 animate-in fade-in duration-500">
+      {/* LEFT PANEL: CONTROLS */}
+      <div className="flex flex-col h-full bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-2xl shadow-sm overflow-hidden">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-100 dark:border-neutral-800 bg-gray-50/50 dark:bg-white/5">
+          <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
+            <Star className="w-5 h-5 text-brand-copper" fill="currentColor" />
+            Curación de Lugares
+          </h3>
+          <p className="text-xs text-brand-void/60 dark:text-gray-400 mt-1">
+            Explora y selecciona las mejores experiencias.
           </p>
         </div>
-        {initialData.id && <AutoFillButton propertyId={initialData.id} />}
-      </div>
 
-      {/* Map View */}
-      {mapCenter && (
-        <div className="mb-6">
-          <label className="text-sm font-bold text-gray-900 dark:text-white mb-2 block">
-            Mapa de Recomendaciones
-          </label>
-          <div className="h-[400px] w-full rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-neutral-800">
-            <MapCN
-              initialViewState={{
-                latitude: mapCenter[0],
-                longitude: mapCenter[1],
-                zoom: 14,
-              }}
-              markers={markers && markers.length > 0 ? markers : []}
-              onMapClick={(e) => handleMapAdd(e.lngLat.lat, e.lngLat.lng)}
-            />
-          </div>
-          <p className="text-xs text-gray-400 mt-1">
-            Haz clic en el mapa para agregar un marcador automáticamente.
-          </p>
-        </div>
-      )}
-
-      {/* --- MOBILE ACCORDION LIST --- */}
-      <div className="md:hidden space-y-3 mb-6">
-        {categoriesList
-          .filter((cat) => cat.id !== "transit")
-          .map((cat) => (
-            <div
+        {/* Categories Tabs */}
+        <div className="p-2 grid grid-cols-3 gap-1 bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800">
+          {CATEGORIES.map((cat) => (
+            <button
               key={cat.id}
-              className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm"
+              onClick={() => setActiveCategory(cat.id)}
+              className={cn(
+                "flex flex-col items-center justify-center p-2 rounded-lg transition-all text-xs font-medium gap-1",
+                activeCategory === cat.id
+                  ? `bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white`
+                  : "text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5",
+              )}
             >
-              <button
-                type="button"
-                onClick={() =>
-                  setActiveCategory(activeCategory === cat.id ? "" : cat.id)
-                }
-                className="w-full flex items-center justify-between p-4"
-              >
-                <div className="flex items-center gap-3">
+              <cat.icon
+                className={cn("w-4 h-4", activeCategory === cat.id && cat.text)}
+              />
+              <span className="truncate w-full text-center">{cat.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* List of Selected Places (For current category or All?) 
+            Let's show current category for focus.
+        */}
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex justify-between items-center">
+            Seleccionados (
+            {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              recFields.filter((f: any) => f.categoryType === activeCategory)
+                .length
+            }
+            )
+          </h4>
+
+          <div className="space-y-3">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {recFields.map((field: any, index) => {
+              if (field.categoryType !== activeCategory) return null;
+              return (
+                <div
+                  key={field.id}
+                  className="group flex items-start gap-3 p-3 rounded-xl border border-gray-100 dark:border-neutral-800 hover:border-brand-copper/30 transition-all bg-white dark:bg-white/5"
+                >
                   <div
                     className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center",
-                      activeCategory === cat.id
-                        ? `${cat.bg} text-white`
-                        : "bg-gray-100 dark:bg-neutral-800 text-gray-500",
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5",
+                      CATEGORIES.find((c) => c.id === field.categoryType)
+                        ?.color,
+                      "text-white",
                     )}
                   >
-                    <cat.icon className="w-5 h-5" />
+                    <Navigation className="w-4 h-4" />
                   </div>
-                  <div className="text-left">
-                    <h4
-                      className={cn(
-                        "font-bold text-sm",
-                        activeCategory === cat.id
-                          ? "text-gray-900 dark:text-white"
-                          : "text-gray-600 dark:text-gray-400",
-                      )}
-                    >
-                      {cat.label}
-                    </h4>
-                    <p className="text-xs text-gray-400">
-                      {
-                        recFields.filter(
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (f: any) => f.categoryType === cat.id,
-                        ).length
-                      }{" "}
-                      lugares
-                    </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm truncate text-gray-900 dark:text-white">
+                      {field.title}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {field.formattedAddress}
+                    </div>
                   </div>
+                  <button
+                    onClick={() => handleRemovePlace(index)}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 transition-opacity"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-                <ChevronDown
-                  className={cn(
-                    "w-5 h-5 text-gray-300 transition-transform duration-300",
-                    activeCategory === cat.id ? "rotate-180" : "",
-                  )}
-                />
-              </button>
+              );
+            })}
 
-              {/* Expanded Content */}
-              {activeCategory === cat.id && (
-                <div className="p-4 bg-gray-50 dark:bg-neutral-800/30 border-t border-gray-100 dark:border-neutral-800 animate-in slide-in-from-top-2 duration-200">
-                  <div className="flex gap-2 mb-3">
-                    {/* Keyword Edit Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const dbCat = initialData.categories?.find(
-                          (c) => c.type === cat.id,
-                        );
-                        setKeywordModal({
-                          isOpen: true,
-                          category: {
-                            id: cat.id,
-                            name: cat.label,
-                            type: cat.id,
-                            searchKeywords: dbCat?.searchKeywords || null,
-                          },
-                        });
-                      }}
-                      className="flex-1 px-3 py-2.5 text-xs font-medium text-brand-void dark:text-brand-copper hover:bg-brand-void/10 dark:hover:bg-brand-copper/20 rounded-lg transition-colors flex items-center justify-center gap-2 border border-brand-void/20 dark:border-brand-copper/30"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      Editar Keywords
-                    </button>
-
-                    {/* Delete Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteCategory(cat.id);
-                      }}
-                      className="px-3 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-red-200 dark:border-red-800"
-                      title="Eliminar categoría"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-col gap-3 mb-4">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        appendRec({
-                          title: "",
-                          formattedAddress: "",
-                          googleMapsLink: "",
-                          categoryType: activeCategory,
-                          description: "",
-                        })
-                      }
-                      className="w-full px-4 py-3 text-sm font-semibold text-brand-void dark:text-brand-copper bg-brand-void/10 dark:bg-brand-copper/20 border border-brand-void/20 dark:border-brand-copper/30 rounded-xl flex items-center justify-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" /> Agregar Lugar
-                    </button>
-                  </div>
-
-                  {/* List */}
-                  <div className="space-y-4">
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    {recFields.map((field: any, index) => {
-                      if (field.categoryType !== activeCategory) return null;
-                      return (
-                        <div
-                          key={field.id}
-                          className="relative p-4 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-xl space-y-3"
-                        >
-                          <div className="pr-6">
-                            <input
-                              {...register(
-                                `recommendations.${index}.title` as const,
-                              )}
-                              className="w-full text-sm font-bold bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
-                              placeholder="Nombre del Lugar"
-                            />
-                            <input
-                              {...register(
-                                `recommendations.${index}.description` as const,
-                              )}
-                              className="w-full text-xs text-gray-500 bg-transparent outline-none mt-2"
-                              placeholder="Descripción breve..."
-                            />
-                          </div>
-                          <input
-                            {...register(
-                              `recommendations.${index}.formattedAddress` as const,
-                            )}
-                            className="w-full text-xs bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
-                            placeholder="Dirección o Zona"
-                          />
-                          <input
-                            {...register(
-                              `recommendations.${index}.googleMapsLink` as const,
-                            )}
-                            className="w-full text-xs text-blue-500 bg-transparent border-b border-gray-200 dark:border-neutral-700 pb-1 outline-none"
-                            placeholder="https://maps..."
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeRec(index)}
-                            className="absolute top-3 right-3 text-gray-400 hover:text-red-500"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                    {recFields.filter(
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      (f: any) => f.categoryType === activeCategory,
-                    ).length === 0 && (
-                      <p className="text-center text-gray-400 text-xs italic py-2">
-                        Sin lugares por ahora.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        <button
-          type="button"
-          onClick={() => setIsAddingCategory(true)}
-          className="w-full py-3 border border-dashed border-gray-300 dark:border-neutral-700 rounded-xl flex items-center justify-center text-gray-500 font-semibold text-sm gap-2"
-        >
-          <PlusCircle className="w-4 h-4" /> Nueva Categoría
-        </button>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {recFields.filter((f: any) => f.categoryType === activeCategory)
+              .length === 0 && (
+              <div className="text-center py-8 px-4 border border-dashed border-gray-200 dark:border-neutral-800 rounded-xl">
+                <Search className="w-8 h-8 mx-auto text-gray-300 mb-2" />
+                <p className="text-sm text-gray-500">
+                  No has seleccionado lugares de{" "}
+                  {CATEGORIES.find((c) => c.id === activeCategory)?.label} aún.
+                </p>
+                <p className="text-xs text-gray-400 mt-1">Busca en el mapa →</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="hidden md:grid md:grid-cols-3 gap-4 mb-6">
-        {categoriesList
-          .filter((cat) => cat.id !== "transit")
-          .map((cat) => (
-            <div
-              key={cat.id}
-              className={cn(
-                "p-4 border rounded-xl transition-all hover:bg-gray-50 dark:hover:bg-brand-copper/10 flex items-center gap-3 relative overflow-hidden group",
-                activeCategory === cat.id
-                  ? `${cat.border} dark:border-opacity-50 dark:bg-brand-copper/10`
-                  : "border-gray-200 dark:border-neutral-800 dark:bg-white/5",
-              )}
-            >
-              <div
-                onClick={() => setActiveCategory(cat.id)}
-                className="flex items-center gap-3 flex-1 cursor-pointer"
+      {/* RIGHT PANEL: MAP */}
+      <div className="lg:col-span-2 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-neutral-800 relative group">
+        <Map
+          mapId="DEMO_MAP_ID" // Reemplazar con ID real si se quiere styling avanzado
+          defaultCenter={center}
+          defaultZoom={15}
+          gestureHandling={"greedy"}
+          disableDefaultUI={true}
+          className="w-full h-full"
+        >
+          {/* 1. Property Location Pin */}
+          <AdvancedMarker position={center}>
+            <div className="relative">
+              <div className="w-12 h-12 bg-brand-void text-white rounded-full flex items-center justify-center shadow-2xl ring-4 ring-white dark:ring-black z-20">
+                <Star className="w-6 h-6 fill-current" />
+              </div>
+              {/* Pulse */}
+              <div className="absolute inset-0 bg-brand-void rounded-full animate-ping opacity-20 z-10"></div>
+            </div>
+          </AdvancedMarker>
+
+          {/* 2. Suggested Places (Gray Pins) */}
+          {suggestedPlaces.map((place) => {
+            // Skip if already selected? Or show as separate marker?
+            if (!place.location) return null;
+            const isSelected = selectedPlaceIds.has(place.id);
+
+            // If selected, we might render it via the 'selected' loop or handle it here.
+            // Ideally we handle everything here.
+            if (isSelected) return null; // We'll render selected ones separately
+
+            return (
+              <AdvancedMarker
+                key={place.id}
+                position={place.location}
+                onClick={() => setSelectedPlaceInfo(place)}
+              >
+                <Pin
+                  background={"#94a3b8"}
+                  borderColor={"#64748b"}
+                  glyphColor={"#f8fafc"}
+                  scale={0.8}
+                />
+              </AdvancedMarker>
+            );
+          })}
+
+          {/* 3. Selected Places (Brand Pins) */}
+          {/* We iterate fields instead of map items to ensure sync */}
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {recFields.map((field: any) => {
+            if (!field.latitude || !field.longitude) return null;
+            const catConfig =
+              CATEGORIES.find((c) => c.id === field.categoryType) ||
+              CATEGORIES[0];
+
+            return (
+              <AdvancedMarker
+                key={field.id} // use field.id (uuid from hook form)
+                position={{
+                  lat: parseFloat(field.latitude),
+                  lng: parseFloat(field.longitude),
+                }}
+                // Maybe onClick to edit?
               >
                 <div
                   className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                    activeCategory === cat.id
-                      ? "bg-white/80 dark:bg-neutral-900/50"
-                      : "bg-gray-100 dark:bg-neutral-800",
+                    "w-8 h-8 rounded-full flex items-center justify-center text-white shadow-lg transform transition-transform hover:scale-110",
+                    catConfig.color,
                   )}
                 >
-                  <cat.icon
-                    className={cn(
-                      "w-5 h-5 dark:text-white",
-                      activeCategory === cat.id ? cat.color : "dark:text-white",
-                    )}
-                  />
+                  <catConfig.icon className="w-4 h-4" />
                 </div>
-                <div>
-                  <h4
-                    className={cn(
-                      "font-bold text-base dark:text-white",
-                      activeCategory === cat.id ? cat.color : "dark:text-white",
-                    )}
-                  >
-                    {cat.label}
-                  </h4>
-                  <p className="text-xs text-gray-500">
-                    {
-                      recFields.filter(
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (f: any) => f.categoryType === cat.id,
-                      ).length
-                    }{" "}
-                    lugares
-                  </p>
-                </div>
-              </div>
-
-              {/* Actions Row */}
-              <div className="flex items-center justify-between mt-auto pt-2 gap-2">
-                {/* Keyword Edit Button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const dbCat = initialData.categories?.find(
-                      (c) => c.type === cat.id,
-                    );
-                    setKeywordModal({
-                      isOpen: true,
-                      category: {
-                        id: cat.id,
-                        name: cat.label,
-                        type: cat.id,
-                        searchKeywords: dbCat?.searchKeywords || null,
-                      },
-                    });
-                  }}
-                  className="px-3 py-1.5 text-xs font-medium text-brand-copper/80 hover:text-brand-copper dark:text-brand-copper dark:hover:text-brand-copper hover:bg-brand-copper/10 dark:hover:bg-brand-copper/20 rounded-lg transition-colors"
-                >
-                  + Add Keywords
-                </button>
-
-                {/* Delete Button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteCategory(cat.id);
-                  }}
-                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                  title="Eliminar categoría"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-
-        {/* Add New Category Button */}
-        {isAddingCategory ? (
-          <div className="p-4 border border-dashed border-gray-300 dark:border-neutral-700 rounded-xl bg-gray-50 dark:bg-neutral-800/30 flex flex-col justify-center gap-2">
-            <input
-              autoFocus
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder="Nombre categoría..."
-              className="w-full text-sm bg-white dark:bg-neutral-900 px-3 py-2 rounded-lg border border-gray-200 dark:border-neutral-700 outline-none focus:border-brand-copper"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddCategory();
-                }
-              }}
-            />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleAddCategory}
-                className="flex-1 bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-gray-800"
-              >
-                Crear
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsAddingCategory(false)}
-                className="px-3 bg-gray-200 text-gray-600 text-xs font-bold py-2 rounded-lg hover:bg-gray-300"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setIsAddingCategory(true)}
-            className="p-4 border border-dashed border-gray-300 dark:border-neutral-700 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-transparent transition-all gap-1 h-full min-h-[88px]"
-          >
-            <PlusCircle className="w-6 h-6" />
-            <span className="text-xs font-semibold">Nueva Categoría</span>
-          </button>
-        )}
-      </div>
-
-      <div className="hidden md:block bg-gray-50 dark:bg-white/5 p-4 md:p-6 rounded-2xl border border-gray-200 dark:border-neutral-800">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-          <h4 className="font-semibold capitalize flex items-center gap-2">
-            {/* Show active category icon and label */}
-            {(() => {
-              const cat = categoriesList.find((c) => c.id === activeCategory);
-              if (!cat) return activeCategory;
-              return (
-                <>
-                  <cat.icon
-                    className={cn(cat.color, "w-5 h-5 dark:text-white")}
-                  />
-                  <span className={cn("dark:text-white", cat.color)}>
-                    {cat.label}
-                  </span>
-                </>
-              );
-            })()}
-          </h4>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-            {initialData.id && (
-              <AutoFillButton
-                propertyId={initialData.id}
-                categoryId={activeCategory}
-                className="flex-shrink-0"
-              />
-            )}
-            <button
-              type="button"
-              onClick={() =>
-                appendRec({
-                  title: "",
-                  formattedAddress: "",
-                  googleMapsLink: "",
-                  categoryType: activeCategory,
-                  description: "",
-                })
-              }
-              className="px-4 py-2.5 text-sm font-semibold text-brand-void dark:text-white bg-brand-void/10 dark:bg-brand-copper border border-brand-void/20 dark:border-brand-copper rounded-xl hover:bg-brand-void/20 dark:hover:bg-brand-copper/90 transition-colors flex items-center justify-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> Agregar Lugar
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {recFields.map((field: any, index) => {
-            if (field.categoryType !== activeCategory) return null;
-            return (
-              <div
-                key={field.id}
-                className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-neutral-800 shadow-sm relative group"
-              >
-                <div className="md:col-span-3 pr-6 md:pr-0">
-                  <input
-                    {...register(`recommendations.${index}.title` as const)}
-                    className="w-full text-sm font-semibold bg-transparent border-b border-gray-200 focus:border-brand-copper outline-none pb-1"
-                    placeholder="Nombre del Lugar"
-                  />
-                  <input
-                    {...register(
-                      `recommendations.${index}.description` as const,
-                    )}
-                    className="w-full text-xs text-gray-500 bg-transparent outline-none mt-1"
-                    placeholder="Descripción breve..."
-                  />
-                </div>
-                <div className="md:col-span-4">
-                  <input
-                    {...register(
-                      `recommendations.${index}.formattedAddress` as const,
-                    )}
-                    className="w-full text-sm bg-transparent border-b border-gray-200 focus:border-brand-copper outline-none pb-1"
-                    placeholder="Dirección o Zona"
-                  />
-                </div>
-                <div className="md:col-span-4">
-                  <input
-                    {...register(
-                      `recommendations.${index}.googleMapsLink` as const,
-                    )}
-                    className="w-full text-sm text-brand-copper/80 bg-transparent border-b border-gray-200 focus:border-brand-copper outline-none pb-1"
-                    placeholder="https://maps..."
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeRec(index)}
-                  className=" p-2 pt-0 text-gray-400 hover:text-red-500 opacity-100 group-hover:opacity-100 transition-opacity md:col-span-1"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              </AdvancedMarker>
             );
           })}
-          {recFields.filter(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (f: any) => f.categoryType === activeCategory,
-          ).length === 0 && (
-            <p className="text-center text-gray-400 text-sm italic py-4">
-              No hay lugares en esta categoría aún.
-            </p>
+
+          {/* Info Window for Suggestions */}
+          {selectedPlaceInfo && selectedPlaceInfo.location && (
+            <InfoWindow
+              position={selectedPlaceInfo.location}
+              onCloseClick={() => setSelectedPlaceInfo(null)}
+              headerContent={
+                <div className="font-bold text-sm px-1 pt-1">
+                  {selectedPlaceInfo.displayName}
+                </div>
+              }
+            >
+              <div className="min-w-[200px] p-2">
+                <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                  {selectedPlaceInfo.formattedAddress}
+                </p>
+                <button
+                  onClick={() => handleAddPlace(selectedPlaceInfo)}
+                  className="w-full py-1.5 bg-brand-void text-white text-xs font-bold rounded shadow hover:bg-opacity-90 transition-all flex items-center justify-center gap-1"
+                >
+                  <Plus className="w-3 h-3" /> Agregar a Guía
+                </button>
+              </div>
+            </InfoWindow>
           )}
-        </div>
+        </Map>
+
+        {/* Loading Indicator */}
+        {isSearching && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg text-xs font-medium text-gray-600 flex items-center gap-2 z-10">
+            <div className="w-3 h-3 border-2 border-brand-copper border-t-transparent rounded-full animate-spin"></div>
+            Buscando lugares...
+          </div>
+        )}
       </div>
-
-      {/* Keyword Modal */}
-      {keywordModal.isOpen && keywordModal.category && (
-        <KeywordModal
-          isOpen={keywordModal.isOpen}
-          onClose={() => setKeywordModal({ isOpen: false, category: null })}
-          category={keywordModal.category}
-          onSave={async (keywords) => {
-            // Find the numeric ID from the database categories
-            const catType = keywordModal.category?.id;
-            const dbCategory = initialData.categories?.find(
-              (c) => c.type === catType,
-            );
-
-            if (!dbCategory) {
-              alert(
-                "Error: Categoría no sincronizada. Por favor recarga la página.",
-              );
-              return;
-            }
-
-            const result = await updateCategoryKeywords(
-              Number(dbCategory.id),
-              keywords,
-            );
-            if (result.success) {
-              console.log("Keywords updated successfully");
-            } else {
-              alert("Error al guardar keywords");
-            }
-          }}
-        />
-      )}
     </div>
   );
 }
