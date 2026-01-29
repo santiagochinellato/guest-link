@@ -30,6 +30,7 @@ import {
   MapPin,
   X,
   MoreVertical,
+  Edit,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -255,6 +256,14 @@ function RecommendationsContent() {
 
   return (
     <div className="flex flex-col h-[700px] bg-white dark:bg-neutral-950 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden animate-in fade-in">
+      <div className="flex flex-col  p-4 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Recomendaciones
+        </h2>
+        <p className=" text-sm text-gray-600 dark:text-gray-300">
+          Agrega lugares que los huéspedes pueden visitar cerca de la propiedad.
+        </p>
+      </div>
       {/* 1. TOP BAR: CATEGORY TABS */}
       <div className="min-h-14 flex items-center p-4 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-950 overflow-x-auto no-scrollbar gap-2 flex-wrap">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -330,7 +339,7 @@ function RecommendationsContent() {
               return (
                 <div
                   key={field.id}
-                  className="group relative bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-xl p-3 shadow-sm hover:shadow-md transition-all"
+                  className="group relative bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-xl p-3 shadow-sm hover:shadow-md transition-all flex flex-col gap-2"
                 >
                   <div className="flex gap-3">
                     <div className="w-8 h-8 rounded-full bg-brand-copper/10 text-brand-copper flex items-center justify-center shrink-0">
@@ -353,12 +362,18 @@ function RecommendationsContent() {
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => removeRec(index)}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-opacity bg-white dark:bg-neutral-900 rounded-full shadow-sm"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex justify-end gap-2">
+                    <button className="flex items-center gap-1 p-1 text-green-700 hover:text-green-600 transition-opacity bg-white dark:bg-neutral-900 rounded-md shadow-sm w-fit self-end">
+                      <Edit className="w-3.5 h-3.5" />
+                      <p>Editar</p>
+                    </button>
+                    <button
+                      onClick={() => removeRec(index)}
+                      className=" h-[32px] w-[32px] flex items-center gap-1 p-2 text-red-500 hover:text-red-600 transition-opacity bg-white dark:bg-neutral-900 rounded-md shadow-sm w-fit self-end"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
