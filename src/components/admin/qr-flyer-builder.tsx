@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { FlyerConfig } from "./qr-flyer/types";
 import { Sidebar } from "./qr-flyer/controls/Sidebar";
@@ -9,6 +9,7 @@ import { useFlyerExport } from "@/hooks/use-flyer-export";
 
 interface QrFlyerBuilderProps {
   initialData?: {
+    id?: number;
     name: string;
     wifiSsid?: string;
     wifiPassword?: string;
@@ -18,7 +19,6 @@ interface QrFlyerBuilderProps {
 }
 
 export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
-  const qrRef = useRef<HTMLDivElement>(null!);
   const [scale, setScale] = useState(0.5);
 
   const [config, setConfig] = useState<FlyerConfig>({
@@ -57,7 +57,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
   const updateConfig = (
     section: keyof FlyerConfig,
     key: string,
-    value: any,
+    value: string | number | boolean,
   ) => {
     setConfig((prev) => ({
       ...prev,
@@ -65,7 +65,9 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
     }));
   };
 
-  const { handleExport, isExporting } = useFlyerExport({ qrRef, config });
+  const { handleExport, isExporting } = useFlyerExport({
+    propertyId: initialData?.id,
+  });
 
   return (
     <div className="flex flex-col md:flex-row bg-[#f6f8f8] dark:bg-brand-void rounded-xl shadow border border-slate-200 dark:border-slate-800 h-auto md:h-[800px] overflow-hidden">
@@ -107,7 +109,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
             className="transition-transform duration-300 origin-center"
           >
             <div className="shadow-2xl">
-              <FlyerPreview config={config} qrRef={qrRef} />
+              <FlyerPreview config={config} />
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { PropertyForm } from "@/components/admin/property-form";
+import { PropertySettings } from "@/components/admin/dashboards/property-settings";
 import { Suspense } from "react";
 import { getProperty } from "@/lib/actions/properties";
 import { notFound } from "next/navigation";
@@ -29,7 +29,7 @@ export default async function EditPropertyPage({
 
   return (
     <Suspense fallback={<ContentLoader text="Cargando propiedad..." />}>
-      <PropertyForm initialData={result.data} isEditMode={true} />
+      <PropertySettings initialData={result.data} />
     </Suspense>
   );
 }

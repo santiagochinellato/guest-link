@@ -4,7 +4,11 @@ import { FlyerConfig } from "../types";
 
 interface DesignControlsProps {
   config: FlyerConfig;
-  updateConfig: (section: keyof FlyerConfig, key: string, value: any) => void;
+  updateConfig: (
+    section: keyof FlyerConfig,
+    key: string,
+    value: string | boolean | number,
+  ) => void;
 }
 
 export function DesignControls({ config, updateConfig }: DesignControlsProps) {
@@ -147,15 +151,27 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
         <h3 className="text-xs font-bold text-slate-500 dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
           <Type className="w-4 h-4" /> Tipografía
         </h3>
-        <select
-          value={config.design.font}
-          onChange={(e) => updateConfig("design", "font", e.target.value)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm"
-        >
-          <option value="inter">Modern Sans (Inter)</option>
-          <option value="serif">Elegant Serif</option>
-          <option value="mono">Technical (Mono)</option>
-        </select>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { id: "inter", label: "Inter", class: "font-sans" },
+            { id: "playfair", label: "Playfair", class: "font-playfair" },
+            { id: "roboto", label: "Roboto", class: "font-roboto" },
+          ].map((font) => (
+            <button
+              key={font.id}
+              onClick={() => updateConfig("design", "font", font.id)}
+              className={cn(
+                "px-3 py-2 rounded-lg text-xs border transition-all",
+                config.design.font === font.id
+                  ? "border-brand-copper bg-brand-copper/10 text-brand-copper font-bold"
+                  : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-gray-400",
+                font.class,
+              )}
+            >
+              {font.label}
+            </button>
+          ))}
+        </div>
       </section>
     </div>
   );

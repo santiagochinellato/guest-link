@@ -27,18 +27,29 @@ import {
   deleteCategory,
 } from "@/lib/actions/categories";
 
+import { MapCN } from "@/components/ui/map-cn";
+// Remove old dynamic import
+
 interface RecommendationsTabProps {
   initialData: {
     id?: number;
     categories?: PropertyFormData["categories"];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recommendations?: any[];
+    latitude?: string | null;
+    longitude?: string | null;
   };
 }
 
 export function RecommendationsSection({
   initialData,
 }: RecommendationsTabProps) {
-  const { control, register } = useFormContext<PropertyFormData>();
+  const { control, register, watch } = useFormContext<PropertyFormData>();
+
+  // Watch lat/lng from form as updated by LocationSection
+  const propLat = watch("latitude");
+  const propLng = watch("longitude");
+
   const {
     fields: recFields,
     append: appendRec,
@@ -48,8 +59,52 @@ export function RecommendationsSection({
     name: "recommendations",
   });
 
+  const handleMapAdd = (lat: number, lng: number) => {
+    // Suggest adding new place
+    // reverse geocoding happens here or simply open "New"
+    appendRec({
+      title: "Nuevo Marcador",
+      formattedAddress: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+      googleMapsLink: `https://www.google.com/maps?q=${lat},${lng}`,
+      categoryType: activeCategory,
+      description: "",
+      // Store raw geometry if supported by schema
+      // geometry: { location: { lat, lng } }
+    });
+  };
+
+  // Prepare markers
+  const markers = recFields
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((f: any) => {
+      // Try to parse googleMapsLink which format is usually "https://...q=lat,lng"
+      if (f.googleMapsLink) {
+        const match = f.googleMapsLink.match(
+          /q=([-+]?\d+\.\d+),([-+]?\d+\.\d+)/,
+        );
+        if (match) {
+          return {
+            id: f.id || Math.random().toString(),
+            latitude: parseFloat(match[1]),
+            longitude: parseFloat(match[2]),
+            title: f.title || "Marcador",
+          };
+        }
+      }
+      return null;
+    })
+    .filter(Boolean); // Placeholder logic
+
+  // Valid Center
+  const mapCenter: [number, number] | null =
+    propLat && propLng ? [parseFloat(propLat), parseFloat(propLng)] : null;
+
+  // ... (rest of component state)
+
   // Local State for Categories
   const [activeCategory, setActiveCategory] = useState<string>("gastronomy");
+  // ...
+
   const [keywordModal, setKeywordModal] = useState<{
     isOpen: boolean;
     category: {
@@ -278,6 +333,29 @@ export function RecommendationsSection({
         </div>
         {initialData.id && <AutoFillButton propertyId={initialData.id} />}
       </div>
+
+      {/* Map View */}
+      {mapCenter && (
+        <div className="mb-6">
+          <label className="text-sm font-bold text-gray-900 dark:text-white mb-2 block">
+            Mapa de Recomendaciones
+          </label>
+          <div className="h-[400px] w-full rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-neutral-800">
+            <MapCN
+              initialViewState={{
+                latitude: mapCenter[0],
+                longitude: mapCenter[1],
+                zoom: 14,
+              }}
+              markers={markers && markers.length > 0 ? markers : []}
+              onMapClick={(e) => handleMapAdd(e.lngLat.lat, e.lngLat.lng)}
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1">
+            Haz clic en el mapa para agregar un marcador automáticamente.
+          </p>
+        </div>
+      )}
 
       {/* --- MOBILE ACCORDION LIST --- */}
       <div className="md:hidden space-y-3 mb-6">

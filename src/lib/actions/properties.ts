@@ -66,6 +66,11 @@ export async function createProperty(data: PropertyFormData) {
           text: p.houseRules || "",
           allowed: p.rulesAllowed?.map(r => r.value) || [],
           prohibited: p.rulesProhibited?.map(r => r.value) || [],
+          access: {
+            instructions: p.accessInstructions,
+            hasParking: p.hasParking,
+            parkingDetails: p.parkingDetails
+          },
           host: {
             name: p.hostName,
             image: p.hostImage,
@@ -177,6 +182,11 @@ export async function updateProperty(id: number, data: PropertyFormData) {
           text: p.houseRules || "",
           allowed: p.rulesAllowed?.map(r => r.value) || [],
           prohibited: p.rulesProhibited?.map(r => r.value) || [],
+          access: {
+            instructions: p.accessInstructions,
+            hasParking: p.hasParking,
+            parkingDetails: p.parkingDetails
+          },
           host: {
             name: p.hostName,
             image: p.hostImage,
@@ -432,6 +442,15 @@ export async function getProperty(id: number) {
              } catch {
                  return [];
              }
+        })(),
+        accessInstructions: (() => {
+             try { return JSON.parse(prop.houseRules || "").access?.instructions || ""; } catch { return ""; }
+        })(),
+        hasParking: (() => {
+             try { return JSON.parse(prop.houseRules || "").access?.hasParking || false; } catch { return false; }
+        })(),
+        parkingDetails: (() => {
+             try { return JSON.parse(prop.houseRules || "").access?.parkingDetails || ""; } catch { return ""; }
         })(),
         recommendations: recs.map(r => ({
            title: r.title,
