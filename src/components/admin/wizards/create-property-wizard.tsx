@@ -179,6 +179,9 @@ export function CreatePropertyWizard() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdPropertyId, setCreatedPropertyId] = useState<number | null>(
+    null,
+  );
 
   // Transition Logic
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -205,6 +208,43 @@ export function CreatePropertyWizard() {
 
   const { trigger, handleSubmit, watch } = form;
   const currentStep = WIZARD_STEPS[currentStepIndex];
+
+  // --- PERSISTENCE LOGIC ---
+  const STORAGE_KEY = "wizard_property_data";
+  const STEP_KEY = "wizard_current_step";
+
+  // 1. Load from storage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    const savedStep = localStorage.getItem(STEP_KEY);
+
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        // Reset form with merged defaults and saved data
+        form.reset({ ...form.getValues(), ...parsed });
+      } catch (e) {
+        console.error("Failed to parse saved wizard data", e);
+      }
+    }
+
+    if (savedStep) {
+      setCurrentStepIndex(parseInt(savedStep, 10));
+    }
+  }, [form]);
+
+  // 2. Save to storage on change
+  useEffect(() => {
+    const subscription = watch((value) => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
+
+  // 3. Save step on change
+  useEffect(() => {
+    localStorage.setItem(STEP_KEY, currentStepIndex.toString());
+  }, [currentStepIndex]);
 
   // Helper: Detect category change for fake loading
   const handleStepChange = async (nextIndex: number) => {
@@ -278,10 +318,14 @@ export function CreatePropertyWizard() {
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       const result = await createProperty(data);
-      if (result.success) {
+      if (result.success && result.id) {
         toast.success("¡Propiedad creada con éxito!");
-        router.push("/dashboard/properties");
-        router.refresh();
+        // Clear storage on success
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STEP_KEY);
+        setCreatedPropertyId(result.id);
+        // router.push("/dashboard/properties"); // Removed auto-redirect
+        // router.refresh();
       } else {
         toast.error(`Error al crear: ${result.error}`);
       }
@@ -366,6 +410,66 @@ export function CreatePropertyWizard() {
             )}
           </AnimatePresence>
 
+          {/* SUCCESS OVERLAY */}
+          <AnimatePresence>
+            {createdPropertyId && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-white/90 dark:bg-black/90 backdrop-blur-xl p-6"
+              >
+                <motion.div
+                  initial={{ scale: 0.9, y: 20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  className="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-3xl p-8 shadow-2xl max-w-md w-full text-center space-y-6"
+                >
+                  <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      ¡Propiedad lanzada!
+                    </h2>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      Tu propiedad ha sido creada y publicada correctamente.
+                      ¿Qué te gustaría hacer ahora?
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-3 pt-4">
+                    <Button
+                      size="lg"
+                      className="w-full rounded-xl bg-brand-void hover:bg-brand-void/90 text-white dark:bg-brand-copper dark:text-white shadow-xl"
+                      onClick={() =>
+                        window.open(
+                          `/flyer/${createdPropertyId}/print`,
+                          "_blank",
+                        )
+                      }
+                    >
+                      <Rocket className="w-5 h-5 mr-2" />
+                      Imprimir Flyer QR
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full rounded-xl"
+                      onClick={() => {
+                        router.push("/dashboard/properties");
+                        router.refresh();
+                      }}
+                    >
+                      <Home className="w-5 h-5 mr-2" />
+                      Ir al Dashboard
+                    </Button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* STICKY HEADER (Except on Intro) */}
           {currentStep.id !== "intro" && (
             <div className="sticky top-0 z-40 bg-zinc-50/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 transition-all duration-300">
@@ -391,7 +495,7 @@ export function CreatePropertyWizard() {
           )}
 
           {/* MAIN CONTENT AREA */}
-          <div className="flex-1 flex flex-col w-full max-w-5xl mx-auto px-6 py-8 md:py-12 relative">
+          <div className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-6 py-8 md:py-12 relative">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={currentStep.id}

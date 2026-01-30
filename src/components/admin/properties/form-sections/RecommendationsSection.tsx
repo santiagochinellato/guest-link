@@ -33,6 +33,8 @@ import {
   Users,
   Map as MapIcon,
   List as ListIcon,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -224,8 +226,64 @@ function RecommendationsContent() {
   };
 
   // Smart Discovery: Auto-search when changing category if keywords exist
-  useEffect(() => {
+  const handleDiscoverNearby = () => {
     if (!map || !placesLibrary || !activeCategory) return;
+
+    setIsSearching(true);
+    const service = new placesLibrary.PlacesService(map);
+
+    // Tomamos la primera keyword (ej: "restaurant") para la búsqueda
+    const mainKeyword = activeCategory.searchKeywords.split(",")[0].trim();
+
+    const request = {
+      location: center,
+      radius: 1000, // 1km a la redonda
+      keyword: mainKeyword,
+      // Opcional: type: activeCategory.type si coincide con los tipos de Google
+    };
+
+    service.nearbySearch(request, (results, status) => {
+      setIsSearching(false);
+      if (
+        status === placesLibrary.PlacesServiceStatus.OK &&
+        results &&
+        results.length > 0
+      ) {
+        // Filtrar los que ya tenemos guardados
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const existingIds = new Set(recFields.map((r: any) => r.googlePlaceId));
+        const newSuggestions = results.filter(
+          (p) => p.place_id && !existingIds.has(p.place_id),
+        );
+
+        setSuggestedPlaces(newSuggestions);
+
+        if (newSuggestions.length > 0) {
+          toast.success(
+            `Se encontraron ${newSuggestions.length} lugares cercanos.`,
+          );
+          // Ajustar mapa para verlos todos
+          const bounds = new google.maps.LatLngBounds();
+          newSuggestions.forEach((p) => {
+            if (p.geometry?.location) bounds.extend(p.geometry.location);
+          });
+          map.fitBounds(bounds);
+
+          // Switch to map view to see results
+          setViewMode("map");
+        } else {
+          toast.info("No se encontraron lugares nuevos en esta zona.");
+        }
+      } else {
+        toast.info("No se encontraron resultados cercanos.");
+        setIsSearching(false);
+      }
+    });
+  };
+
+  useEffect(() => {
+    // Optional: Auto-trigger on category change if desired, but user requested a button.
+    // Keeping this hook empty or removing it as per requirement for manual button.
   }, [activeCategory, map, placesLibrary]);
 
   const handleAddPlace = (place: google.maps.places.Place) => {
@@ -245,6 +303,12 @@ function RecommendationsContent() {
     });
 
     toast.success("Agregado a " + activeCategory.name);
+
+    // Remove from suggestions
+    setSuggestedPlaces((prev) =>
+      prev.filter((p) => p.place_id !== place.place_id),
+    );
+
     setSelectedPlaceInfo(null);
 
     // Auto-open Curator Modal for the newly added item
@@ -253,6 +317,57 @@ function RecommendationsContent() {
   };
 
   const editingItem = editingIndex !== null ? recFields[editingIndex] : null;
+
+  // POI Click Handler (Native Google Maps POIs)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleMapClick = (ev: any) => {
+    // Check if it was a POI click
+    if (ev.detail.placeId && placesLibrary) {
+      // Stop the default InfoWindow from showing
+      ev.stop();
+
+      const placeId = ev.detail.placeId;
+
+      const service = new placesLibrary.PlacesService(map!);
+      service.getDetails(
+        {
+          placeId: placeId,
+          fields: [
+            "name",
+            "formatted_address",
+            "geometry",
+            "place_id",
+            "rating",
+            "user_ratings_total",
+            "url",
+          ],
+        },
+        (place, status) => {
+          if (status === placesLibrary.PlacesServiceStatus.OK && place) {
+            // Convert to a compatible format for our modal
+            // We need to shape it like the google.maps.places.Place class instance relative to what our handleAddPlace expects
+            // But handleAddPlace expects the new Place class instance structure somewhat.
+            // Let's create a compatible object.
+
+            // Constructing a "Place-like" object that matches what we use elsewhere
+            const placeLikeObject = {
+              displayName: place.name || "",
+              formattedAddress: place.formatted_address || "",
+              location: place.geometry?.location,
+              id: place.place_id || placeId,
+              place_id: place.place_id || placeId,
+              rating: place.rating,
+              userRatingCount: place.user_ratings_total,
+              googleMapsURI: place.url,
+            };
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSelectedPlaceInfo(placeLikeObject as any);
+          }
+        },
+      );
+    }
+  };
 
   return (
     <div className="flex flex-col h-[700px] bg-white dark:bg-neutral-950 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden animate-in fade-in relative">
@@ -424,6 +539,7 @@ function RecommendationsContent() {
             gestureHandling={"greedy"}
             disableDefaultUI={true}
             className="w-full h-full"
+            onClick={handleMapClick}
           >
             {/* OMNIBOX CONTROL */}
             <MapControl position={ControlPosition.TOP_CENTER}>
@@ -431,6 +547,22 @@ function RecommendationsContent() {
                 <Omnibox onSearch={handleSearch} isSearching={isSearching} />
               </div>
             </MapControl>
+
+            {/* SMART DISCOVERY BUTTON */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+              <Button
+                onClick={handleDiscoverNearby}
+                disabled={isSearching}
+                className="bg-white text-black hover:bg-gray-100 shadow-xl border border-gray-200 rounded-full px-6 transition-all hover:scale-105"
+              >
+                {isSearching ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-yellow-500 mr-2" />
+                )}
+                Buscar {activeCategory?.name} cercanos
+              </Button>
+            </div>
 
             {/* Property Pin */}
             <AdvancedMarker position={center}>
@@ -443,18 +575,22 @@ function RecommendationsContent() {
 
             {/* Suggested Pins (Gray) */}
             {suggestedPlaces.map((place) => {
-              if (!place.location) return null;
-              const isSelected = selectedPlaceIds.has(place.id);
+              if (!place.location && !place.geometry?.location) return null;
+              const location = place.location || place.geometry?.location;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const placeId = (place as any).place_id || place.id;
+
+              const isSelected = selectedPlaceIds.has(placeId);
               if (isSelected) return null;
 
               return (
                 <AdvancedMarker
-                  key={place.id}
-                  position={place.location}
+                  key={placeId}
+                  position={location}
                   onClick={() => setSelectedPlaceInfo(place)}
                 >
                   <Pin
-                    background={"#64748b"}
+                    background={"#94a3b8"}
                     borderColor={"#475569"}
                     glyphColor={"#f1f5f9"}
                     scale={0.8}
@@ -519,6 +655,22 @@ function RecommendationsContent() {
               </InfoWindow>
             )}
           </Map>
+
+          {/* SMART DISCOVERY BUTTON */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex gap-2 pointer-events-none">
+            <Button
+              onClick={handleDiscoverNearby}
+              disabled={isSearching}
+              className="pointer-events-auto bg-white text-black hover:bg-gray-100 shadow-xl border border-gray-200 rounded-full px-6 transition-all hover:scale-105"
+            >
+              {isSearching ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Sparkles className="w-4 h-4 text-yellow-500 mr-2" />
+              )}
+              Buscar {activeCategory?.name} cercanos
+            </Button>
+          </div>
         </div>
       </div>
 

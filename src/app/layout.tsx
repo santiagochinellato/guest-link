@@ -31,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={cn(
           inter.variable,
           jakarta.variable,

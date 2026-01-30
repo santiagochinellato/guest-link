@@ -14,10 +14,22 @@ export default async function EditPropertyPage({
   const propertyId = parseInt(id);
 
   if (isNaN(propertyId)) {
+    console.error(`[EditPropertyPage] Invalid Property ID: ${id}`);
     return notFound();
   }
 
+  console.log(`[EditPropertyPage] Fetching property with ID: ${propertyId}`);
   const result = await getProperty(propertyId);
+
+  if (!result.success) {
+    console.error(`[EditPropertyPage] Failed to fetch property:`, result.error);
+  } else if (!result.data) {
+    console.error(`[EditPropertyPage] Property data is null`);
+  } else {
+    console.log(
+      `[EditPropertyPage] Successfully fetched property: ${result.data.name}`,
+    );
+  }
 
   if (!result.success || !result.data) {
     return (
