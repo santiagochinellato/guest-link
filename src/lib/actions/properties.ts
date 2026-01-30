@@ -69,7 +69,10 @@ export async function createProperty(data: PropertyFormData) {
           access: {
             instructions: p.accessInstructions,
             hasParking: p.hasParking,
-            parkingDetails: p.parkingDetails
+            parkingDetails: p.parkingDetails,
+            accessCode: p.accessCode,
+            alarmCode: p.alarmCode,
+            accessSteps: p.accessSteps?.map(s => s.text) || []
           },
           host: {
             name: p.hostName,
@@ -185,7 +188,10 @@ export async function updateProperty(id: number, data: PropertyFormData) {
           access: {
             instructions: p.accessInstructions,
             hasParking: p.hasParking,
-            parkingDetails: p.parkingDetails
+            parkingDetails: p.parkingDetails,
+            accessCode: p.accessCode,
+            alarmCode: p.alarmCode,
+            accessSteps: p.accessSteps?.map(s => s.text) || []
           },
           host: {
             name: p.hostName,
@@ -446,6 +452,18 @@ export async function getProperty(id: number) {
         accessInstructions: (() => {
              try { return JSON.parse(prop.houseRules || "").access?.instructions || ""; } catch { return ""; }
         })(),
+        accessCode: (() => {
+             try { return JSON.parse(prop.houseRules || "").access?.accessCode || ""; } catch { return ""; }
+        })(),
+        alarmCode: (() => {
+             try { return JSON.parse(prop.houseRules || "").access?.alarmCode || ""; } catch { return ""; }
+        })(),
+        accessSteps: (() => {
+             try { 
+                 const steps = JSON.parse(prop.houseRules || "").access?.accessSteps || [];
+                 return (steps as string[]).map(s => ({ text: s }));
+             } catch { return []; }
+        })(),
         hasParking: (() => {
              try { return JSON.parse(prop.houseRules || "").access?.hasParking || false; } catch { return false; }
         })(),
@@ -557,6 +575,21 @@ export async function getPropertyBySlug(slug: string) {
              checkOut: prop.checkOutTime,
              latitude: prop.latitude,
              longitude: prop.longitude,
+             access: (() => {
+                  try {
+                      const parsed = JSON.parse(prop.houseRules || "");
+                      return {
+                          instructions: parsed.access?.instructions || "",
+                          accessCode: parsed.access?.accessCode || "",
+                          alarmCode: parsed.access?.alarmCode || undefined,
+                          accessSteps: (parsed.access?.accessSteps || []).map((s: string) => ({ text: s })),
+                          hasParking: parsed.access?.hasParking || false,
+                          parkingDetails: parsed.access?.parkingDetails || ""
+                      };
+                  } catch {
+                      return { instructions: "", accessCode: "", alarmCode: undefined, accessSteps: [], hasParking: false, parkingDetails: "" };
+                  }
+             })(),
              recommendations: recs.map(r => ({
                  title: r.title,
                  description: r.description,

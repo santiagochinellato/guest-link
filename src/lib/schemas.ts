@@ -90,6 +90,9 @@ export const PropertyFormSchema = z.object({
 
   // Access & Parking
   accessInstructions: z.string().optional(),
+  accessCode: z.string().optional(),
+  alarmCode: z.string().optional(),
+  accessSteps: z.array(z.object({ text: z.string() })).optional(),
   hasParking: z.boolean().optional(),
   parkingDetails: z.string().optional(),
 });
