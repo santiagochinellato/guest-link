@@ -3,7 +3,12 @@ import Link from "next/link";
 import { getProperties } from "@/lib/actions/properties";
 import { PropertiesGrid } from "@/components/admin/properties-grid";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
   const result = await getProperties();
   const properties = result.success && result.data ? result.data : [];
 
@@ -102,7 +107,7 @@ export default async function DashboardPage() {
             Your Properties
           </h3>
           <Link
-            href="/dashboard/properties/new"
+            href={`/${lang}/dashboard/properties/new`}
             className="bg-brand-void hover:bg-brand-void/90 dark:bg-brand-copper dark:hover:bg-brand-copper/90 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm hover:shadow-md transition-all flex items-center gap-2"
           >
             <Home className="w-5 h-5" />

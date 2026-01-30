@@ -25,7 +25,12 @@ interface Property {
 }
 
 // Server Component
-export default async function PropertiesPage() {
+export default async function PropertiesPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
   const result = await getProperties();
   const properties = (result.success ? result.data : []) as Property[];
 
@@ -39,7 +44,7 @@ export default async function PropertiesPage() {
           </p>
         </div>
         <Link
-          href="/dashboard/properties/new"
+          href={`/${lang}/dashboard/properties/new`}
           className="w-full md:w-auto bg-brand-void hover:bg-brand-void/90 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors dark:bg-brand-copper dark:hover:bg-brand-copper/90"
         >
           <Plus className="w-4 h-4" />

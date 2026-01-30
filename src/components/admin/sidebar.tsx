@@ -5,10 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Building2,
-  QrCode,
-  BarChart2,
-  Settings,
   MoreVertical,
   ChevronLeft,
   ChevronRight,
@@ -25,7 +21,7 @@ const NAV_ITEMS = [
   // { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ locale = "es" }: { locale?: string }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [session, setSession] = useState<{
@@ -122,11 +118,12 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-6 flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href;
+          const hrefWithLocale = `/${locale}${item.href}`;
+          const isActive = pathname === hrefWithLocale;
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={hrefWithLocale}
               className={cn(
                 "flex items-center gap-3 py-3 rounded-lg font-medium transition-colors group relative",
                 isCollapsed ? "justify-center px-2" : "px-4",

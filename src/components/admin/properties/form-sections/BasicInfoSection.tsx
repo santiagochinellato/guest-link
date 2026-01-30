@@ -1,9 +1,25 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
-import { Clock, ImageIcon, X, Loader2, Upload } from "lucide-react";
-import { PropertyFormData } from "@/lib/schemas";
 import { useState, ChangeEvent } from "react";
+import { useFormContext } from "react-hook-form";
+import {
+  Clock,
+  ImageIcon,
+  X,
+  Loader2,
+  Upload,
+  Home,
+  Globe,
+  User,
+  Phone,
+  LayoutTemplate,
+  Image as ImageIconLucide,
+} from "lucide-react";
+import { PropertyFormData } from "@/lib/schemas";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export function BasicInfoSection() {
   const {
@@ -19,30 +35,26 @@ export function BasicInfoSection() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Valida que la URL sea una imagen válida (no base64)
+  // Valida que la URL sea una imagen válida
   const isValidImageUrl = (url: string) => {
     if (!url) return false;
-    // Rechazar URLs base64
     if (url.startsWith("data:")) return false;
-    // Aceptar URLs http/https
     return url.startsWith("http://") || url.startsWith("https://");
   };
 
-  // Maneja la subida de archivos a Supabase Storage
+  // Maneja la subida de archivos
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar tipo
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      setUploadError("Solo se permiten imágenes JPEG, PNG, GIF o WebP");
+      setUploadError("Formato no soportado (Use JPG, PNG, WEBP)");
       return;
     }
 
-    // Validar tamaño (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setUploadError("El archivo es muy grande. Máximo 5MB");
+      setUploadError("El archivo es muy grande (Máx 5MB)");
       return;
     }
 
@@ -60,116 +72,238 @@ export function BasicInfoSection() {
 
       const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || "Error al subir imagen");
-      }
+      if (!response.ok) throw new Error(result.error || "Error al subir");
 
-      // Setear la URL en el formulario
-      setValue("coverImageUrl", result.url);
+      setValue("coverImageUrl", result.url, { shouldDirty: true });
     } catch (error) {
       console.error("Upload error:", error);
-      setUploadError(
-        error instanceof Error ? error.message : "Error al subir imagen",
-      );
+      setUploadError("Hubo un error al subir la imagen.");
     } finally {
       setIsUploading(false);
-      // Limpiar el input para permitir subir el mismo archivo de nuevo
       e.target.value = "";
     }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
-        <h3 className="text-xl font-semibold">Información Básica</h3>
-        <p className="text-sm text-gray-500">
-          Detalles principales de tu propiedad.
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* HEADER */}
+      <div className="border-b border-zinc-100 dark:border-zinc-800 pb-6">
+        <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+          Información General
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          Define la identidad principal de tu propiedad y su portada.
         </p>
       </div>
 
-      <div className="space-y-5">
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Nombre de la Propiedad
-          </label>
-          <input
-            {...register("name")}
-            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all dark:bg-white/5"
-            placeholder="ej. Casa Azul - Vista al Mar"
-          />
-          {errors.name && (
-            <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Slug (URL)
-          </label>
-          <div className="relative mt-1">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-mono">
-              guestlink.com/stay/
-            </span>
-            <input
-              {...register("slug")}
-              className="w-full pl-48 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none font-mono text-sm focus:border-brand-copper transition-all dark:bg-white/5"
-            />
-          </div>
-          {errors.slug && (
-            <p className="text-red-500 text-xs mt-1">{errors.slug.message}</p>
-          )}
-        </div>
-
-        {/* Cover Image - Con upload a Supabase Storage */}
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-            <div className="w-full col-span-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                Imagen de Portada
-              </label>
-
-              {isValidImageUrl(watchCoverImage || "") ? (
-                <div className="relative w-full h-64 rounded-xl overflow-hidden border border-gray-200 dark:border-neutral-700 group">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={watchCoverImage}
-                    alt="Cover"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setValue("coverImageUrl", "")}
-                    className="absolute top-2 right-2 p-2 bg-white/80 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* COLUMNA IZQUIERDA: DATOS Y LOGÍSTICA */}
+        <div className="xl:col-span-2 space-y-6">
+          {/* CARD 1: IDENTIDAD */}
+          <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-950">
+            <CardContent className="p-6 space-y-6">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-2 bg-brand-copper/10 rounded-lg text-brand-copper">
+                  <LayoutTemplate className="w-4 h-4" />
                 </div>
-              ) : (
+                <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                  Identidad Digital
+                </h4>
+              </div>
+
+              {/* Nombre */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  Nombre Público
+                </Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-zinc-400">
+                    <Home className="w-4 h-4" />
+                  </div>
+                  <Input
+                    {...register("name")}
+                    placeholder="Ej: Cabaña Vista al Lago"
+                    className="pl-10 h-11 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus-visible:ring-brand-copper/20 text-base"
+                  />
+                </div>
+                {errors.name && (
+                  <p className="text-red-500 text-xs">{errors.name.message}</p>
+                )}
+              </div>
+
+              {/* Slug */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                  Link Personalizado (Slug)
+                </Label>
+                <div className="flex rounded-md shadow-sm">
+                  <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 text-sm font-mono select-none">
+                    <Globe className="w-3.5 h-3.5 mr-2" />
+                    guestlink.com/stay/
+                  </div>
+                  <Input
+                    {...register("slug")}
+                    placeholder="mi-propiedad"
+                    className="rounded-l-none h-11 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-brand-copper/20 font-mono text-sm"
+                  />
+                </div>
+                {errors.slug && (
+                  <p className="text-red-500 text-xs">{errors.slug.message}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* CARD 2: OPERATIVIDAD & HOST */}
+          <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-950">
+            <CardContent className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Horarios */}
                 <div className="space-y-4">
-                  {/* Área de upload */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400">
+                      <Clock className="w-3.5 h-3.5" />
+                    </div>
+                    <h4 className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
+                      Horarios
+                    </h4>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-zinc-500">Check-in</Label>
+                      <Input
+                        type="time"
+                        {...register("checkInTime")}
+                        className="bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-zinc-500">Check-out</Label>
+                      <Input
+                        type="time"
+                        {...register("checkOutTime")}
+                        className="bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Anfitrión */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 bg-green-50 dark:bg-green-900/20 rounded text-green-600 dark:text-green-400">
+                      <User className="w-3.5 h-3.5" />
+                    </div>
+                    <h4 className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
+                      Anfitrión
+                    </h4>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <User className="absolute left-3 top-2.5 w-4 h-4 text-zinc-400" />
+                      <Input
+                        {...register("hostName")}
+                        placeholder="Nombre del Host"
+                        className="pl-9 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 h-9 text-sm"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-2.5 w-4 h-4 text-zinc-400" />
+                      <Input
+                        {...register("hostPhone")}
+                        placeholder="+54 9 11..."
+                        className="pl-9 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 h-9 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* COLUMNA DERECHA: COVER IMAGE (VISUAL ANCHOR) */}
+        <div className="xl:col-span-1">
+          <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm h-full bg-white dark:bg-zinc-950 flex flex-col">
+            <CardContent className="p-5 flex-1 flex flex-col">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-brand-copper/10 rounded-lg text-brand-copper">
+                  <ImageIconLucide className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                    Imagen de Portada
+                  </h4>
+                  <p className="text-[10px] text-muted-foreground">
+                    Será la primera impresión del huésped.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col justify-center">
+                {isValidImageUrl(watchCoverImage || "") ? (
+                  <div className="relative w-full aspect-[9/16] xl:aspect-[3/4] rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 group shadow-sm bg-zinc-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={watchCoverImage}
+                      alt="Cover"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+
+                    {/* Overlay Actions */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
+                      <button
+                        type="button"
+                        onClick={() => setValue("coverImageUrl", "")}
+                        className="p-3 bg-white/90 text-red-600 rounded-full hover:bg-white hover:scale-110 transition-all shadow-lg"
+                        title="Eliminar imagen"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/60 to-transparent">
+                      <p className="text-white text-xs font-medium text-center">
+                        Vista Previa
+                      </p>
+                    </div>
+                  </div>
+                ) : (
                   <label
-                    className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all dark:bg-white/5 ${
+                    className={cn(
+                      "flex-1 min-h-[300px] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all group relative overflow-hidden",
                       isUploading
-                        ? "border-brand-copper bg-brand-copper/5 dark:bg-brand-copper/10"
-                        : "border-gray-300 dark:border-neutral-700 hover:border-brand-copper/50 hover:bg-gray-50 dark:hover:bg-neutral-800/50"
-                    }`}
+                        ? "border-brand-copper bg-brand-copper/5"
+                        : "border-zinc-200 dark:border-zinc-800 hover:border-brand-copper/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50",
+                    )}
                   >
+                    <div className="absolute inset-0 bg-[url('/file.svg')] opacity-[0.03] bg-center bg-repeat space-y-4" />
+
                     {isUploading ? (
                       <>
-                        <Loader2 className="w-8 h-8 text-brand-copper animate-spin" />
-                        <p className="text-sm text-brand-copper font-medium">
-                          Subiendo imagen...
+                        <Loader2 className="w-10 h-10 text-brand-copper animate-spin relative z-10" />
+                        <p className="text-sm text-brand-copper font-medium relative z-10">
+                          Subiendo...
                         </p>
                       </>
                     ) : (
                       <>
-                        <Upload className="w-8 h-8 text-gray-400" />
-                        <span className="text-sm text-brand-copper font-medium hover:underline">
-                          Subir imagen desde tu PC
-                        </span>
-                        <p className="text-xs text-gray-400">
-                          PNG, JPG, GIF, WebP hasta 5MB
-                        </p>
+                        <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
+                          <Upload className="w-8 h-8 text-zinc-400 group-hover:text-brand-copper transition-colors" />
+                        </div>
+                        <div className="text-center relative z-10 px-4">
+                          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                            Click para subir imagen
+                          </p>
+                          <p className="text-xs text-zinc-400 mt-1">
+                            o arrastra y suelta aquí
+                          </p>
+                          <p className="text-[10px] text-zinc-400 mt-4 px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full inline-block">
+                            JPG, PNG, WEBP (Max 5MB)
+                          </p>
+                        </div>
                       </>
                     )}
                     <input
@@ -180,94 +314,34 @@ export function BasicInfoSection() {
                       disabled={isUploading}
                     />
                   </label>
+                )}
 
-                  {/* Error de upload */}
-                  {uploadError && (
-                    <p className="text-red-500 text-xs flex items-center gap-1">
-                      ⚠️ {uploadError}
-                    </p>
-                  )}
-
-                  {/* Separador */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-gray-200 dark:bg-neutral-700" />
-                    <span className="text-xs text-gray-400">o pegar URL</span>
-                    <div className="flex-1 h-px bg-gray-200 dark:bg-neutral-700" />
+                {/* Error Message */}
+                {uploadError && (
+                  <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg flex items-center gap-2 text-red-600 dark:text-red-400 text-xs">
+                    <X className="w-4 h-4 shrink-0" />
+                    {uploadError}
                   </div>
+                )}
 
-                  {/* Input de URL */}
-                  <div className="flex flex-col gap-2">
-                    <input
-                      {...register("coverImageUrl")}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper text-sm dark:bg-white/5"
-                    />
-                    {watchCoverImage && !isValidImageUrl(watchCoverImage) && (
-                      <p className="text-amber-500 text-xs">
-                        ⚠️ Solo URLs https:// son válidas.
-                      </p>
-                    )}
+                {/* Fallback URL Input (Subtle) */}
+                {!isValidImageUrl(watchCoverImage || "") && !isUploading && (
+                  <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-[10px] text-zinc-400 uppercase text-center">
+                        O pegar enlace directo
+                      </Label>
+                      <Input
+                        {...register("coverImageUrl")}
+                        placeholder="https://..."
+                        className="h-8 text-xs bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-center"
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-            <div className="col-span-1 gap-6 flex flex-col justify-between">
-              <div className="flex flex-col md:flex-row w-full justify-between gap-6">
-                {" "}
-                <div className="w-full">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-1">
-                    <Clock className="w-4 h-4 text-brand-copper" /> Check-in
-                  </label>
-                  <input
-                    type="time"
-                    {...register("checkInTime")}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper dark:bg-white/5"
-                  />
-                </div>
-                <div className="w-full">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-1">
-                    <Clock className="w-4 h-4 text-brand-copper" /> Check-out
-                  </label>
-                  <input
-                    type="time"
-                    {...register("checkOutTime")}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper dark:bg-white/5"
-                  />
-                </div>
+                )}
               </div>
-              <div className="border-t border-gray-100 dark:border-neutral-800 pt-6">
-                <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-                  Información del Anfitrión
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Nombre del Anfitrión
-                    </label>
-                    <input
-                      {...register("hostName")}
-                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all dark:bg-white/5"
-                      placeholder="Ej. Santiago"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Teléfono / WhatsApp (Opcional)
-                    </label>
-                    <input
-                      {...register("hostPhone")}
-                      className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-neutral-700 bg-transparent outline-none focus:border-brand-copper transition-all dark:bg-white/5"
-                      placeholder="+54 9 11 ..."
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      Si se completa, aparecerá un botón de contacto directo en
-                      &quot;Ayuda&quot;.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

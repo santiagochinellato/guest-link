@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { Edit, Trash2, Eye, Loader2 } from "lucide-react";
 import { deleteProperty } from "@/lib/actions/properties";
 
@@ -14,6 +15,8 @@ export function PropertyCardActions({
   propertyId,
   slug,
 }: PropertyCardActionsProps) {
+  const params = useParams();
+  const lang = params?.lang || "es";
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -41,7 +44,7 @@ export function PropertyCardActions({
   return (
     <div className="flex items-center gap-2">
       <Link
-        href={`/stay/${slug}`}
+        href={`/${lang}/stay/${slug}`}
         target="_blank"
         className="p-2 rounded-lg bg-gray-50 dark:bg-neutral-800 text-gray-600 dark:text-gray-300 hover:bg-brand-copper hover:text-white dark:hover:bg-brand-copper dark:hover:text-white transition-colors flex items-center gap-2 shadow-sm"
         title="View as Guest"
@@ -50,7 +53,7 @@ export function PropertyCardActions({
         <p className="text-xs font-medium">Vista del huésped</p>
       </Link>
       <Link
-        href={`/dashboard/properties/${propertyId}/edit`}
+        href={`/${lang}/dashboard/properties/${propertyId}/edit`}
         className="p-2 rounded-lg bg-gray-50 dark:bg-neutral-800 text-gray-600 dark:text-gray-300 hover:bg-brand-void hover:text-white dark:hover:bg-white dark:hover:text-brand-void transition-colors flex items-center gap-2 shadow-sm"
         title="Edit Property"
       >
