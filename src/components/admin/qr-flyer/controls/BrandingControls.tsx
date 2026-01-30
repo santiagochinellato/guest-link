@@ -33,7 +33,6 @@ export function BrandingControls({
         </span>
         <span className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</span>
       </div>
-
       <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-700">
         <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
           Insertar logo en el QR
@@ -49,12 +48,12 @@ export function BrandingControls({
           }
           className={cn(
             "w-10 h-6 rounded-full relative transition-colors",
-            config.branding.embedLogoInQr ? "bg-[#0f756d]" : "bg-slate-200",
+            config.branding.embedLogoInQr ? "bg-brand-copper" : "bg-slate-200",
           )}
         >
           <div
             className={cn(
-              "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+              "absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm",
               config.branding.embedLogoInQr ? "left-5" : "left-1",
             )}
           />

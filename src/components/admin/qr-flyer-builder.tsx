@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
+import { useFormContext } from "react-hook-form";
 import { FlyerConfig } from "./qr-flyer/types";
 import { Sidebar } from "./qr-flyer/controls/Sidebar";
 import { FlyerPreview } from "./qr-flyer/FlyerPreview";
-import { useFlyerExport } from "@/hooks/use-flyer-export";
+import { PropertyFormData } from "@/lib/schemas";
 
 interface QrFlyerBuilderProps {
   initialData?: {
@@ -19,7 +20,9 @@ interface QrFlyerBuilderProps {
 }
 
 export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
-  const [scale, setScale] = useState(0.5);
+  const [scale, setScale] = useState(0.8);
+  const [activeTab, setActiveTab] = useState("design");
+  const { setValue } = useFormContext<PropertyFormData>();
 
   const [config, setConfig] = useState<FlyerConfig>({
     content: {
@@ -49,10 +52,18 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
       secondaryColor: "#1e293b",
       backgroundColor: "#ffffff",
       font: "inter",
-      layout: "minimal",
+      layout: "gradient", // Default to Gradient which will be premium
       orientation: "vertical",
     },
   });
+
+  // Sync config changes to the form data
+  useEffect(() => {
+    setValue("wifiQrCode", JSON.stringify(config), {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  }, [config, setValue]);
 
   const updateConfig = (
     section: keyof FlyerConfig,
@@ -65,50 +76,98 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
     }));
   };
 
-  const { handleExport, isExporting } = useFlyerExport({
-    propertyId: initialData?.id,
-  });
+  const handlePrint = () => {
+    if (initialData?.id) {
+      // Save to localStorage for instant preview
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          `flyer_config_${initialData.id}`,
+          JSON.stringify(config),
+        );
+      }
+      // Open print page
+      window.open(`/flyer/${initialData.id}/print`, "_blank");
+    } else {
+      // Fallback or alert if no ID (e.g. creating new property)
+      alert(
+        "Primero debes guardar la propiedad para imprimir el diseño final.",
+      );
+    }
+  };
 
   return (
-    <div className="flex flex-col md:flex-row bg-[#f6f8f8] dark:bg-brand-void rounded-xl shadow border border-slate-200 dark:border-slate-800 h-auto md:h-[800px] overflow-hidden">
-      <div className="w-full md:w-auto border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 h-[400px] md:h-full overflow-y-auto shrink-0">
-        <Sidebar
-          config={config}
-          updateConfig={updateConfig}
-          onExport={handleExport}
-          isExporting={isExporting}
-        />
+    <div className="flex flex-col md:flex-row bg-[#f0f0f0] dark:bg-black h-[calc(100vh-100px)] fixed inset-0 md:relative md:h-[800px] w-full overflow-hidden border border-gray-200 dark:border-gray-800 md:rounded-xl">
+      {/* Sidebar Controls - Left Panel */}
+      <div className="w-full md:w-[450px] bg-white dark:bg-brand-void border-r border-gray-200 dark:border-gray-800 flex flex-col z-20 shrink-0">
+        <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-brand-void z-10">
+          <h2 className="font-bold text-lg flex items-center gap-2">
+            <span className="text-brand-copper">Design</span> Studio
+          </h2>
+          <p className="text-xs text-gray-400">
+            Personaliza tu flyer imprimible
+          </p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <Sidebar
+            config={config}
+            updateConfig={updateConfig}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
+        </div>
       </div>
 
-      {/* Right Panel: Preview Stage */}
-      <main className="flex-1 bg-[#1e293b] relative overflow-hidden flex flex-col h-[500px] md:h-full">
-        {/* Zoom Controls */}
-        <div className="absolute top-6 right-6 z-30 flex gap-2 bg-white/10 backdrop-blur rounded-full p-1 ring-1 ring-white/20">
+      {/* Main Preview Area - Right Panel */}
+      <main className="flex-1 bg-zinc-100 dark:bg-[#121212] relative overflow-hidden flex flex-col">
+        {/* Floating Toolbar */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-white dark:bg-brand-void/90 backdrop-blur shadow-xl border border-gray-100 dark:border-gray-700 p-1.5 rounded-full pr-1.5 pl-4 transition-all hover:scale-105">
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-1 mr-2 border-r border-gray-200 dark:border-gray-700 pr-3">
+            <button
+              type="button"
+              onClick={() => setScale((s) => Math.max(0.3, s - 0.1))}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/10 transition-colors"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <span className="w-12 text-center text-xs font-mono font-medium text-gray-600 dark:text-gray-300">
+              {Math.round(scale * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={() => setScale((s) => Math.min(1.5, s + 0.1))}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/10 transition-colors"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Export Action */}
           <button
-            type="button"
-            onClick={() => setScale((s) => Math.max(0.2, s - 0.1))}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20"
+            onClick={handlePrint}
+            className="bg-brand-void hover:bg-brand-copper text-white px-5 py-2 rounded-full text-sm font-semibold shadow-md flex items-center gap-2 transition-all"
           >
-            <ZoomOut className="w-4 h-4" />
-          </button>
-          <span className="flex items-center px-1 text-xs font-mono text-white/80">
-            {Math.round(scale * 100)}%
-          </span>
-          <button
-            type="button"
-            onClick={() => setScale((s) => Math.min(1.5, s + 0.1))}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20"
-          >
-            <ZoomIn className="w-4 h-4" />
+            <span>🖨️</span> Imprimir PDF
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto flex items-center justify-center p-8 md:p-20 custom-scrollbar">
+        {/* Canvas */}
+        <div className="flex-1 overflow-auto flex items-center justify-center p-8 md:p-20 custom-scrollbar relative">
+          {/* Background Grid Pattern */}
+          <div
+            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            style={{
+              backgroundImage: `radial-gradient(#000 1px, transparent 1px)`,
+              backgroundSize: "20px 20px",
+            }}
+          />
+
           <div
             style={{ transform: `scale(${scale})` }}
-            className="transition-transform duration-300 origin-center"
+            className="transition-transform duration-300 origin-center will-change-transform"
           >
-            <div className="shadow-2xl">
+            <div className="shadow-2xl shadow-black/20 ring-1 ring-black/5 bg-white">
               <FlyerPreview config={config} />
             </div>
           </div>

@@ -15,6 +15,38 @@ export function ContentControls({
     <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
       <div className="space-y-4">
         <div>
+          <label className="text-xs font-bold text-slate-500 dark:text-white uppercase mb-2 block">
+            ¿Qué debe abrir el QR?
+          </label>
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+            <button
+              type="button"
+              onClick={() => updateConfig("content", "qrType", "url")}
+              className={cn(
+                "flex-1 py-2 text-xs font-bold rounded-md flex items-center justify-center gap-2 transition-all",
+                !config.content.qrType || config.content.qrType === "url"
+                  ? "bg-white dark:bg-brand-void-light shadow text-brand-copper"
+                  : "text-slate-400",
+              )}
+            >
+              <span>🔗</span> Guía Digital
+            </button>
+            <button
+              type="button"
+              onClick={() => updateConfig("content", "qrType", "wifi")}
+              className={cn(
+                "flex-1 py-2 text-xs font-bold rounded-md flex items-center justify-center gap-2 transition-all",
+                config.content.qrType === "wifi"
+                  ? "bg-white dark:bg-brand-void-light shadow text-brand-copper"
+                  : "text-slate-400",
+              )}
+            >
+              <span>📶</span> Conectar WiFi
+            </button>
+          </div>
+        </div>
+
+        <div>
           <label className="text-xs font-bold text-slate-500 dark:text-white uppercase">
             Título
           </label>

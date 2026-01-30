@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 
 import { Wifi, Smartphone, Lock } from "lucide-react";
@@ -23,27 +25,37 @@ const QrSection = ({
   content: FlyerConfig["content"];
   branding: FlyerConfig["branding"];
   primaryColor: string;
-}) => (
-  <div className="flex flex-col items-center justify-center gap-2 ">
-    <HostlyLogoVertical
-      className="h-32 w-auto"
-      style={{ color: primaryColor }}
-    />
-    <div className="bg-white p-6 pt-0 shadow-sm border border-gray-100 rounded-2xl">
-      <QrCode
-        url={content.guideUrl}
-        size={size}
-        branding={branding}
-        primaryColor={primaryColor}
-        className="block"
+}) => {
+  // Determine QR Content
+  const qrData =
+    content.qrType === "wifi"
+      ? `WIFI:T:WPA;S:${content.networkName};P:${content.networkPassword};;`
+      : content.guideUrl;
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 print:break-inside-avoid">
+      <HostlyLogoVertical
+        className="h-32 w-auto"
+        style={{ color: primaryColor }}
       />
+      <div className="bg-white p-6 pt-0 shadow-sm border border-gray-100 rounded-2xl print:border-gray-300 print:shadow-none">
+        <QrCode
+          url={qrData}
+          size={size}
+          branding={branding}
+          primaryColor={primaryColor}
+          className="block"
+        />
+      </div>
+      <div className="mt-6 flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 print:text-gray-600">
+        <Smartphone size={14} />
+        <span>
+          {content.qrType === "wifi" ? "Scan to Connect" : "Scan to open"}
+        </span>
+      </div>
     </div>
-    <div className="mt-6 flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400">
-      <Smartphone size={14} />
-      <span>Scan to connect</span>
-    </div>
-  </div>
-);
+  );
+};
 
 const NetworkInfo = ({
   className,
@@ -52,23 +64,29 @@ const NetworkInfo = ({
   className?: string;
   content: FlyerConfig["content"];
 }) => (
-  <div className={cn("flex flex-col gap-6 w-full max-w-md", className)}>
+  <div
+    className={cn(
+      "flex flex-col gap-6 w-full max-w-md print:break-inside-avoid",
+      className,
+    )}
+  >
     <div>
-      <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2 flex items-center gap-2">
-        <Wifi size={14} className="text-gray-900" /> Red WiFi
+      <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2 flex items-center gap-2 print:text-gray-600">
+        <Wifi size={14} className="text-gray-900 print:text-black" /> Red WiFi
       </p>
-      <p className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words">
+      <p className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words print:text-black">
         {content.networkName}
       </p>
     </div>
 
     {content.showPassword && content.networkPassword && (
       <div>
-        <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2 flex items-center gap-2">
-          <Lock size={14} className="text-gray-900" /> Contraseña
+        <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2 flex items-center gap-2 print:text-gray-600">
+          <Lock size={14} className="text-gray-900 print:text-black" />{" "}
+          Contraseña
         </p>
         <div className="relative inline-block w-full">
-          <p className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words">
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight break-words print:text-black">
             {content.networkPassword}
           </p>
         </div>
@@ -86,29 +104,39 @@ export const MinimalTemplate: React.FC<TemplateProps> = ({
   const isHorizontal = design.orientation === "horizontal";
   const primaryColor = design.primaryColor || "#000000";
 
+  // Dimensions for A4
+  const a4Styles = isHorizontal
+    ? { width: "297mm", height: "210mm" }
+    : { width: "210mm", height: "297mm" };
+
+  const containerClass = cn(
+    "w-full h-full bg-white text-gray-900 font-sans flex overflow-hidden relative print:overflow-visible",
+    containerStyles,
+  );
+
+  const printStyle = {
+    WebkitPrintColorAdjust: "exact" as any,
+    printColorAdjust: "exact" as any,
+    ...a4Styles,
+  };
+
   if (isHorizontal) {
     // HORIZONTAL CLEAN (842x595)
     return (
-      <div
-        ref={qrRef}
-        className={cn(
-          "w-full h-full flex bg-white text-gray-900 font-sans flex overflow-hidden",
-          containerStyles,
-        )}
-      >
-        <div className="flex justify-center items-center">
+      <div ref={qrRef} className={cn(containerClass)} style={printStyle}>
+        <div className="flex justify-center items-center h-full w-full">
           {/* Left Col: Welcome & Context (60%) */}
-          <div className="w-[60%] h-full p-10 flex flex-col justify-center relative z-10">
+          <div className="w-[50%] h-full p-10 flex flex-col justify-center relative z-10">
             <div>
-              <h1 className="text-5xl font-bold leading-none tracking-tight text-gray-900 mb-4 max-w-md">
+              <h1 className="text-5xl font-bold leading-none tracking-tight text-gray-900 mb-4 max-w-md print:text-black">
                 {content.title || "Bienvenido"}
               </h1>
               <div className="flex flex-col gap-2">
-                <p className="text-gray-500 leading-normal text-lg max-w-md font-medium">
+                <p className="text-gray-500 leading-normal text-xl max-w-md font-medium print:text-gray-700">
                   {content.welcomeMessage ||
                     "Escanea el código QR para acceder a Internet y a nuestra guía local."}
                 </p>
-                <p className="text-gray-500 leading-normal text-sm max-w-md font-medium">
+                <p className="text-gray-500 leading-normal text-xl max-w-md font-medium print:text-gray-600">
                   *
                   {content.welcomeMessageEn ||
                     "Scan this code to access the property guide, WiFi, and local recommendations."}
@@ -116,15 +144,15 @@ export const MinimalTemplate: React.FC<TemplateProps> = ({
               </div>
             </div>
 
-            <div className="pt-6 border-t border-gray-100">
+            <div className="pt-6 border-t border-gray-100 mt-8 print:border-gray-300">
               <NetworkInfo content={content} className="max-w-md" />
             </div>
           </div>
 
           {/* Right Col: Pure QR Focus (40%) */}
-          <div className="w-[40%] h-full bg-[#fafafa] flex items-center justify-center p-8 relative border-l border-gray-100/50">
+          <div className="w-[50%] h-full bg-[#fafafa] flex items-center justify-center p-8 relative border-l border-gray-100/50 print:bg-gray-50 print:border-gray-200">
             <QrSection
-              size={220}
+              size={400}
               content={content}
               branding={branding}
               primaryColor={primaryColor}
@@ -139,30 +167,27 @@ export const MinimalTemplate: React.FC<TemplateProps> = ({
   return (
     <div
       ref={qrRef}
-      className={cn(
-        "w-full h-full bg-white text-gray-900 font-sans flex flex-col relative overflow-hidden p-12",
-        containerStyles,
-      )}
+      className={cn(containerClass, "flex-col p-12")}
+      style={printStyle}
     >
-      {/* Header */}
       {/* Main Content (Hero) */}
-      <main className="flex-1 flex flex-col items-center justify-start w-full">
+      <main className="flex-1 flex flex-col items-center justify-start w-full mt-10">
         <div className="mb-10 text-center max-w-md mx-auto">
-          <h1 className="text-4xl font-bold mb-4 tracking-tight text-gray-900 leading-tight">
+          <h1 className="text-5xl font-bold mb-4 tracking-tight text-gray-900 leading-tight print:text-black">
             {content.title || "Conéctate"}
           </h1>
           <div className="flex flex-col gap-2">
-            <p className="text-gray-500 text-lg leading-relaxed">
+            <p className="text-gray-500 text-xl leading-relaxed print:text-gray-700">
               {content.welcomeMessage}
             </p>
-            <p className="text-gray-500 text-sm leading-relaxed">
+            <p className="text-gray-500 text-xl leading-relaxed print:text-gray-600">
               *{content.welcomeMessageEn}
             </p>
           </div>
         </div>
 
         <QrSection
-          size={260}
+          size={400}
           content={content}
           branding={branding}
           primaryColor={primaryColor}
@@ -170,23 +195,23 @@ export const MinimalTemplate: React.FC<TemplateProps> = ({
       </main>
 
       {/* Footer / Network Info */}
-      <footer className="w-full pt-2 border-t border-gray-100 ">
+      <footer className="w-full pt-8 pb-4 border-t border-gray-100 print:border-gray-300">
         <div className="flex flex-row items-start justify-between gap-10">
           <div className="flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2 print:text-gray-600">
               Red WiFi
             </p>
-            <p className="text-xl font-bold text-gray-900 truncate">
+            <p className="text-xl font-bold text-gray-900 truncate print:text-black">
               {content.networkName}
             </p>
           </div>
 
           {content.showPassword && content.networkPassword && (
             <div className="flex-1 text-right">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-2 print:text-gray-600">
                 Contraseña
               </p>
-              <p className="text-xl font-bold text-gray-900 truncate">
+              <p className="text-xl font-bold text-gray-900 truncate print:text-black">
                 {content.networkPassword}
               </p>
             </div>

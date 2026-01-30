@@ -8,6 +8,7 @@ export interface FlyerConfig {
     networkPassword?: string;
     guideUrl: string;
     showPassword: boolean;
+    qrType?: "url" | "wifi";
   };
   branding: {
     logo?: string; // Data URL
