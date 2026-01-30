@@ -55,9 +55,9 @@ export function WifiSection() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6">
         {/* Left Column: QR Card Preview (Bento Item) */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 order-last lg:order-none">
           <div
             className={`h-full rounded-2xl p-6 border transition-all duration-300 relative overflow-hidden group ${wifiQrCode ? "bg-brand-void text-white border-brand-void dark:bg-brand-copper dark:border-brand-copper" : "bg-gray-100 border-gray-200 text-gray-400 dark:bg-neutral-800 dark:border-neutral-700"}`}
           >
@@ -142,7 +142,7 @@ export function WifiSection() {
           </div>
 
           {/* Alternativas */}
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-gray-100 dark:border-neutral-800 shadow-sm flex items-center justify-between gap-4">
+          <div className="bg-white dark:bg-neutral-900 flex flex-col md:flex-row rounded-2xl p-6 border border-gray-100 dark:border-neutral-800 shadow-sm items-center justify-between gap-4">
             <div>
               <h4 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <Link2 className="w-4 h-4" />

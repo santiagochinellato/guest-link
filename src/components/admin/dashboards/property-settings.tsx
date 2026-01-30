@@ -20,7 +20,16 @@ import {
   ArrowLeft,
   Check,
   Key,
+  Menu,
 } from "lucide-react";
+
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 
 import { cn } from "@/lib/utils";
 import { PropertyFormSchema, PropertyFormData } from "@/lib/schemas";
@@ -212,12 +221,17 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
       (item) => item.id === activeTab,
     )?.component || (BasicInfoSection as any);
 
+  // This sidebar is REMOVED because it's now handled by the layout.
+  // We make the internal property navigation responsive:
+  // Mobile: Horizontal Scrollable Tabs.
+  // Desktop: Sidebar + Content.
+
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-black overflow-hidden font-sans">
-      {/* SIDEBAR */}
-      <aside className="w-64 border-r border-gray-200 dark:border-neutral-800 bg-white dark:bg-black flex-shrink-0 flex flex-col h-full">
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-100 dark:border-neutral-800">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-3.5rem)] md:h-screen bg-gray-50 dark:bg-black overflow-hidden font-sans">
+      {/* INTERNAL NAVIGATION - Desktop: Sidebar, Mobile: Horizontal Tabs */}
+      <aside className="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-neutral-800 bg-white dark:bg-black flex-shrink-0 flex flex-col h-auto lg:h-full z-10">
+        {/* Sidebar Header - Hidden on Mobile to save space, or kept compact */}
+        <div className="p-4 border-b border-gray-100 dark:border-neutral-800 lg:block hidden">
           <button
             onClick={() => router.push("/dashboard/properties")}
             className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors mb-4"
@@ -245,20 +259,79 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
+        {/* Navigation - Vertical on Desktop, Sheet Button on Mobile */}
+        {/* Made sticky top-0 so it stays visible while scrolling */}
+        <div className="lg:hidden sticky top-0 z-30 bg-gray-50 dark:bg-black p-4 border-b border-gray-100 dark:border-neutral-800 transition-all">
+          <Sheet>
+            <SheetTrigger asChild>
+              <button className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl shadow-sm active:scale-[0.98] transition-all">
+                <span className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <Menu className="w-4 h-4 text-brand-copper" />
+                  {SETTINGS_TABS.flatMap((c) => c.items).find(
+                    (i) => i.id === activeTab,
+                  )?.label || "Menu"}
+                </span>
+                <span className="text-xs text-brand-copper font-medium">
+                  Cambiar
+                </span>
+              </button>
+            </SheetTrigger>
+            <SheetContent
+              side="bottom"
+              className="h-[80vh] rounded-t-[20px] p-0 flex flex-col"
+            >
+              <div className="p-4 border-b border-gray-100 dark:border-neutral-800">
+                <SheetTitle className="text-lg font-bold text-center">
+                  Secciones
+                </SheetTitle>
+                <SheetDescription className="text-center text-xs text-gray-500">
+                  Selecciona una sección para editar
+                </SheetDescription>
+              </div>
+              <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+                {SETTINGS_TABS.map((category) => (
+                  <div key={category.category}>
+                    <h3 className="text-xs font-bold text-gray-400 dark:text-neutral-500 uppercase tracking-wider mb-3 px-2">
+                      {category.category}
+                    </h3>
+                    <div className="space-y-1">
+                      {category.items.map((item) => (
+                        <SheetTrigger key={item.id} asChild>
+                          <button
+                            onClick={() => handleTabChange(item.id)}
+                            className={cn(
+                              "w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                              activeTab === item.id
+                                ? "bg-brand-void text-white dark:bg-brand-copper dark:text-white shadow-md"
+                                : "text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-neutral-900/50 hover:bg-gray-100 dark:hover:bg-neutral-800",
+                            )}
+                          >
+                            <item.icon className="w-5 h-5" />
+                            <span>{item.label}</span>
+                          </button>
+                        </SheetTrigger>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        <nav className="hidden lg:flex flex-1 overflow-y-auto p-4 flex-col gap-8 custom-scrollbar items-stretch whitespace-nowrap">
           {SETTINGS_TABS.map((category) => (
-            <div key={category.category}>
+            <div key={category.category} className="flex flex-col gap-2">
               <h3 className="text-xs font-semibold text-gray-400 dark:text-neutral-500 uppercase tracking-wider mb-2 px-2">
                 {category.category}
               </h3>
-              <div className="space-y-0.5">
+              <div className="flex flex-col gap-1">
                 {category.items.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => handleTabChange(item.id)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                      "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
                       activeTab === item.id
                         ? "bg-brand-void text-white dark:bg-brand-copper dark:text-white shadow-sm"
                         : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-900",
@@ -273,8 +346,8 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
           ))}
         </nav>
 
-        {/* Sidebar Footer info */}
-        <div className="p-4 text-xs text-gray-400 border-t border-gray-100 dark:border-neutral-800 text-center">
+        {/* Sidebar Footer info - Desktop Only */}
+        <div className="p-4 text-xs text-gray-400 border-t border-gray-100 dark:border-neutral-800 text-center lg:block hidden">
           ID: {initialData.id} • v1.0
         </div>
       </aside>
@@ -282,7 +355,7 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
       {/* MAIN CONTENT */}
       <main className="flex-1 flex flex-col h-full relative overflow-hidden">
         {/* Scrollable Form Area */}
-        <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar pb-32">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 custom-scrollbar pb-48">
           <div className="max-w-6xl mx-auto">
             <FormProvider {...form}>
               <form
@@ -311,17 +384,25 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
           </div>
         </div>
 
-        {/* Floating Save Action Bar - Only shows when needed or always for easy access */}
-        <div className="absolute bottom-6 right-6 z-20">
+        {/* Floating Save Action Bar */}
+        {/* Mobile: Fixed Bottom Bar. Desktop: Floating Pill */}
+        <div
+          className={cn(
+            "z-20",
+            "lg:absolute lg:bottom-6 lg:right-6 lg:left-auto lg:top-auto lg:w-auto lg:transform-none", // Desktop: Floating Pill
+            "fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-black border-t border-gray-100 dark:border-neutral-800", // Mobile: Fixed Bar background
+          )}
+        >
           <button
             type="submit"
             form="settings-form"
             disabled={isSaving}
             className={cn(
-              "flex items-center gap-2 px-6 py-3 rounded-full font-bold shadow-xl transition-all active:scale-95 bg-brand-void dark:bg-brand-copper text-white hover:opacity-90 ring-2 ring-offset-2 ring-brand-copper dark:ring-offset-black",
+              "w-full lg:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl lg:rounded-full font-bold shadow-none lg:shadow-xl transition-all active:scale-95", // Mobile: Full width, Desktop: Pill
+              "bg-brand-void dark:bg-brand-copper text-white hover:opacity-90 ring-2 ring-offset-2 ring-brand-copper dark:ring-offset-black",
               isDirty
                 ? ""
-                : " border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700",
+                : "border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700 bg-white dark:bg-transparent text-gray-900 dark:text-gray-300 shadow-none lg:shadow-sm", // Not dirty styling
             )}
           >
             {isSaving ? (

@@ -371,13 +371,33 @@ function RecommendationsContent() {
 
   return (
     <div className="flex flex-col h-[700px] bg-white dark:bg-neutral-950 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden animate-in fade-in relative">
-      <div className="flex flex-col  p-4 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-950">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Recomendaciones
-        </h2>
-        <p className=" text-sm text-gray-600 dark:text-gray-300">
-          Agrega lugares que los huéspedes pueden visitar cerca de la propiedad.
-        </p>
+      <div className="flex flex-row justify-between items-start p-4 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-950 gap-4">
+        <div className="flex flex-col">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Recomendaciones
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Agrega lugares cercanos.
+          </p>
+        </div>
+
+        {/* Mobile View Toggle (Header Version) */}
+        <button
+          onClick={() => setViewMode(viewMode === "map" ? "list" : "map")}
+          className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors shrink-0"
+        >
+          {viewMode === "map" ? (
+            <>
+              <ListIcon className="w-3.5 h-3.5" />
+              Lista
+            </>
+          ) : (
+            <>
+              <MapIcon className="w-3.5 h-3.5" />
+              Mapa
+            </>
+          )}
+        </button>
       </div>
       {/* 1. TOP BAR: CATEGORY TABS */}
       <div className="min-h-14 flex items-center p-4 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-950 overflow-x-auto no-scrollbar gap-2 flex-wrap">
@@ -415,7 +435,7 @@ function RecommendationsContent() {
         {/* LEFT SIDEBAR: LIST */}
         <div
           className={cn(
-            "w-full lg:w-1/3 min-w-[300px] border-r border-gray-100 dark:border-neutral-800 bg-gray-50/30 dark:bg-neutral-900/10 flex flex-col transition-transform duration-300",
+            "w-full lg:w-1/3 lg:min-w-[300px] border-r border-gray-100 dark:border-neutral-800 bg-gray-50/30 dark:bg-neutral-900/10 flex flex-col transition-transform duration-300",
             viewMode === "map" ? "hidden lg:flex" : "flex",
           )}
         >
@@ -674,31 +694,6 @@ function RecommendationsContent() {
         </div>
       </div>
 
-      {/* MOBILE FLOATING ACTION BUTTON (TOGGLE VIEW) */}
-      <div className="lg:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <button
-          onClick={() => setViewMode(viewMode === "map" ? "list" : "map")}
-          className="flex items-center gap-2 bg-brand-void text-white px-6 py-3 rounded-full shadow-xl font-semibold text-sm hover:scale-105 transition-transform"
-        >
-          {viewMode === "map" ? (
-            <>
-              <ListIcon className="w-4 h-4" />
-              Ver Lista (
-              {
-                recFields.filter((r) => r.categoryType === activeCategory?.type)
-                  .length
-              }
-              )
-            </>
-          ) : (
-            <>
-              <MapIcon className="w-4 h-4" />
-              Ver Mapa
-            </>
-          )}
-        </button>
-      </div>
-
       {/* CURATOR MODAL */}
       <Dialog
         open={editingIndex !== null}
@@ -792,7 +787,7 @@ function Omnibox({
   const [query, setQuery] = useState("");
 
   return (
-    <div className="flex items-center bg-white dark:bg-neutral-900 rounded-lg shadow-xl border border-gray-200 dark:border-neutral-800 w-[320px] overflow-hidden transition-all focus-within:ring-2 ring-brand-copper/50">
+    <div className="flex items-center bg-white dark:bg-neutral-900 rounded-lg shadow-xl border border-gray-200 dark:border-neutral-800 w-full md:w-[320px] overflow-hidden transition-all focus-within:ring-2 ring-brand-copper/50">
       <div className="pl-3 text-gray-400">
         {isSearching ? (
           <div className="w-4 h-4 rounded-full border-2 border-brand-copper border-t-transparent animate-spin" />

@@ -281,11 +281,13 @@ function RuleCategoryManager({
                       currentStyle.badge,
                     )}
                   >
-                    <span className="font-medium">{field.value}</span>
+                    <span className="font-medium break-words min-w-0 flex-1 mr-2">
+                      {field.value}
+                    </span>
                     <button
                       type="button"
                       onClick={() => onRemove(index)}
-                      className="text-current opacity-60 hover:opacity-100 p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                      className="text-current opacity-60 hover:opacity-100 p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-colors shrink-0"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>

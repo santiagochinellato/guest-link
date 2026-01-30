@@ -136,7 +136,7 @@ export function BasicInfoSection() {
                 <Label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                   Link Personalizado (Slug)
                 </Label>
-                <div className="flex rounded-md shadow-sm">
+                <div className="flex md:flex-row flex-col rounded-md shadow-sm">
                   <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 text-sm font-mono select-none">
                     <Globe className="w-3.5 h-3.5 mr-2" />
                     guestlink.com/stay/

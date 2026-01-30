@@ -21,15 +21,15 @@ export default async function DashboardPage({
   const totalScans = 0;
 
   return (
-    <div className=" mx-auto px-8 py-6 flex flex-col gap-8">
+    <div className=" mx-auto px-2 md:px-8 py-6 flex flex-col gap-8">
       {/* Header Section */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-[#4b5563] dark:text-white text-sm font-medium uppercase tracking-wider">
-            Good morning, Santiago
+            Buenos dias, bienvenido a tu
           </h2>
           <h1 className="text-4xl font-black text-brand-void dark:text-white tracking-tight">
-            Dashboard
+            Panel de control
           </h1>
         </div>
       </header>
@@ -102,9 +102,9 @@ export default async function DashboardPage({
 
       {/* Property Grid Section */}
       <section className="flex flex-col gap-4 pb-20 md:pb-0">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:gap-0 gap-4 items-start md:items-center justify-between">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-            Your Properties
+            Tus propiedades
           </h3>
           <Link
             href={`/${lang}/dashboard/properties/new`}

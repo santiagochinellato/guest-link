@@ -177,18 +177,20 @@ export function TransportSection({
       </div>
 
       <Tabs defaultValue="public" className="w-full">
-        <TabsList className="bg-zinc-100/80 dark:bg-zinc-900/80 p-1 rounded-xl w-full sm:w-auto inline-flex">
+        <TabsList className="bg-zinc-100/80 dark:bg-zinc-900/80 p-1 rounded-xl w-full sm:w-auto flex flex-wrap h-auto">
           <TabsTrigger
             value="public"
-            className="rounded-lg px-4 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm transition-all flex gap-2"
+            className="flex-1 sm:flex-none rounded-lg px-4 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm transition-all flex gap-2 justify-center"
           >
-            <Bus className="w-4 h-4" /> Transporte Público
+            <Bus className="w-4 h-4" />{" "}
+            <span className="hidden xs:inline">Transporte</span> Público
           </TabsTrigger>
           <TabsTrigger
             value="private"
-            className="rounded-lg px-4 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm transition-all flex gap-2"
+            className="flex-1 sm:flex-none rounded-lg px-4 py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm transition-all flex gap-2 justify-center"
           >
-            <Car className="w-4 h-4" /> Privado y Alquileres
+            <Car className="w-4 h-4" /> Privado{" "}
+            <span className="hidden xs:inline">y Alquileres</span>
           </TabsTrigger>
         </TabsList>
 
@@ -196,7 +198,7 @@ export function TransportSection({
         <TabsContent value="public" className="space-y-6 mt-6">
           {/* Smart Discovery Toolbar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/30">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                 <Sparkles className="w-5 h-5" />
               </div>
@@ -215,6 +217,7 @@ export function TransportSection({
                 <TransitAutoButton
                   propertyId={propertyId}
                   city={initialCity || ""}
+                  className="w-full sm:w-auto justify-center"
                   onComplete={(suggestions) => {
                     if (suggestions && suggestions.length > 0) {
                       // AQUÍ ESTÁ LA MAGIA: Flattening & Exploding
@@ -259,35 +262,36 @@ export function TransportSection({
                     {/* Badge Columna Izquierda */}
                     <div
                       className={cn(
-                        "w-full sm:w-28 flex flex-row sm:flex-col items-center justify-between sm:justify-center p-4 gap-2 border-b sm:border-b-0 sm:border-r border-zinc-100 dark:border-zinc-800",
+                        "w-full sm:w-28 flex flex-row sm:flex-col items-center justify-between sm:justify-center p-3 sm:p-4 gap-2 border-b sm:border-b-0 sm:border-r border-zinc-100 dark:border-zinc-800",
                         isVisible
                           ? "bg-zinc-50/50 dark:bg-zinc-900/50"
                           : "bg-transparent",
                       )}
                     >
-                      <div className="relative">
-                        <div
+                      <div className="flex items-center gap-3 sm:block">
+                        <div className="relative">
+                          <div
+                            className={cn(
+                              "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center text-lg sm:text-2xl font-bold shadow-sm border border-black/5 dark:border-white/10 tracking-tight",
+                              isVisible
+                                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                                : "bg-zinc-200 text-zinc-400",
+                            )}
+                          >
+                            {displayLineNumber}
+                          </div>
+                        </div>
+                        <Badge
+                          variant="secondary"
                           className={cn(
-                            "w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold shadow-sm border border-black/5 dark:border-white/10 tracking-tight",
-                            isVisible
-                              ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
-                              : "bg-zinc-200 text-zinc-400",
+                            "text-[9px] uppercase tracking-wider font-bold px-2 sm:mt-2",
+                            styles.bg,
+                            styles.text,
                           )}
                         >
-                          {displayLineNumber}
-                        </div>
+                          {styles.label}
+                        </Badge>
                       </div>
-
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-[9px] uppercase tracking-wider font-bold px-2",
-                          styles.bg,
-                          styles.text,
-                        )}
-                      >
-                        {styles.label}
-                      </Badge>
 
                       <div className="sm:hidden">
                         <Switch
@@ -300,7 +304,7 @@ export function TransportSection({
                     </div>
 
                     {/* Info Central */}
-                    <div className="flex-1 p-4 sm:p-5 flex flex-col justify-center gap-5">
+                    <div className="flex-1 p-3 sm:p-5 flex flex-col justify-center gap-3 sm:gap-5">
                       {/* Parada */}
                       <div className="flex items-start gap-3 relative">
                         <div className="absolute top-3 left-[5px] w-0.5 h-10 bg-gradient-to-b from-zinc-200 to-transparent dark:from-zinc-700" />
@@ -310,7 +314,7 @@ export function TransportSection({
                             <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500" />
                           </div>
                         </div>
-                        <div className="flex-1 -mt-0.5">
+                        <div className="flex-1 -mt-0.5 min-w-0">
                           <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-0.5">
                             Parada / Estación
                           </p>
@@ -320,7 +324,7 @@ export function TransportSection({
                               {...register(
                                 `transport.${index}.scheduleInfo` as const,
                               )}
-                              className="h-auto py-0 px-0 border-0 bg-transparent text-sm font-semibold text-zinc-800 dark:text-zinc-200 focus-visible:ring-0 placeholder:text-zinc-300"
+                              className="h-auto py-0 px-0 border-0 bg-transparent text-sm font-semibold text-zinc-800 dark:text-zinc-200 focus-visible:ring-0 placeholder:text-zinc-300 w-full min-w-0"
                               placeholder="Ubicación de parada"
                             />
                           </div>
@@ -339,7 +343,7 @@ export function TransportSection({
                             )}
                           />
                         </div>
-                        <div className="flex-1 group/input">
+                        <div className="flex-1 group/input min-w-0">
                           <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block group-focus-within/input:text-brand-void dark:group-focus-within/input:text-brand-copper transition-colors">
                             Recorrido / Destinos
                           </Label>
@@ -348,7 +352,7 @@ export function TransportSection({
                               `transport.${index}.description` as const,
                             )}
                             placeholder="Ej: Centro Cívico, Puerto Pañuelo..."
-                            className="border-0 border-b border-zinc-200 dark:border-zinc-800 bg-transparent rounded-none px-0 h-auto py-1 shadow-none focus-visible:ring-0 focus-visible:border-brand-void dark:focus-visible:border-brand-copper font-medium text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300"
+                            className="border-0 border-b border-zinc-200 dark:border-zinc-800 bg-transparent rounded-none px-0 h-auto py-1 shadow-none focus-visible:ring-0 focus-visible:border-brand-void dark:focus-visible:border-brand-copper font-medium text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 w-full min-w-0"
                           />
                         </div>
                       </div>
@@ -409,7 +413,7 @@ export function TransportSection({
 
         {/* --- TAB PRIVADO (Sin Cambios) --- */}
         <TabsContent value="private" className="space-y-6 mt-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-0 justify-between items-start md:items-center">
             <div>
               <h4 className="font-medium text-base">Agenda de Contactos</h4>
               <p className="text-xs text-muted-foreground">

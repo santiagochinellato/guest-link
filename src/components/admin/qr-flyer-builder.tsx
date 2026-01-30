@@ -95,15 +95,45 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
     }
   };
 
+  const [mobileTab, setMobileTab] = useState<"edit" | "preview">("edit");
+
   return (
-    <div className="flex flex-col md:flex-row bg-[#f0f0f0] dark:bg-black h-[calc(100vh-100px)] fixed inset-0 md:relative md:h-[800px] w-full overflow-hidden border border-gray-200 dark:border-gray-800 md:rounded-xl">
-      {/* Sidebar Controls - Left Panel */}
-      <div className="w-full md:w-[450px] bg-white dark:bg-brand-void border-r border-gray-200 dark:border-gray-800 flex flex-col z-20 shrink-0">
+    <div className="flex flex-col md:flex-row bg-[#f0f0f0] dark:bg-black h-full md:h-[800px] w-full overflow-hidden border border-gray-200 dark:border-gray-800 rounded-xl relative">
+      {/* Mobile Tab Toggles */}
+      <div className="md:hidden flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-brand-void shrink-0">
+        <button
+          onClick={() => setMobileTab("edit")}
+          className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider ${
+            mobileTab === "edit"
+              ? "text-brand-copper border-b-2 border-brand-copper"
+              : "text-gray-500"
+          }`}
+        >
+          Editar
+        </button>
+        <button
+          onClick={() => setMobileTab("preview")}
+          className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider ${
+            mobileTab === "preview"
+              ? "text-brand-copper border-b-2 border-brand-copper"
+              : "text-gray-500"
+          }`}
+        >
+          Vista Previa
+        </button>
+      </div>
+
+      {/* Sidebar Controls - Left Panel (Mobile: Show only if edit tab is active) */}
+      <div
+        className={`w-full md:w-[450px] bg-white dark:bg-brand-void border-r border-gray-200 dark:border-gray-800 flex flex-col z-20 shrink-0 ${
+          mobileTab === "edit" ? "flex" : "hidden md:flex"
+        }`}
+      >
         <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-brand-void z-10">
           <h2 className="font-bold text-lg flex items-center gap-2">
             <span className="text-brand-copper">Design</span> Studio
           </h2>
-          <p className="text-xs text-gray-400">
+          <p className="text-sm text-gray-400">
             Personaliza tu flyer imprimible
           </p>
         </div>
@@ -118,10 +148,14 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
         </div>
       </div>
 
-      {/* Main Preview Area - Right Panel */}
-      <main className="flex-1 bg-zinc-100 dark:bg-[#121212] relative overflow-hidden flex flex-col">
+      {/* Main Preview Area - Right Panel (Mobile: Show only if preview tab is active) */}
+      <main
+        className={`flex-1 bg-zinc-100 dark:bg-[#121212] relative overflow-hidden flex flex-col ${
+          mobileTab === "preview" ? "flex" : "hidden md:flex"
+        }`}
+      >
         {/* Floating Toolbar */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white dark:bg-brand-void/90 backdrop-blur shadow-xl border border-gray-100 dark:border-gray-700 p-1.5 rounded-full px-4 transition-all hover:scale-105 w-[70%] flex justify-center">
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white dark:bg-brand-void/90 backdrop-blur shadow-xl border border-gray-100 dark:border-gray-700 p-1.5 rounded-full px-4 transition-all hover:scale-105 w-[90%] md:w-auto overflow-x-auto no-scrollbar justify-between md:justify-center">
           {/* Zoom Controls */}
           <div className="flex items-center gap-1 mr-2 border-r border-gray-200 dark:border-gray-700 pr-3">
             <button
@@ -131,7 +165,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
             >
               <ZoomOut className="w-4 h-4" />
             </button>
-            <span className="w-12 text-center text-xs font-mono font-medium text-gray-600 dark:text-gray-300">
+            <span className="w-8 text-center text-xs font-mono font-medium text-gray-600 dark:text-gray-300">
               {Math.round(scale * 100)}%
             </span>
             <button
@@ -153,7 +187,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
                 config.content.qrType === "wifi" ? "url" : "wifi",
               )
             }
-            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors flex items-center gap-2 ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap ${
               config.content.qrType === "wifi"
                 ? "bg-brand-copper/10 text-brand-copper"
                 : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
@@ -162,14 +196,16 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
             <span>📶</span> WiFi
           </button>
 
-          <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+          <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1 hidden md:block"></div>
 
           {/* Export Action */}
           <button
             onClick={handlePrint}
-            className="bg-brand-void hover:bg-brand-copper text-white px-5 py-2 rounded-full text-sm font-semibold shadow-md flex items-center gap-2 transition-all"
+            className="bg-brand-void hover:bg-brand-copper text-white px-3 md:px-5 py-2 rounded-full text-xs md:text-sm font-semibold shadow-md flex items-center gap-2 transition-all whitespace-nowrap"
           >
-            <span>🖨️</span> Imprimir PDF
+            <span>🖨️</span>{" "}
+            <span className="hidden md:inline">Imprimir PDF</span>
+            <span className="md:hidden">PDF</span>
           </button>
         </div>
 

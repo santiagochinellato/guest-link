@@ -238,17 +238,17 @@ export function EmergencySection() {
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                       <input
                         {...register(
                           `emergencyContacts.${index}.phone` as const,
                         )}
                         placeholder="Número de teléfono"
-                        className="flex-1 bg-transparent text-lg font-mono tracking-wider outline-none text-gray-600 dark:text-gray-300"
+                        className="flex-1 bg-transparent text-lg font-mono tracking-wider outline-none text-gray-600 dark:text-gray-300 w-full min-w-0"
                       />
                       <Badge
                         variant="outline"
-                        className="text-[10px] uppercase font-bold tracking-tighter py-0"
+                        className="text-[10px] uppercase font-bold tracking-tighter py-0 w-fit"
                       >
                         {watch(`emergencyContacts.${index}.type`) || "General"}
                       </Badge>

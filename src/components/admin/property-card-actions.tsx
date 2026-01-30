@@ -50,7 +50,9 @@ export function PropertyCardActions({
         title="View as Guest"
       >
         <Eye className="w-4 h-4" />
-        <p className="text-xs font-medium">Vista del huésped</p>
+        <p className="text-xs font-medium hidden md:inline">
+          Vista del huésped
+        </p>
       </Link>
       <Link
         href={`/${lang}/dashboard/properties/${propertyId}/edit`}
@@ -58,7 +60,7 @@ export function PropertyCardActions({
         title="Edit Property"
       >
         <Edit className="w-4 h-4" />
-        <p className="text-xs font-medium">Editar propiedad</p>
+        <p className="text-xs font-medium hidden md:inline">Editar propiedad</p>
       </Link>
       <button
         onClick={handleDelete}
@@ -71,7 +73,9 @@ export function PropertyCardActions({
         ) : (
           <Trash2 className="w-4 h-4" />
         )}
-        <p className="text-xs font-medium">Eliminar propiedad</p>
+        <p className="text-xs font-medium hidden md:inline">
+          Eliminar propiedad
+        </p>
       </button>
     </div>
   );

@@ -142,7 +142,7 @@ function IntroView({ onStart }: { onStart: () => void }) {
       <Button
         size="lg"
         onClick={onStart}
-        className="rounded-full px-10 py-7 text-lg shadow-xl shadow-brand-copper/20 bg-brand-void hover:bg-brand-void/90 text-white dark:bg-white dark:text-brand-void transition-all hover:scale-105"
+        className="rounded-full px-10 py-7 text-lg shadow-xl shadow-brand-copper/20 bg-brand-void hover:bg-brand-void/90 text-white dark:bg-white dark:text-brand-void transition-all hover:scale-105 text-md md:text-lg"
       >
         Comenzar configuración <ChevronRight className="ml-2 w-5 h-5" />
       </Button>
@@ -208,6 +208,11 @@ export function CreatePropertyWizard() {
 
   const { trigger, handleSubmit, watch } = form;
   const currentStep = WIZARD_STEPS[currentStepIndex];
+
+  // Force scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // --- PERSISTENCE LOGIC ---
   const STORAGE_KEY = "wizard_property_data";
@@ -462,7 +467,7 @@ export function CreatePropertyWizard() {
                       }}
                     >
                       <Home className="w-5 h-5 mr-2" />
-                      Ir al Dashboard
+                      Ir al Panel de control
                     </Button>
                   </div>
                 </motion.div>
@@ -495,7 +500,7 @@ export function CreatePropertyWizard() {
           )}
 
           {/* MAIN CONTENT AREA */}
-          <div className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-6 py-8 md:py-12 relative">
+          <div className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 relative">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={currentStep.id}

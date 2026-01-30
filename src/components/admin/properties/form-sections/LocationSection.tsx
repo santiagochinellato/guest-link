@@ -95,7 +95,7 @@ export function LocationSection() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Left Panel: Inputs */}
-          <div className="space-y-6 bg-gray-50 dark:bg-neutral-800/20 p-6 rounded-2xl border border-gray-100 dark:border-neutral-800/50">
+          <div className="space-y-6 bg-gray-50 dark:bg-neutral-800/20 md:p-6 p-2 rounded-2xl border border-gray-100 dark:border-neutral-800/50">
             {/* Main Google Search */}
             <div className="relative z-20">
               <label className="text-sm font-bold text-gray-900 dark:text-white mb-2 block">
@@ -173,7 +173,7 @@ export function LocationSection() {
           </div>
 
           {/* Right Panel: Map */}
-          <div className="relative h-[500px] w-full rounded-2xl overflow-hidden shadow-2xl shadow-gray-200/50 dark:shadow-none border-thin border-gray-700 dark:border-neutral-800">
+          <div className="relative md:h-[500px] h-[300px] w-full rounded-2xl overflow-hidden shadow-2xl shadow-gray-200/50 dark:shadow-none border-thin border-gray-700 dark:border-neutral-800">
             <MapCN
               mapRef={mapRef}
               markers={markers}
@@ -186,20 +186,20 @@ export function LocationSection() {
             />
 
             {/* Overlay instruction */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-black/80 backdrop-blur-md px-4 py-2 rounded-full text-xs font-medium text-gray-600 dark:text-gray-300 shadow-lg border border-white/20 pointer-events-none">
+            {/* <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-black/80 backdrop-blur-md px-4 py-2 rounded-full text-xs font-medium text-gray-600 dark:text-gray-300 shadow-lg border border-white/20 pointer-events-none">
               📍 Arrastra el mapa para explorar los alrededores
-            </div>
+            </div> */}
 
-            {!lat && (
+            {/* {!lat && !address && (
               <div className="absolute inset-0 bg-black/5 backdrop-blur-[1px] flex items-center justify-center z-10 transition-opacity">
-                <div className="bg-white dark:bg-neutral-900 p-4 rounded-xl shadow-xl flex flex-col items-center">
-                  <SearchPinIcon className="w-10 h-10 text-brand-copper mb-2" />
+                <div className="bg-white dark:bg-neutral-900 p-4 rounded-xl shadow-xl flex md:flex-col flex-row items-center gap-2 md:gap-0">
+                  <SearchPinIcon className="md:w-10 md:h-10 w-6 h-6 text-brand-copper md:mb-2" />
                   <p className="text-sm font-semibold">
                     Busca una dirección para comenzar
                   </p>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>

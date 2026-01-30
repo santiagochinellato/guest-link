@@ -15,13 +15,19 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { signOut } from "next-auth/react";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Panel de control", href: "/dashboard", icon: LayoutDashboard },
 
   // { label: "Analytics", href: "/dashboard/analytics", icon: BarChart2 },
   // { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-export function Sidebar({ locale = "es" }: { locale?: string }) {
+export function Sidebar({
+  locale = "es",
+  onLinkClick,
+}: {
+  locale?: string;
+  onLinkClick?: () => void;
+}) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [session, setSession] = useState<{
@@ -42,14 +48,14 @@ export function Sidebar({ locale = "es" }: { locale?: string }) {
   return (
     <aside
       className={cn(
-        "flex-shrink-0 bg-white dark:bg-brand-void border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen transition-all duration-300 relative hidden md:flex",
+        "flex-shrink-0 bg-white dark:bg-brand-void border-r border-gray-200 dark:border-gray-800 flex flex-col h-full transition-all duration-300 relative",
         isCollapsed ? "w-20" : "w-64",
       )}
     >
-      {/* Toggle Button */}
+      {/* Toggle Button (Only show on desktop) */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-24 bg-white dark:bg-brand-void border border-gray-200 dark:border-gray-700 rounded-full p-1 shadow-sm hover:shadow-md transition-all z-10 text-gray-500 hover:text-brand-copper"
+        className="absolute -right-3 top-24 bg-white dark:bg-brand-void border border-gray-200 dark:border-gray-700 rounded-full p-1 shadow-sm hover:shadow-md transition-all z-10 text-gray-500 hover:text-brand-copper hidden md:flex"
       >
         {isCollapsed ? (
           <ChevronRight className="w-4 h-4" />
@@ -124,6 +130,7 @@ export function Sidebar({ locale = "es" }: { locale?: string }) {
             <Link
               key={item.href}
               href={hrefWithLocale}
+              onClick={onLinkClick}
               className={cn(
                 "flex items-center gap-3 py-3 rounded-lg font-medium transition-colors group relative",
                 isCollapsed ? "justify-center px-2" : "px-4",

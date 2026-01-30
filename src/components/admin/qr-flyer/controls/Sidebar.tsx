@@ -21,8 +21,8 @@ interface SidebarProps {
 
 export function Sidebar({ config, updateConfig }: SidebarProps) {
   return (
-    <div className="w-full flex flex-col h-full bg-white dark:bg-brand-void">
-      <div className="flex-1 overflow-y-auto px-4 custom-scrollbar">
+    <div className="w-full flex flex-col bg-white dark:bg-brand-void h-auto md:h-full">
+      <div className="w-full md:flex-1 md:overflow-y-auto px-4 custom-scrollbar">
         <Accordion
           type="single"
           collapsible
@@ -38,7 +38,7 @@ export function Sidebar({ config, updateConfig }: SidebarProps) {
                 Diseño & Layout
               </div>
             </AccordionTrigger>
-            <AccordionContent className="pt-2 pb-6 px-1">
+            <AccordionContent className="pt-2 pb-6 px-1 max-h-[60vh] overflow-y-auto custom-scrollbar md:max-h-none md:overflow-visible">
               <DesignControls config={config} updateConfig={updateConfig} />
             </AccordionContent>
           </AccordionItem>
@@ -52,7 +52,7 @@ export function Sidebar({ config, updateConfig }: SidebarProps) {
                 Contenido
               </div>
             </AccordionTrigger>
-            <AccordionContent className="pt-2 pb-6 px-1">
+            <AccordionContent className="pt-2 pb-6 px-1 max-h-[60vh] overflow-y-auto custom-scrollbar md:max-h-none md:overflow-visible">
               <ContentControls config={config} updateConfig={updateConfig} />
             </AccordionContent>
           </AccordionItem>
@@ -66,7 +66,7 @@ export function Sidebar({ config, updateConfig }: SidebarProps) {
                 Branding
               </div>
             </AccordionTrigger>
-            <AccordionContent className="pt-2 pb-6 px-1">
+            <AccordionContent className="pt-2 pb-6 px-1 max-h-[60vh] overflow-y-auto custom-scrollbar md:max-h-none md:overflow-visible">
               <BrandingControls config={config} updateConfig={updateConfig} />
             </AccordionContent>
           </AccordionItem>
