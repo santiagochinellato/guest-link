@@ -50,7 +50,7 @@ export function MapCN({
   return (
     <div
       className={cn(
-        "relative w-full h-full overflow-hidden rounded-xl border border-border shadow-sm",
+        "relative w-full h-full overflow-hidden rounded-xl shadow-sm",
         className,
       )}
     >
