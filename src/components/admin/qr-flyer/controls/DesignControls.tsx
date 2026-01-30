@@ -133,6 +133,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
             { id: "roboto", label: "Roboto", class: "font-roboto" },
           ].map((font) => (
             <button
+              type="button"
               key={font.id}
               onClick={() => updateConfig("design", "font", font.id)}
               className={cn(

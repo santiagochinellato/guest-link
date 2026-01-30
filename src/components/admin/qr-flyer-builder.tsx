@@ -121,7 +121,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
       {/* Main Preview Area - Right Panel */}
       <main className="flex-1 bg-zinc-100 dark:bg-[#121212] relative overflow-hidden flex flex-col">
         {/* Floating Toolbar */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white dark:bg-brand-void/90 backdrop-blur shadow-xl border border-gray-100 dark:border-gray-700 p-1.5 rounded-full px-4 transition-all hover:scale-105">
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white dark:bg-brand-void/90 backdrop-blur shadow-xl border border-gray-100 dark:border-gray-700 p-1.5 rounded-full px-4 transition-all hover:scale-105 w-[70%] flex justify-center">
           {/* Zoom Controls */}
           <div className="flex items-center gap-1 mr-2 border-r border-gray-200 dark:border-gray-700 pr-3">
             <button
