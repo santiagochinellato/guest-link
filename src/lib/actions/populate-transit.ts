@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 
 export async function populateTransitSmart(
   propertyId: number,
-  cityContext: string = ""
+  _cityContext: string = ""
 ) {
   try {
     console.log(`🚍 Smart Transit (Bariloche DB) for Property ${propertyId}`);
@@ -29,7 +29,7 @@ export async function populateTransitSmart(
     }
 
     // 2. Run Local Triangulation Logic
-    let nearbyStops = await findNearbyTransit(lat, lng);
+    const nearbyStops = await findNearbyTransit(lat, lng);
 
     if (nearbyStops.length === 0) {
         return {
@@ -45,21 +45,9 @@ export async function populateTransitSmart(
     const suggestions = [];
 
     for (const stop of bestStops) {
-        // Format lines: "20, 55, 10"
-        const lineNumbers = stop.lines.map(l => l.number).join(", ");
-        
-        // Rich description with attractions
-        const details = stop.lines.map(l => {
-            let info = `• Línea ${l.number}`;
-            if (l.attractions) info += `: Va a ${l.attractions}`;
-            else if (l.name) info += ` (${l.name})`;
-            return info;
-        }).join("\n");
-
-        const fullDescription = `📍 Parada a ${stop.distanceMeters}m (${stop.stopName})\n\n${details}`;
-        
-        // Title: "Parada de Colectivo (Líneas 20, 55)"
-        const title = `Colectivo (Líneas ${lineNumbers})`;
+        // Build the Enriched Format
+        const fullDescription = stop.description;
+        const title = stop.scheduleInfo; // Use the precise stop info as title
 
         // Google Maps Link
         const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${stop.latitude},${stop.longitude}&travelmode=transit`;
@@ -68,7 +56,7 @@ export async function populateTransitSmart(
             name: title,
             type: "bus",
             description: fullDescription,
-            website: mapUrl, // Using the 'website' field for the map link
+            website: mapUrl,
         });
     }
 

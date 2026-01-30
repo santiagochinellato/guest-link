@@ -29,11 +29,13 @@ export const EmergencyContactSchema = z.object({
 export const TransportInfoSchema = z.object({
   id: z.number().optional(),
   name: z.string().min(1, "Provider name is required"),
-  type: z.string().min(1, "Type is required").optional().or(z.literal("")), // Relaxed
+  type: z.string().min(1, "Type is required").or(z.literal("")), 
   description: z.string().optional(),
   website: z.string().optional(),
   scheduleInfo: z.string().optional(),
   priceInfo: z.string().optional(),
+  phone: z.string().optional(), // Added for trusted contacts
+  isActive: z.boolean().default(true).optional(), // Added for visibility toggle in UI
 });
 
 export const CategorySchema = z.object({

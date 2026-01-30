@@ -42,20 +42,9 @@ export async function autoDetectTransport(propertyId: number) {
     const newTransportEntries = [];
 
     for (const match of transitMatches) {
-      // Format: "Parada: Bustillo Km 4 (a 50m)"
-      // Description: "Línea 20 (Centro, Llao Llao), Línea 55 (Catedral)"
-
-      const title = `Bus Stop: ${match.stopName}`;
-      const linesDesc = match.lines
-        .map((l) => {
-           let desc = `${l.number}`;
-           if (l.attractions) desc += ` (Va a: ${l.attractions})`;
-           else if (l.name) desc += ` (${l.name})`;
-           return desc;
-        })
-        .join("\n• ");
-
-      const fullDescription = `Distancia: ${match.distanceMeters}m\n\nLíneas que pasan:\n• ${linesDesc}`;
+      // The new MatchResult already has enriched formatting
+      const title = match.scheduleInfo; // "📍 Parada a Xm (Calle)"
+      const fullDescription = match.description; // Detailed lines info
 
       // Insert into DB
       const result = await db.insert(transportInfo).values({
@@ -63,6 +52,7 @@ export async function autoDetectTransport(propertyId: number) {
         type: "bus",
         name: title,
         description: fullDescription,
+        scheduleInfo: match.scheduleInfo,
       }).returning();
       
       newTransportEntries.push(result[0]);
