@@ -8,6 +8,16 @@ import { PropertyFormSchema, PropertyFormData } from "@/lib/schemas"; // Import 
 
 // Schema definitions moved to @/lib/schemas.ts
 
+// Helper for safe JSON parsing
+const safeJsonParse = (str: string | null | undefined, fallback = {}) => {
+  if (!str) return fallback;
+  try {
+    return JSON.parse(str);
+  } catch {
+    return fallback;
+  }
+};
+
 export async function deleteProperty(id: number) {
   try {
     await db.transaction(async (tx) => {
@@ -380,7 +390,19 @@ export async function getProperty(id: number) {
      const [recs, emergency, transport, allCats] = await Promise.all([
          db.query.recommendations.findMany({
              where: eq(recommendations.propertyId, id),
-             with: { category: true }
+             with: { category: true },
+             columns: {
+               id: true,
+               title: true,
+               description: true,
+               formattedAddress: true,
+               googleMapsLink: true,
+               rating: true,
+               userRatingsTotal: true,
+               googlePlaceId: true,
+               externalSource: true,
+               // geometry: false // Exclude geometry to avoid JSON parse errors
+             }
          }),
          db.query.emergencyContacts.findMany({
              where: eq(emergencyContacts.propertyId, id)
@@ -411,65 +433,30 @@ export async function getProperty(id: number) {
         checkInTime: prop.checkInTime || "",
         checkOutTime: prop.checkOutTime || "",
 
-        hostName: (() => {
-             try { return JSON.parse(prop.houseRules || "").host?.name || ""; } catch { return ""; }
-        })(),
-        hostImage: (() => {
-             try { return JSON.parse(prop.houseRules || "").host?.image || ""; } catch { return ""; }
-        })(),
-        hostPhone: (() => {
-             try { return JSON.parse(prop.houseRules || "").host?.phone || ""; } catch { return ""; }
-        })(),
+        hostName: safeJsonParse(prop.houseRules).host?.name || "",
+        hostImage: safeJsonParse(prop.houseRules).host?.image || "",
+        hostPhone: safeJsonParse(prop.houseRules).host?.phone || "",
         // Status from DB prop
         status: (prop.status as "active" | "draft" | "archived") || "draft",
         
         houseRules: (() => {
-             try {
-                 const parsed = JSON.parse(prop.houseRules || "");
-                 return parsed.text || prop.houseRules || "";
-             } catch {
-                 return prop.houseRules || "";
-             }
+          const parsed: any = safeJsonParse(prop.houseRules, { text: "" });
+          return parsed.text || prop.houseRules || "";
         })(),
         rulesAllowed: (() => {
-             try {
-                 const parsed = JSON.parse(prop.houseRules || "");
-                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                 return (parsed.allowed || []).map((v: any) => ({ value: v }));
-             } catch {
-                 return [];
-             }
+          const parsed: any = safeJsonParse(prop.houseRules);
+          return (parsed.allowed || []).map((v: any) => ({ value: v }));
         })(),
         rulesProhibited: (() => {
-             try {
-                 const parsed = JSON.parse(prop.houseRules || "");
-                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                 return (parsed.prohibited || []).map((v: any) => ({ value: v }));
-             } catch {
-                 return [];
-             }
+          const parsed: any = safeJsonParse(prop.houseRules);
+          return (parsed.prohibited || []).map((v: any) => ({ value: v }));
         })(),
-        accessInstructions: (() => {
-             try { return JSON.parse(prop.houseRules || "").access?.instructions || ""; } catch { return ""; }
-        })(),
-        accessCode: (() => {
-             try { return JSON.parse(prop.houseRules || "").access?.accessCode || ""; } catch { return ""; }
-        })(),
-        alarmCode: (() => {
-             try { return JSON.parse(prop.houseRules || "").access?.alarmCode || ""; } catch { return ""; }
-        })(),
-        accessSteps: (() => {
-             try { 
-                 const steps = JSON.parse(prop.houseRules || "").access?.accessSteps || [];
-                 return (steps as string[]).map(s => ({ text: s }));
-             } catch { return []; }
-        })(),
-        hasParking: (() => {
-             try { return JSON.parse(prop.houseRules || "").access?.hasParking || false; } catch { return false; }
-        })(),
-        parkingDetails: (() => {
-             try { return JSON.parse(prop.houseRules || "").access?.parkingDetails || ""; } catch { return ""; }
-        })(),
+        accessInstructions: safeJsonParse(prop.houseRules).access?.instructions || "",
+        accessCode: safeJsonParse(prop.houseRules).access?.accessCode || "",
+        alarmCode: safeJsonParse(prop.houseRules).access?.alarmCode || "",
+        accessSteps: (safeJsonParse(prop.houseRules).access?.accessSteps || []).map((s: string) => ({ text: s })),
+        hasParking: safeJsonParse(prop.houseRules).access?.hasParking || false,
+        parkingDetails: safeJsonParse(prop.houseRules).access?.parkingDetails || "",
         recommendations: recs.map(r => ({
            title: r.title,
            description: r.description || "",
@@ -522,7 +509,18 @@ export async function getPropertyBySlug(slug: string) {
      const [recs, emergency, transport] = await Promise.all([
          db.query.recommendations.findMany({
              where: eq(recommendations.propertyId, prop.id),
-             with: { category: true }
+             with: { category: true },
+             columns: {
+                id: true,
+                title: true,
+                description: true,
+                formattedAddress: true,
+                googleMapsLink: true,
+                rating: true,
+                userRatingsTotal: true,
+                googlePlaceId: true,
+                externalSource: true,
+             }
          }),
          db.query.emergencyContacts.findMany({
              where: eq(emergencyContacts.propertyId, prop.id)
@@ -549,47 +547,30 @@ export async function getPropertyBySlug(slug: string) {
              wifiPassword: prop.wifiPassword,
              wifiQrCode: prop.wifiQrCode || "",
              // Handle House Rules parsing for Guest View (Object Structure)
-             houseRules: (() => {
-                 try {
-                     const parsed = JSON.parse(prop.houseRules || "");
-                     return { 
-                        text: parsed.text || "", 
-                        allowed: parsed.allowed || [], 
-                        prohibited: parsed.prohibited || [] 
-                     };
-                 } catch {
-                     return { text: prop.houseRules || "", allowed: [], prohibited: [] };
-                 }
-             })(),
-             hostName: (() => {
-                    try { return JSON.parse(prop.houseRules || "").host?.name || ""; } catch { return ""; }
-             })(),
-             hostImage: (() => {
-                    try { return JSON.parse(prop.houseRules || "").host?.image || ""; } catch { return ""; }
-             })(),
-             hostPhone: (() => {
-                    try { return JSON.parse(prop.houseRules || "").host?.phone || ""; } catch { return ""; }
-             })(),
+              houseRules: (() => {
+                 const parsed: any = safeJsonParse(prop.houseRules, { text: "" });
+                 return { 
+                    text: parsed.text || "", 
+                    allowed: parsed.allowed || [], 
+                    prohibited: parsed.prohibited || [] 
+                 };
+              })(),
              image: prop.coverImageUrl,
              checkIn: prop.checkInTime,
              checkOut: prop.checkOutTime,
              latitude: prop.latitude,
              longitude: prop.longitude,
-             access: (() => {
-                  try {
-                      const parsed = JSON.parse(prop.houseRules || "");
-                      return {
-                          instructions: parsed.access?.instructions || "",
-                          accessCode: parsed.access?.accessCode || "",
-                          alarmCode: parsed.access?.alarmCode || undefined,
-                          accessSteps: (parsed.access?.accessSteps || []).map((s: string) => ({ text: s })),
-                          hasParking: parsed.access?.hasParking || false,
-                          parkingDetails: parsed.access?.parkingDetails || ""
-                      };
-                  } catch {
-                      return { instructions: "", accessCode: "", alarmCode: undefined, accessSteps: [], hasParking: false, parkingDetails: "" };
-                  }
-             })(),
+              access: (() => {
+                  const parsed: any = safeJsonParse(prop.houseRules);
+                  return {
+                      instructions: parsed.access?.instructions || "",
+                      accessCode: parsed.access?.accessCode || "",
+                      alarmCode: parsed.access?.alarmCode || undefined,
+                      accessSteps: (parsed.access?.accessSteps || []).map((s: string) => ({ text: s })),
+                      hasParking: parsed.access?.hasParking || false,
+                      parkingDetails: parsed.access?.parkingDetails || ""
+                  };
+              })(),
              recommendations: recs.map(r => ({
                  title: r.title,
                  description: r.description,

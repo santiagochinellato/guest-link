@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { useFormContext } from "react-hook-form";
+import { useParams } from "next/navigation"; // Added import
 import { FlyerConfig } from "./qr-flyer/types";
 import { Sidebar } from "./qr-flyer/controls/Sidebar";
 import { FlyerPreview } from "./qr-flyer/FlyerPreview";
@@ -23,6 +24,8 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
   const [scale, setScale] = useState(0.8);
   const [activeTab, setActiveTab] = useState("design");
   const { setValue } = useFormContext<PropertyFormData>();
+  const params = useParams(); // Added hook
+  const lang = params?.lang || "es"; // Fallback to 'es' if not found
 
   const [config, setConfig] = useState<FlyerConfig>({
     content: {
@@ -86,7 +89,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
         );
       }
       // Open print page
-      window.open(`/flyer/${initialData.id}/print`, "_blank");
+      window.open(`/${lang}/flyer/${initialData.id}/print`, "_blank");
     } else {
       // Fallback or alert if no ID (e.g. creating new property)
       alert(

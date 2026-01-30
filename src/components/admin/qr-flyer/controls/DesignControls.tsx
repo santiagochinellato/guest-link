@@ -49,7 +49,7 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
             },
             {
               id: "card",
-              label: "Elegant Card",
+              label: "Modern Card",
               preview: (
                 <div className="w-full h-24 bg-slate-50 flex items-center justify-center relative overflow-hidden rounded-lg">
                   <div className="w-14 h-18 bg-white shadow-md border border-slate-200 rounded flex flex-col items-center justify-center gap-1 p-1">
@@ -57,6 +57,23 @@ export function DesignControls({ config, updateConfig }: DesignControlsProps) {
                       <div className="w-3 h-3 bg-white/50 rounded-sm" />
                     </div>
                     <div className="w-8 h-0.5 bg-slate-200 rounded-full" />
+                  </div>
+                </div>
+              ),
+            },
+            {
+              id: "elegant",
+              label: "Elegant Serif",
+              preview: (
+                <div className="w-full h-24 bg-[#FAFAFA] flex items-center justify-center relative overflow-hidden rounded-lg p-2">
+                  <div className="w-full h-full border border-slate-200 p-1 flex items-center gap-1">
+                    <div className="flex-1 flex flex-col gap-1 items-center">
+                      <div className="w-6 h-1 bg-slate-800 rounded-full opacity-50" />
+                      <div className="w-8 h-0.5 bg-slate-300" />
+                    </div>
+                    <div className="w-8 h-8 border border-slate-200 bg-white flex items-center justify-center">
+                      <div className="w-4 h-4 bg-slate-800/10" />
+                    </div>
                   </div>
                 </div>
               ),

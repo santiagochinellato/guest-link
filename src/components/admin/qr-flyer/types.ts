@@ -23,7 +23,7 @@ export interface FlyerConfig {
     secondaryColor: string;
     backgroundColor: string;
     font: "inter" | "sans" | "serif" | "mono";
-    layout: "minimal" | "gradient" | "card";
+    layout: "minimal" | "gradient" | "card" | "elegant";
     orientation: "vertical" | "horizontal";
   };
 }

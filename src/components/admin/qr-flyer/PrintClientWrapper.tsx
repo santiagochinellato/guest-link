@@ -5,6 +5,7 @@ import { FlyerConfig } from "@/components/admin/qr-flyer/types";
 import { GradientTemplate } from "@/components/admin/qr-flyer/templates/GradientTemplate";
 import { MinimalTemplate } from "@/components/admin/qr-flyer/templates/MinimalTemplate";
 import { CardTemplate } from "@/components/admin/qr-flyer/templates/CardTemplate";
+import { ElegantTemplate } from "@/components/admin/qr-flyer/templates/ElegantTemplate";
 
 interface PrintClientWrapperProps {
   config: FlyerConfig;
@@ -43,6 +44,8 @@ export function PrintClientWrapper({
         return <GradientTemplate config={config} />;
       case "card":
         return <CardTemplate config={config} />;
+      case "elegant":
+        return <ElegantTemplate config={config} />;
       case "minimal":
       default:
         return <MinimalTemplate config={config} />;

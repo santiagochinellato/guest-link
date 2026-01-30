@@ -1,16 +1,18 @@
 "use client";
 
-import { MapPinned } from "lucide-react";
-import { GuestHero } from "@/components/features/guest/components/GuestHero";
-import { GuestWiFiCard } from "@/components/features/guest/components/GuestWiFiCard";
-import { GuestInfoGrid } from "@/components/features/guest/components/GuestInfoGrid";
-import { GuestRulesList } from "@/components/features/guest/components/GuestRulesList";
-import { GuestTabNavigation } from "@/components/features/guest/components/GuestTabNavigation";
-import { useGuestView } from "@/components/features/guest/hooks/useGuestView";
-import { Button } from "../ui/button";
+import { useEffect, useState, useRef } from "react";
+import { Wifi, MapPin, ShieldCheck, Car, Utensils, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Modules
+import { GuestHero } from "./modules/GuestHero";
+import { WifiCard } from "./modules/WifiCard";
+import { AccessModule } from "./modules/AccessModule";
+import { TransportModule } from "./modules/TransportModule";
+import { RulesModule } from "./modules/RulesModule";
+
+// Views
 import { GuestRecommendationsView } from "./views/GuestRecommendationsView";
-import { GuestTransportView } from "./views/GuestTransportView";
-import { GuestEmergencyView } from "./views/GuestEmergencyView";
 
 interface GuestViewProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,11 +22,56 @@ interface GuestViewProps {
 }
 
 export function GuestView({ property, dict: _dict }: GuestViewProps) {
-  // We keep state for views
-  const { activeView, setActiveView, activeCategory, setActiveCategory } =
-    useGuestView();
+  // Navigation State
+  const [activeView, setActiveView] = useState<
+    "home" | "guide" | "transport" | "info"
+  >("home");
+  const [activeCategory, setActiveCategory] = useState("all");
 
-  // Helper to extract unique categories
+  // Scroll Position for Glassmorphism Header
+  const [scrolled, setScrolled] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Home Section Active State (for HomeNav)
+  const [activeHomeSection, setActiveHomeSection] = useState("wifi");
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollRef.current) {
+        setScrolled(scrollRef.current.scrollTop > 50);
+
+        // Simple scroll spy logic for HomeNav
+        if (activeView === "home") {
+          const wifiEl = document.getElementById("wifi-module");
+          const rulesEl = document.getElementById("rules-module");
+          const accessEl = document.getElementById("access-module");
+          const scrollPos = scrollRef.current.scrollTop + 200; // Offset
+
+          if (accessEl && accessEl.offsetTop <= scrollPos) {
+            setActiveHomeSection("access");
+          } else if (rulesEl && rulesEl.offsetTop <= scrollPos) {
+            setActiveHomeSection("rules");
+          } else if (wifiEl) {
+            setActiveHomeSection("wifi");
+          }
+        }
+      }
+    };
+
+    const div = scrollRef.current;
+    if (div) div.addEventListener("scroll", handleScroll);
+    return () => div?.removeEventListener("scroll", handleScroll);
+  }, [activeView]);
+
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      // Adjust scroll position to account for header + nav
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  // Prepare categories for Recommendations View
   const categories = property.recommendations
     ? Array.from(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,290 +87,258 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
   );
 
   return (
-    <div className="fixed inset-0 z-50 w-full bg-[#f1f5f9] dark:bg-[#000000] flex justify-center md:items-start overflow-hidden font-sans text-[#0e1b1a] dark:text-white md:overflow-y-auto">
-      {/* 
-        MOBILE WRAPPER 
-        Maintains the "Phone" look on md screens if we wanted to keep it, 
-        but for true desktop layout we want to break out of it.
-        We'll use a conditionally rendered layout.
-      */}
-
-      {/**
-       * DESKTOP LAYOUT (Hidden on mobile, visible on md+)
-       * Grid Layout: Left Sidebar (Hero + Info) | Right Content (Views)
-       */}
-      <div className="hidden md:flex w-full max-w-7xl mx-auto p-4 lg:p-6 gap-6 h-screen overflow-hidden">
-        {/* LEFT SIDEBAR (Sticky) */}
-        <aside className="w-[320px] lg:w-[360px] flex flex-col gap-6 overflow-y-auto no-scrollbar pb-10 shrink-0 h-full">
-          <div className="rounded-3xl overflow-hidden shadow-xl border border-white/20 relative group shrink-0">
-            <GuestHero
-              image={property.image}
-              name={property.name}
-              address={property.address || property.city || "Premium Stay"}
-              hostName={property.hostName}
-              hostImage={property.hostImage}
-              className="h-[220px]" // Reduced height for better fit
-            />
-          </div>
-
-          {/* Host Chip / Property Branding */}
-          <div className="bg-white dark:bg-brand-void p-5 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-800 flex flex-col gap-3 shrink-0">
-            <div className="flex items-center">
-              <div
-                className="w-8 h-8 bg-neutral-900 dark:bg-brand-copper shrink-0 transition-colors"
-                style={{
-                  maskImage: "url('/hostlylogo.svg')",
-                  maskSize: "contain",
-                  maskPosition: "center",
-                  maskRepeat: "no-repeat",
-                  WebkitMaskImage: "url('/hostlylogo.svg')",
-                  WebkitMaskSize: "contain",
-                  WebkitMaskPosition: "center",
-                  WebkitMaskRepeat: "no-repeat",
-                }}
-              />
-              <div>
-                <h2 className="text-base font-bold">HOSTLY</h2>
-                <p className="text-[10px] text-neutral-500">
-                  The city, simplified.
-                </p>
-              </div>
-            </div>
-            <div className="bg-neutral-50 dark:bg-white/5 p-3 rounded-xl flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden relative shrink-0">
-                <div className="w-full h-full flex items-center justify-center text-xs font-bold">
-                  {property.hostName?.charAt(0) || "H"}
-                </div>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase text-neutral-400">
-                  Anfitrión
-                </p>
-                <p className="font-semibold text-sm">
-                  {property.hostName || "Tu Anfitrión"}
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <Button
-              className="w-full rounded-xl h-9 text-xs flex items-center justify-center gap-2 bg-brand-void dark:bg-brand-copper text-white shadow-lg"
-              onClick={() => {
-                const query =
-                  property.latitude && property.longitude
-                    ? `${property.latitude},${property.longitude}`
-                    : `${property.address || property.name}, ${property.city || ""}`;
-                window.open(
-                  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    query,
-                  )}`,
-                  "_blank",
-                );
-              }}
-            >
-              <MapPinned className="w-3.5 h-3.5" />
-              Ir al alojamiento
-            </Button>
-          </div>
-        </aside>
-
-        {/* MAIN CONTENT AREA */}
-        <main className="flex-1 flex flex-col gap-6 overflow-y-auto no-scrollbar pb-10 h-full">
-          {/* Desktop Navigation (Tabs) */}
-          <div className=" top-6 z-40 bg-white/80 dark:bg-brand-void/90 backdrop-blur-xl p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
-            <GuestTabNavigation
-              activeView={activeView}
-              onNavigate={setActiveView}
-              variant="desktop"
-            />
-          </div>
-
-          {/* Content Container */}
-          <div className="bg-white dark:bg-brand-void/50 rounded-[2rem] p-8 shadow-sm border border-gray-100 dark:border-gray-800 ">
-            {activeView === "home" && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h2 className="text-3xl font-bold mb-6">Información General</h2>
-                <GuestInfoGrid
-                  checkIn={property.checkIn}
-                  checkOut={property.checkOut}
-                />
-
-                <div className="mt-8">
-                  <h3 className="text-xl font-bold mb-4">Conectividad</h3>
-                  <GuestWiFiCard
-                    ssid={property.wifiSsid}
-                    password={property.wifiPassword}
-                  />
-                </div>
-              </div>
+    <div className="fixed inset-0 z-50 w-full bg-[#f8fafc] dark:bg-[#000000] flex justify-center overflow-hidden font-sans text-slate-900 dark:text-white">
+      {/* MAX WIDTH CONTAINER */}
+      <div className="w-full max-w-md h-full relative flex flex-col bg-white dark:bg-black shadow-2xl overflow-hidden">
+        {/* HEADER */}
+        <header
+          className={cn(
+            "absolute top-0 left-0 right-0 z-40 transition-all duration-300 px-4 py-4 flex items-center justify-between pointer-events-none",
+            scrolled || activeView !== "home"
+              ? "bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-slate-100 dark:border-white/10"
+              : "bg-transparent",
+          )}
+        >
+          <div
+            className={cn(
+              "font-bold text-lg transition-opacity duration-300 pointer-events-auto",
+              scrolled || activeView !== "home"
+                ? "opacity-100 text-slate-900 dark:text-white"
+                : "opacity-0 invisible",
             )}
-
-            {activeView === "rules" && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h2 className="text-3xl font-bold mb-6">Reglas de la Casa</h2>
-                <GuestRulesList rules={property.houseRules} />
-              </div>
-            )}
-
-            {activeView === "recommendations" && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* <h2 className="text-3xl font-bold mb-6">Guía Local</h2> */}
-                <GuestRecommendationsView
-                  recommendations={recommendations}
-                  categories={categories}
-                  activeCategory={activeCategory}
-                  setActiveCategory={setActiveCategory}
-                />
-              </div>
-            )}
-
-            {activeView === "transport" && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h2 className="text-3xl font-bold mb-6">Cómo Moverse</h2>
-                <GuestTransportView transport={property.transport} />
-              </div>
-            )}
-
-            {activeView === "help" && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h2 className="text-3xl font-bold mb-6">Zona de Ayuda</h2>
-                <GuestEmergencyView property={property} />
-              </div>
-            )}
+          >
+            {property.name}
           </div>
-        </main>
-      </div>
-
-      {/* 
-        MOBILE LAYOUT (Visible < md, Hidden on md+)
-        Original "Phone" Container logic
-      */}
-      <div className="md:hidden w-full h-full relative flex flex-col overflow-hidden bg-[#f6f8f8] dark:bg-brand-void/60">
-        {/* Top Header Mobile */}
-        <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-black/20 backdrop-blur-md z-20 border-b border-gray-100 dark:border-white/5 absolute top-0 w-full">
-          <div className="flex items-center justify-between gap-3 text-[#0f756d] w-full">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-8 h-8 bg-neutral-900 dark:bg-brand-copper shrink-0 transition-colors"
-                style={{
-                  maskImage: "url('/hostlylogo.svg')",
-                  maskSize: "contain",
-                  maskPosition: "center",
-                  maskRepeat: "no-repeat",
-                  WebkitMaskImage: "url('/hostlylogo.svg')",
-                  WebkitMaskSize: "contain",
-                  WebkitMaskPosition: "center",
-                  WebkitMaskRepeat: "no-repeat",
-                }}
-              />
-              <div className="flex flex-col">
-                <h2 className="text-neutral-900 dark:text-white text-lg font-bold tracking-tight leading-none font-sans">
-                  HOSTLY
-                </h2>
-                <p
-                  className="text-[10px] text-neutral-500 font-medium tracking-wide leading-none mt-1"
-                  style={{ fontFamily: "var(--font-inter)" }}
-                >
-                  You stay, connected.
-                </p>
-              </div>
-            </div>
-            {/* Host Chip */}
-            <div className="flex items-center gap-3 bg-neutral-100/50 dark:bg-white/10 backdrop-blur-md border border-neutral-200/50 dark:border-white/20 p-2 pr-4 rounded-xl w-fit hover:bg-neutral-200/50 dark:hover:bg-white/20 transition-colors cursor-pointer">
-              <div className="flex flex-col">
-                <span className="text-neutral-500 dark:text-white/70 text-[10px] font-bold uppercase tracking-wide">
-                  Anfitrión
-                </span>
-                <span className="text-neutral-900 dark:text-white text-sm font-bold leading-none">
-                  {property.hostName || "Anfitrión"}
-                </span>
-              </div>
-            </div>
-          </div>
+          <div className="opacity-0"></div>
         </header>
 
-        {/* Main Scrolling Content Area (Mobile) */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-32 relative scroll-smooth">
-          <GuestHero
-            image={property.image}
-            name={property.name}
-            address={property.address || property.city || "Premium Stay"}
-            hostName={property.hostName}
-            hostImage={property.hostImage}
-          />
-
-          <div className="px-6 flex flex-col gap-6 -mt-6 relative z-10 min-h-[500px]">
-            {/* HOME VIEW (Hero + InfoGrid) */}
-
-            <div className="animate-in fade-in duration-300 flex flex-col gap-6 justify-center items-center">
-              <GuestInfoGrid
-                checkIn={property.checkIn}
-                checkOut={property.checkOut}
+        {/* SCROLLABLE CONTAINER */}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto no-scrollbar scroll-smooth pb-32 bg-slate-50 dark:bg-neutral-950"
+        >
+          {/* VIEW: HOME */}
+          {activeView === "home" && (
+            <>
+              {/* 1. HERO SECTION (With Check-in/out) */}
+              <GuestHero
+                name={property.name}
+                address={property.address}
+                coverImage={property.image}
+                hostName={property.hostName}
+                hostImage={property.hostImage}
+                hostPhone={property.hostPhone}
+                checkInTime={property.checkInTime}
+                checkOutTime={property.checkOutTime}
               />
-              <Button
-                className="rounded-xl w-fit flex items-center gap-2 bg-brand-void dark:bg-brand-copper text-white"
-                onClick={() => {
-                  const query =
-                    property.latitude && property.longitude
-                      ? `${property.latitude},${property.longitude}`
-                      : `${property.address || property.name}, ${property.city || ""}`;
-                  window.open(
-                    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                      query,
-                    )}`,
-                    "_blank",
-                  );
-                }}
-              >
-                <MapPinned />
-                Ir al alojamiento
-              </Button>
-            </div>
-            {/* WIFI VIEW (Now Home) */}
-            {activeView === "home" && (
-              <div className="animate-in slide-in-from-bottom duration-300">
-                <GuestWiFiCard
-                  ssid={property.wifiSsid}
-                  password={property.wifiPassword}
-                />
-              </div>
-            )}
 
-            {/* RULES VIEW */}
-            {activeView === "rules" && (
-              <div className="animate-in slide-in-from-right duration-300">
-                <GuestRulesList rules={property.houseRules} />
-              </div>
-            )}
+              {/* 2. DASHBOARD FEED */}
+              <div className="px-5 -mt-6 relative z-10 flex flex-col gap-6">
+                {/* NEW: Modern Home Nav (Sticky-ish feel via placement) */}
+                <div className="flex bg-white dark:bg-neutral-900 rounded-full p-1.5 shadow-sm border border-slate-100 dark:border-neutral-800 mx-4 justify-between relative z-20 -mb-2">
+                  <button
+                    onClick={() => scrollToSection("wifi-module")}
+                    className={cn(
+                      "flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-xs font-bold transition-all duration-300",
+                      activeHomeSection === "wifi"
+                        ? "bg-brand-void text-white shadow-md"
+                        : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5",
+                    )}
+                  >
+                    <Wifi className="w-3.5 h-3.5" /> WiFi
+                  </button>
+                  <button
+                    onClick={() => scrollToSection("rules-module")}
+                    className={cn(
+                      "flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-xs font-bold transition-all duration-300",
+                      activeHomeSection === "rules"
+                        ? "bg-brand-void text-white shadow-md"
+                        : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5",
+                    )}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" /> Reglas
+                  </button>
+                  <button
+                    onClick={() => scrollToSection("access-module")}
+                    className={cn(
+                      "flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-xs font-bold transition-all duration-300",
+                      activeHomeSection === "access"
+                        ? "bg-brand-void text-white shadow-md"
+                        : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5",
+                    )}
+                  >
+                    <MapPin className="w-3.5 h-3.5" /> Llegada
+                  </button>
+                </div>
 
-            {/* RECOMMENDATIONS VIEW */}
-            {activeView === "recommendations" && (
+                {/* Wifi Card (Section) */}
+                <div id="wifi-module" className="scroll-mt-32">
+                  <WifiCard
+                    ssid={property.wifiSsid}
+                    password={property.wifiPassword}
+                    qrCode={property.wifiQrCode}
+                  />
+                </div>
+
+                {/* Rules Module (Section) */}
+                <div id="rules-module" className="scroll-mt-32">
+                  <RulesModule
+                    allowed={property.rulesAllowed}
+                    prohibited={property.rulesProhibited}
+                    additionalRules={property.houseRules}
+                  />
+                </div>
+
+                {/* Access (Ingreso) Module (Section) */}
+                <div id="access-module" className="scroll-mt-32">
+                  <AccessModule
+                    accessCode={property.accessCode}
+                    accessSteps={property.accessSteps}
+                    accessInstructions={property.accessInstructions}
+                    parkingDetails={property.parkingDetails}
+                    location={{
+                      lat: property.latitude,
+                      lng: property.longitude,
+                      address: property.address,
+                    }}
+                  />
+                </div>
+
+                <div className="h-10"></div>
+              </div>
+            </>
+          )}
+
+          {/* VIEW: GUIDE (RECOMMENDATIONS) */}
+          {activeView === "guide" && (
+            <div className="pt-24 px-5">
               <GuestRecommendationsView
                 recommendations={recommendations}
                 categories={categories}
                 activeCategory={activeCategory}
                 setActiveCategory={setActiveCategory}
               />
-            )}
+              <div className="h-20"></div>
+            </div>
+          )}
 
-            {/* TRANSPORT VIEW */}
-            {activeView === "transport" && (
-              <GuestTransportView transport={property.transport} />
-            )}
+          {/* VIEW: TRANSPORT */}
+          {activeView === "transport" && (
+            <div className="pt-24 px-5">
+              <TransportModule transport={property.transport} />
+              <div className="h-20"></div>
+            </div>
+          )}
 
-            {/* HELP (EMERGENCY) VIEW */}
-            {activeView === "help" && (
-              <GuestEmergencyView property={property} />
-            )}
-          </div>
+          {/* VIEW: INFO */}
+          {activeView === "info" && (
+            <div className="pt-24 px-5 flex flex-col gap-6">
+              {/* Emergency */}
+              <div className="bg-red-50 dark:bg-red-900/10 p-6 rounded-3xl border border-red-100 dark:border-red-800/20">
+                <h3 className="font-bold text-red-900 dark:text-red-100 mb-2">
+                  Emergencias
+                </h3>
+                {property.emergencyContacts?.map((c: any, i: number) => (
+                  <div
+                    key={i}
+                    className="mt-2 flex justify-between text-sm items-center border-b border-red-100 dark:border-red-800/20 last:border-0 pb-2 last:pb-0"
+                  >
+                    <span className="font-medium text-red-800 dark:text-red-200">
+                      {c.name}
+                    </span>
+                    <a
+                      href={`tel:${c.phone}`}
+                      className="font-bold text-red-600 dark:text-red-400 bg-white dark:bg-red-950 px-3 py-1 rounded-full text-xs shadow-sm"
+                    >
+                      {c.phone}
+                    </a>
+                  </div>
+                ))}
+                {(!property.emergencyContacts ||
+                  property.emergencyContacts.length === 0) && (
+                  <p className="text-sm text-red-800 dark:text-red-200">911</p>
+                )}
+              </div>
+
+              {/* Rules Reprint */}
+              <RulesModule
+                allowed={property.rulesAllowed}
+                prohibited={property.rulesProhibited}
+                additionalRules={property.houseRules}
+              />
+
+              <div className="h-20"></div>
+            </div>
+          )}
         </div>
 
-        {/* Navigation Bar (Mobile) */}
-        <GuestTabNavigation
-          activeView={activeView}
-          onNavigate={setActiveView}
-        />
+        {/* BOTTOM NAVIGATION (Fixed) */}
+        <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-black/90 backdrop-blur-lg border-t border-slate-100 dark:border-white/10 px-6 py-3 flex justify-around items-center z-40 safe-area-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <NavIcon
+            icon={MapPin}
+            label="Inicio"
+            active={activeView === "home"}
+            onClick={() => setActiveView("home")}
+          />
+          <NavIcon
+            icon={Utensils}
+            label="Guía"
+            active={activeView === "guide"}
+            onClick={() => setActiveView("guide")}
+          />
+          <NavIcon
+            icon={Car}
+            label="Moverse"
+            active={activeView === "transport"}
+            onClick={() => setActiveView("transport")}
+          />
+          <NavIcon
+            icon={Info}
+            label="Info"
+            active={activeView === "info"}
+            onClick={() => setActiveView("info")}
+          />
+        </div>
       </div>
     </div>
+  );
+}
+
+function NavIcon({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: any;
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center gap-1 transition-all duration-300",
+        active
+          ? "text-brand-void dark:text-brand-copper scale-110"
+          : "text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300",
+      )}
+    >
+      <Icon
+        className={cn(
+          "w-6 h-6",
+          active && "fill-current animate-in zoom-in duration-300",
+        )}
+      />
+      <span
+        className={cn(
+          "text-[10px] font-bold",
+          active ? "font-bold" : "font-medium",
+        )}
+      >
+        {label}
+      </span>
+    </button>
   );
 }

@@ -3,6 +3,7 @@ import { FlyerConfig } from "./types";
 import { MinimalTemplate } from "./templates/MinimalTemplate";
 import { GradientTemplate } from "./templates/GradientTemplate";
 import { CardTemplate } from "./templates/CardTemplate";
+import { ElegantTemplate } from "./templates/ElegantTemplate";
 
 interface FlyerPreviewProps {
   config: FlyerConfig;
@@ -64,6 +65,18 @@ export const FlyerPreview = ({ config, qrRef }: FlyerPreviewProps) => {
     return (
       <div {...wrapperProps}>
         <CardTemplate
+          config={config}
+          containerStyles={containerStyles}
+          qrRef={qrRef}
+        />
+      </div>
+    );
+  }
+
+  if (design.layout === "elegant") {
+    return (
+      <div {...wrapperProps}>
+        <ElegantTemplate
           config={config}
           containerStyles={containerStyles}
           qrRef={qrRef}
