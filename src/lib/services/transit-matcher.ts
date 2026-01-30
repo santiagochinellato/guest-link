@@ -1,26 +1,28 @@
 import { db } from "@/db";
 import { busStops, busLines, busRouteStops } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
+// Importamos Google solo como complemento, no como fuente única
 import { GoogleTransitService } from "./google-transit";
 
 interface MatchResult {
   type: string;
-  name: string; // The "Label" name (e.g. "Línea 20") - can be generic if multiple
-  scheduleInfo: string; // "📍 Parada a Xm (Calle)"
-  description: string; // "• Línea 20: Va a... • Línea 55: Va a..."
+  name: string; 
+  scheduleInfo: string;
+  description: string;
   distanceMeters: number;
   latitude: number;
   longitude: number;
+  hasAttractions: boolean; // Flag interno para el ordenamiento
 }
 
-// Haversine util (duplicated but kept for local logic independence if needed)
+// Utilidad Haversine para calcular distancia en metros
 function getDistM(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ) {
-  const R = 6371e3;
+  const R = 6371e3; // Radio de la tierra en metros
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -36,100 +38,90 @@ function getDistM(
 export async function findNearbyTransit(
   propertyLat: number,
   propertyLng: number,
-  radiusMeters: number = 400
+  radiusMeters: number = 500 // Aumentamos radio para encontrar conectividad valiosa
 ): Promise<MatchResult[]> {
-  // 1. Get WHERE from Google (High Precision)
-  const googleStops = await GoogleTransitService.getNearbyStops(
-    propertyLat,
-    propertyLng,
-    radiusMeters
-  );
+  
+  // 1. Obtener TODAS las paradas locales de la DB
+  // (Como son pocas -menos de 1000-, es más eficiente traerlas y filtrar en memoria
+  // que hacer queries complejas geoespaciales si no usamos PostGIS)
+  const allLocalStops = await db.select().from(busStops);
 
-  if (googleStops.length === 0) {
-    // Optional: Fallback to purely local DB search if Google fails? 
-    // For now, let's respect the user's request to use Google. 
-    // We could implement a fallback here if aggressive reliability is needed.
+  // 2. Filtrar paradas cercanas (Capa de Proximidad)
+  const nearbyStops = allLocalStops
+    .map(stop => ({
+      ...stop,
+      dist: getDistM(propertyLat, propertyLng, Number(stop.latitude), Number(stop.longitude))
+    }))
+    .filter(stop => stop.dist <= radiusMeters);
+
+  if (nearbyStops.length === 0) {
     return [];
   }
 
-  // 2. Fetch all local stops (The WHAT)
-  // Optimization: In a large system we would use PostGIS ST_DWithin on the DB side.
-  // Here we fetch all (assuming < 1000 stops) and filter in memory for simplicity.
-  const localStops = await db.select().from(busStops);
-
   const results: MatchResult[] = [];
 
-  for (const gStop of googleStops) {
-    // 3. Match Google Stop -> Local Stop
-    // Strategy: Find closest local stop within 80 meters.
-    let bestLocalStop: typeof localStops[0] | null = null;
-    let minLocalDist = Infinity;
+  // 3. Para cada parada cercana, buscar qué líneas pasan (Capa de Conectividad)
+  for (const stop of nearbyStops) {
+    const routes = await db
+      .select({
+        lineNumber: busLines.lineNumber,
+        name: busLines.name,
+        attractions: busLines.mainAttractions,
+        color: busLines.color
+      })
+      .from(busRouteStops)
+      .innerJoin(busLines, eq(busRouteStops.lineId, busLines.id))
+      .where(eq(busRouteStops.stopId, stop.id));
 
-    for (const lStop of localStops) {
-      const d = getDistM(
-        gStop.location.lat,
-        gStop.location.lng,
-        Number(lStop.latitude),
-        Number(lStop.longitude)
-      );
-      if (d < 80 && d < minLocalDist) { // 80m threshold for "same stop"
-        minLocalDist = d;
-        bestLocalStop = lStop;
+    if (routes.length > 0) {
+      // 4. Analizar "Valor Turístico"
+      // ¿Alguna de estas líneas lleva a una atracción clave?
+      const importantLines = routes.filter(r => r.attractions && r.attractions.length > 0);
+      const isStrategicStop = importantLines.length > 0;
+
+      // Generar descripción rica
+      // Priorizamos mostrar las líneas con atracciones primero
+      const sortedRoutes = routes.sort((a, b) => {
+        if (a.attractions && !b.attractions) return -1;
+        if (!a.attractions && b.attractions) return 1;
+        return 0;
+      });
+
+      // Formatear bullets: "• Línea 20: Llao Llao..."
+      const descriptionBullets = sortedRoutes.map(r => {
+        const dest = r.attractions ? r.attractions : r.name; // Si tiene atracciones, úsalas como destino
+        return `• Línea ${r.lineNumber}: Va a ${dest}`;
+      }).join(" ");
+
+      // Nombre del Badge: Si hay muchas líneas, mostrar las principales o "Múltiples"
+      // Si hay una línea "estrella" (ej 20 o 72), usar esa para el badge.
+      let badgeName = `Línea ${sortedRoutes[0].lineNumber}`;
+      const starLine = sortedRoutes.find(r => ["20", "72", "55", "10"].includes(r.lineNumber));
+      if (starLine) {
+          badgeName = `Línea ${starLine.lineNumber}`; 
+          // Si hay varias, el frontend agregará el "+" visualmente
+          if (routes.length > 1) badgeName += ", ..."; 
       }
-    }
 
-    // 3b. Fallback: Fuzzy Name Match (if no spatial match)
-    // If 'gStop.name' contains 'San Martin', look for local stops with 'San Martin'
-    if (!bestLocalStop) {
-        // Simplistic fuzzy: check if name matches partially
-        const normalizedGName = gStop.name.toLowerCase();
-        for (const lStop of localStops) {
-             if (lStop.name.toLowerCase().includes(normalizedGName) || normalizedGName.includes(lStop.name.toLowerCase())) {
-                 // Double check distance isn't insane (e.g. < 500m from property)
-                 // We already know gStop is close to property.
-                 bestLocalStop = lStop;
-                 break; 
-             }
-        }
-    }
-
-    // 4. If we found a corresponding local stop, get its lines
-    if (bestLocalStop) {
-        const routes = await db
-        .select({
-            lineNumber: busLines.lineNumber,
-            name: busLines.name,
-            attractions: busLines.mainAttractions,
-        })
-        .from(busRouteStops)
-        .innerJoin(busLines, eq(busRouteStops.lineId, busLines.id))
-        .where(eq(busRouteStops.stopId, bestLocalStop.id));
-
-        if (routes.length > 0) {
-            // Build the Enriched Format
-            const dist = gStop.distanceMeters || 0;
-            
-            // Generate Bullet Points
-            const descriptionBullets = routes.map(r => 
-                `• Línea ${r.lineNumber}: ${r.name || 'Recorrido'} (${r.attractions || ''})`
-            ).join(" ");
-            
-            results.push({
-                type: 'bus',
-                name: `Línea ${routes[0].lineNumber}`, // Primary line for Badge
-                scheduleInfo: `📍 Parada a ${dist}m (${gStop.name})`,
-                description: `${gStop.name} • ${descriptionBullets}`, 
-                distanceMeters: dist,
-                latitude: gStop.location.lat,
-                longitude: gStop.location.lng,
-            });
-        }
+      results.push({
+        type: 'bus',
+        name: badgeName, 
+        scheduleInfo: `📍 Parada a ${Math.round(stop.dist)}m (${stop.name})`,
+        description: descriptionBullets,
+        distanceMeters: Math.round(stop.dist),
+        latitude: Number(stop.latitude),
+        longitude: Number(stop.longitude),
+        hasAttractions: isStrategicStop
+      });
     }
   }
-  
-  // Deduplicate results based on stop name similarity or very close distance
-  // (Optional refinement)
 
-  return results.sort((a, b) => a.distanceMeters - b.distanceMeters);
+  // 5. Ordenamiento Inteligente (La clave de la UX)
+  // Prioridad 1: Conectividad (Tiene atracciones)
+  // Prioridad 2: Distancia
+  return results.sort((a, b) => {
+    if (a.hasAttractions && !b.hasAttractions) return -1; // A va primero
+    if (!a.hasAttractions && b.hasAttractions) return 1;  // B va primero
+    return a.distanceMeters - b.distanceMeters; // Si empatan en importancia, gana el más cerca
+  });
 }
-

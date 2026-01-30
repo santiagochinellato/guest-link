@@ -318,10 +318,10 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
             form="settings-form"
             disabled={isSaving}
             className={cn(
-              "flex items-center gap-2 px-6 py-3 rounded-full font-bold shadow-xl transition-all active:scale-95",
+              "flex items-center gap-2 px-6 py-3 rounded-full font-bold shadow-xl transition-all active:scale-95 bg-brand-void dark:bg-brand-copper text-white hover:opacity-90 ring-2 ring-offset-2 ring-brand-copper dark:ring-offset-black",
               isDirty
-                ? "bg-brand-void dark:bg-brand-copper text-white hover:opacity-90 ring-2 ring-offset-2 ring-brand-copper dark:ring-offset-black"
-                : "bg-white dark:bg-neutral-800 text-gray-400 border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700",
+                ? ""
+                : " border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700",
             )}
           >
             {isSaving ? (
