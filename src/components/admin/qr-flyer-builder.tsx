@@ -121,7 +121,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
       {/* Main Preview Area - Right Panel */}
       <main className="flex-1 bg-zinc-100 dark:bg-[#121212] relative overflow-hidden flex flex-col">
         {/* Floating Toolbar */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-white dark:bg-brand-void/90 backdrop-blur shadow-xl border border-gray-100 dark:border-gray-700 p-1.5 rounded-full pr-1.5 pl-4 transition-all hover:scale-105">
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white dark:bg-brand-void/90 backdrop-blur shadow-xl border border-gray-100 dark:border-gray-700 p-1.5 rounded-full px-4 transition-all hover:scale-105">
           {/* Zoom Controls */}
           <div className="flex items-center gap-1 mr-2 border-r border-gray-200 dark:border-gray-700 pr-3">
             <button
@@ -143,6 +143,27 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
             </button>
           </div>
 
+          {/* WiFi Toggle Shortcut */}
+          <button
+            type="button"
+            onClick={() =>
+              updateConfig(
+                "content",
+                "qrType",
+                config.content.qrType === "wifi" ? "url" : "wifi",
+              )
+            }
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors flex items-center gap-2 ${
+              config.content.qrType === "wifi"
+                ? "bg-brand-copper/10 text-brand-copper"
+                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+            }`}
+          >
+            <span>📶</span> WiFi
+          </button>
+
+          <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
           {/* Export Action */}
           <button
             onClick={handlePrint}
@@ -154,12 +175,12 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
 
         {/* Canvas */}
         <div className="flex-1 overflow-auto flex items-center justify-center p-8 md:p-20 custom-scrollbar relative">
-          {/* Background Grid Pattern */}
+          {/* Background Grid Pattern (Dot Pattern) */}
           <div
-            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            className="absolute inset-0 opacity-[0.05] pointer-events-none"
             style={{
               backgroundImage: `radial-gradient(#000 1px, transparent 1px)`,
-              backgroundSize: "20px 20px",
+              backgroundSize: "24px 24px",
             }}
           />
 
@@ -167,7 +188,8 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
             style={{ transform: `scale(${scale})` }}
             className="transition-transform duration-300 origin-center will-change-transform"
           >
-            <div className="shadow-2xl shadow-black/20 ring-1 ring-black/5 bg-white">
+            {/* Paper Effect: Shadow-2xl & White BG */}
+            <div className="shadow-2xl shadow-black/20 ring-1 ring-black/5 bg-white relative">
               <FlyerPreview config={config} />
             </div>
           </div>

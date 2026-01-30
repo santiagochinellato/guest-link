@@ -26,7 +26,7 @@ const QrCard = ({
       : content.guideUrl;
 
   return (
-    <div className="bg-white p-2 rounded-[2.5rem] shadow-2xl flex flex-col items-center relative z-20 mx-auto print:shadow-none print:border print:border-gray-200">
+    <div className="bg-white/20 backdrop-blur-md p-4 rounded-3xl border border-white/30 shadow-2xl flex flex-col items-center relative z-20 mx-auto print:shadow-none print:border print:border-gray-200 print:bg-white/50">
       <HostlyLogoVertical
         className="h-24 w-auto mb-2"
         style={{ color: primaryColor }}
@@ -87,7 +87,7 @@ export const GradientTemplate: React.FC<TemplateProps> = ({
 
   // Ensure high contrast gradient with a dark overlay
   const backgroundStyle = {
-    background: `linear-gradient(135deg, ${primaryColor} 0%, #000000 100%)`,
+    background: `linear-gradient(135deg, ${primaryColor} 0%, #1a1a1a 100%)`,
     WebkitPrintColorAdjust: "exact" as any,
     printColorAdjust: "exact" as any,
   };

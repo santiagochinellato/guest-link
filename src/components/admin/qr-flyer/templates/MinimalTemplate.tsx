@@ -38,7 +38,7 @@ const QrSection = ({
         className="h-32 w-auto"
         style={{ color: primaryColor }}
       />
-      <div className="bg-white p-6 pt-0 shadow-sm border border-gray-100 rounded-2xl print:border-gray-300 print:shadow-none">
+      <div className="bg-white p-6 pt-0 shadow-sm border border-neutral-200 rounded-none print:border-neutral-300 print:shadow-none">
         <QrCode
           url={qrData}
           size={size}
@@ -47,8 +47,8 @@ const QrSection = ({
           className="block"
         />
       </div>
-      <div className="mt-6 flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 print:text-gray-600">
-        <Smartphone size={14} />
+      <div className="mt-8 flex items-center gap-3 text-[10px] font-bold tracking-[0.25em] uppercase text-neutral-400 print:text-neutral-600">
+        <Smartphone size={12} strokeWidth={2.5} />
         <span>
           {content.qrType === "wifi" ? "Scan to Connect" : "Scan to open"}
         </span>
@@ -128,7 +128,7 @@ export const MinimalTemplate: React.FC<TemplateProps> = ({
           {/* Left Col: Welcome & Context (60%) */}
           <div className="w-[50%] h-full p-10 flex flex-col justify-center relative z-10">
             <div>
-              <h1 className="text-5xl font-bold leading-none tracking-tight text-gray-900 mb-4 max-w-md print:text-black">
+              <h1 className="text-6xl font-black leading-none tracking-tighter text-neutral-950 mb-6 max-w-lg print:text-black">
                 {content.title || "Bienvenido"}
               </h1>
               <div className="flex flex-col gap-2">

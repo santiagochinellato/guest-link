@@ -17,9 +17,10 @@ const MainCard = ({
 }) => (
   <div
     className={cn(
-      "bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden relative z-20 print:shadow-none print:border-gray-200",
+      "bg-white rounded-none shadow-2xl border-[12px] border-white overflow-hidden relative z-20 print:shadow-none print:border-[4px] print:border-gray-300",
       className,
     )}
+    style={{ borderColor: "white" }}
   >
     {children}
   </div>
@@ -151,7 +152,7 @@ export const CardTemplate: React.FC<TemplateProps> = ({
         <div className="w-[55%] h-full flex flex-col justify-center relative z-10 pl-2">
           <div className="flex-1 flex flex-col justify-center gap-6  ">
             <div>
-              <h1 className="text-5xl font-black tracking-tighter text-gray-900 leading-[0.9] mb-4 drop-shadow-sm print:text-black">
+              <h1 className="text-6xl font-serif font-medium tracking-tight text-gray-900 leading-[0.9] mb-4 drop-shadow-sm print:text-black italic">
                 {content.title || "WiFi Access"}
               </h1>
               <div className="flex flex-col gap-2">
