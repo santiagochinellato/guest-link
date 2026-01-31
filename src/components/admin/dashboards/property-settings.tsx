@@ -389,7 +389,7 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
         <div
           className={cn(
             "z-20",
-            "lg:absolute lg:bottom-6 lg:right-6 lg:left-auto lg:top-auto lg:w-auto lg:transform-none", // Desktop: Floating Pill
+            "lg:absolute lg:bottom-6 lg:right-6 lg:left-auto lg:top-auto lg:w-auto lg:transform-none lg:bg-transparent lg:border-none", // Desktop: Floating Pill
             "fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-black border-t border-gray-100 dark:border-neutral-800", // Mobile: Fixed Bar background
           )}
         >

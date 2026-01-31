@@ -251,7 +251,6 @@ export const GradientTemplate: React.FC<TemplateProps> = ({
               label="Red WiFi"
               value={content.networkName}
               icon={Wifi}
-              className="w-full"
             />
           </div>
           <div className="w-full">

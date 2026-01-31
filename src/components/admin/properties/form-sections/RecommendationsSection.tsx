@@ -154,10 +154,11 @@ function RecommendationsContent() {
 
   // --- Map & Search State ---
   const [suggestedPlaces, setSuggestedPlaces] = useState<
-    google.maps.places.Place[]
+    (google.maps.places.Place | google.maps.places.PlaceResult)[]
   >([]);
-  const [selectedPlaceInfo, setSelectedPlaceInfo] =
-    useState<google.maps.places.Place | null>(null);
+  const [selectedPlaceInfo, setSelectedPlaceInfo] = useState<
+    google.maps.places.Place | google.maps.places.PlaceResult | null
+  >(null);
   const [isSearching, setIsSearching] = useState(false);
 
   // --- UX State: View Mode & Editing ---
@@ -233,7 +234,9 @@ function RecommendationsContent() {
     const service = new placesLibrary.PlacesService(map);
 
     // Tomamos la primera keyword (ej: "restaurant") para la búsqueda
-    const mainKeyword = activeCategory.searchKeywords.split(",")[0].trim();
+    const mainKeyword = (activeCategory.searchKeywords || "")
+      .split(",")[0]
+      .trim();
 
     const request = {
       location: center,
@@ -286,27 +289,47 @@ function RecommendationsContent() {
     // Keeping this hook empty or removing it as per requirement for manual button.
   }, [activeCategory, map, placesLibrary]);
 
-  const handleAddPlace = (place: google.maps.places.Place) => {
-    if (!place.location || !place.displayName || !activeCategory) return;
+  const handleAddPlace = (
+    place: google.maps.places.Place | google.maps.places.PlaceResult,
+  ) => {
+    const location =
+      (place as any).location || (place as any).geometry?.location;
+    const displayName = (place as any).displayName || (place as any).name;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const placeId = (place as any).id || (place as any).place_id;
+
+    if (!location || !displayName || !activeCategory) return;
 
     appendRec({
-      title: place.displayName,
-      formattedAddress: place.formattedAddress || "",
-      googleMapsLink: place.googleMapsURI || "",
+      title: displayName,
+      formattedAddress:
+        (place as any).formattedAddress ||
+        (place as any).formatted_address ||
+        "",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      googleMapsLink: (place as any).googleMapsURI || (place as any).url || "",
       categoryType: activeCategory.type,
       description: "",
-      googlePlaceId: place.id,
-      latitude: place.location.lat().toString(),
-      longitude: place.location.lng().toString(),
+      googlePlaceId: placeId,
+      latitude: location.lat().toString(),
+      longitude: location.lng().toString(),
       rating: place.rating || undefined,
-      userRatingsTotal: place.userRatingCount || undefined,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      userRatingsTotal:
+        (place as any).userRatingCount ||
+        (place as any).user_ratings_total ||
+        undefined,
     });
 
     toast.success("Agregado a " + activeCategory.name);
 
     // Remove from suggestions
     setSuggestedPlaces((prev) =>
-      prev.filter((p) => p.place_id !== place.place_id),
+      prev.filter((p) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pId = (p as any).id || (p as any).place_id;
+        return pId !== placeId;
+      }),
     );
 
     setSelectedPlaceInfo(null);
@@ -595,10 +618,15 @@ function RecommendationsContent() {
 
             {/* Suggested Pins (Gray) */}
             {suggestedPlaces.map((place) => {
-              if (!place.location && !place.geometry?.location) return null;
-              const location = place.location || place.geometry?.location;
+              if (
+                !(place as any).location &&
+                !(place as any).geometry?.location
+              )
+                return null;
+              const location =
+                (place as any).location || (place as any).geometry?.location;
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const placeId = (place as any).place_id || place.id;
+              const placeId = (place as any).place_id || (place as any).id;
 
               const isSelected = selectedPlaceIds.has(placeId);
               if (isSelected) return null;
@@ -649,31 +677,38 @@ function RecommendationsContent() {
             })}
 
             {/* InfoWindow */}
-            {selectedPlaceInfo && selectedPlaceInfo.location && (
-              <InfoWindow
-                position={selectedPlaceInfo.location}
-                onCloseClick={() => setSelectedPlaceInfo(null)}
-                headerContent={
-                  <span className="font-bold text-sm">
-                    {selectedPlaceInfo.displayName}
-                  </span>
-                }
-              >
-                <div className="p-2 min-w-[200px]">
-                  <p className="text-xs text-gray-500 mb-2 truncate">
-                    {selectedPlaceInfo.formattedAddress}
-                  </p>
-                  <Button
-                    size="sm"
-                    onClick={() => handleAddPlace(selectedPlaceInfo)}
-                    className="w-full h-8 text-xs bg-brand-void hover:bg-brand-void/90"
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Agregar a {activeCategory?.name}
-                  </Button>
-                </div>
-              </InfoWindow>
-            )}
+            {selectedPlaceInfo &&
+              ((selectedPlaceInfo as any).location ||
+                (selectedPlaceInfo as any).geometry?.location) && (
+                <InfoWindow
+                  position={
+                    (selectedPlaceInfo as any).location ||
+                    (selectedPlaceInfo as any).geometry?.location
+                  }
+                  onCloseClick={() => setSelectedPlaceInfo(null)}
+                  headerContent={
+                    <span className="font-bold text-sm">
+                      {(selectedPlaceInfo as any).displayName ||
+                        (selectedPlaceInfo as any).name}
+                    </span>
+                  }
+                >
+                  <div className="p-2 min-w-[200px]">
+                    <p className="text-xs text-gray-500 mb-2 truncate">
+                      {(selectedPlaceInfo as any).formattedAddress ||
+                        (selectedPlaceInfo as any).formatted_address}
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => handleAddPlace(selectedPlaceInfo)}
+                      className="w-full h-8 text-xs bg-brand-void hover:bg-brand-void/90"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Agregar a {activeCategory?.name}
+                    </Button>
+                  </div>
+                </InfoWindow>
+              )}
           </Map>
 
           {/* SMART DISCOVERY BUTTON */}

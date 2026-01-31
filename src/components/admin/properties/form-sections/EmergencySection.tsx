@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Info,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { PropertyFormData } from "@/lib/schemas";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -169,26 +170,58 @@ export function EmergencySection() {
 
       {/* Toggles Rápidos */}
       <Card className="bg-neutral-50 dark:bg-white/5 border-none shadow-sm">
-        <CardContent className="p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-brand-copper/10 rounded-lg">
-              <User className="w-5 h-5 text-brand-copper" />
+        <CardContent className="p-4 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-brand-copper/10 rounded-lg">
+                <User className="w-5 h-5 text-brand-copper" />
+              </div>
+              <div>
+                <Label htmlFor="host-toggle" className="font-bold">
+                  Incluir datos del Anfitrión
+                </Label>
+                <p className="text-xs text-gray-400">
+                  Tus datos aparecerán en la lista de emergencia.
+                </p>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="host-toggle" className="font-bold">
-                Incluir datos del Anfitrión
-              </Label>
-              <p className="text-xs text-gray-400">
-                Tus datos ({hostName || "N/A"}) aparecerán como emergencia.
-              </p>
-            </div>
+            <Switch
+              id="host-toggle"
+              checked={includeHost}
+              onCheckedChange={handleToggleHost}
+              disabled={!hostPhone}
+            />
           </div>
-          <Switch
-            id="host-toggle"
-            checked={includeHost}
-            onCheckedChange={handleToggleHost}
-            disabled={!hostPhone}
-          />
+
+          {/* Host Details Inputs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-200/50 dark:border-white/5">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-500">
+                Nombre del Anfitrión
+              </Label>
+              <Input
+                {...register("hostName")}
+                placeholder="Tu nombre (Ej: Santiago)"
+                className="bg-white dark:bg-black/20 h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-500">
+                Teléfono (WhatsApp)
+              </Label>
+              <Input
+                {...register("hostPhone")}
+                placeholder="+54 9 11..."
+                className="bg-white dark:bg-black/20 h-9"
+              />
+            </div>
+            {!hostPhone && (
+              <p className="text-[10px] text-orange-500 col-span-2">
+                * Ingresa un teléfono para habilitar la opción de incluir
+                anfitrión.
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 
