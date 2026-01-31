@@ -1,19 +1,17 @@
 import { defineConfig } from "drizzle-kit";
 
-// Construir URL con compatibilidad libpq para evitar errores SSL de self-signed certs
-const baseUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL || process.env.DATABASE_URL || "";
-const urlWithCompat = baseUrl.includes("uselibpqcompat") 
-  ? baseUrl 
-  : baseUrl + (baseUrl.includes("?") ? "&" : "?") + "uselibpqcompat=true";
+const rawUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL || process.env.DATABASE_URL || "";
+// Remove sslmode=require to let dbCredentials.ssl handle it without conflict
+const baseUrl = rawUrl.replace(/[?&]sslmode=require/, "");
 
 export default defineConfig({
   dialect: "postgresql",
   schema: "./src/db/schema.ts",
   out: "./drizzle",
   dbCredentials: {
-    url: urlWithCompat,
+    url: baseUrl,
     ssl: {
-      rejectUnauthorized: false, // Permitir certificados self-signed de Supabase
+      rejectUnauthorized: false,
     },
   },
 });
