@@ -217,7 +217,7 @@ export function Sidebar({
             </>
           )}
         </div>
-        <div className="mt-4 px-2">
+        {/* <div className="mt-4 px-2">
           <ThemeToggle
             variant={isCollapsed ? "icon" : "segmented"}
             className={cn(
@@ -225,7 +225,7 @@ export function Sidebar({
               isCollapsed ? "mx-auto" : "w-full",
             )}
           />
-        </div>
+        </div> */}
       </div>
     </aside>
   );
