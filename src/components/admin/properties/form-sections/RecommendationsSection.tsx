@@ -458,7 +458,7 @@ function RecommendationsContent() {
         {/* LEFT SIDEBAR: LIST */}
         <div
           className={cn(
-            "w-full lg:w-1/3 lg:min-w-[300px] border-r border-gray-100 dark:border-neutral-800 bg-gray-50/30 dark:bg-neutral-900/10 flex flex-col transition-transform duration-300",
+            "w-full lg:w-1/3 lg:min-w-[400px] border-r border-gray-100 dark:border-neutral-800 bg-gray-50/30 dark:bg-neutral-900/10 flex flex-col transition-transform duration-300",
             viewMode === "map" ? "hidden lg:flex" : "flex",
           )}
         >
@@ -569,34 +569,157 @@ function RecommendationsContent() {
         </div>
 
         {/* RIGHT: MAP AREA */}
+        {/* RIGHT: MAP AREA */}
         <div
           className={cn(
-            "flex-1 relative bg-gray-100",
-            viewMode === "list" ? "hidden lg:block w-full" : "block w-full",
+            "flex-1 relative bg-gray-100 min-w-0",
+            viewMode === "list" ? "hidden lg:block" : "block",
           )}
         >
-          <Map
-            mapId="DEMO_MAP_ID"
-            defaultCenter={center}
-            defaultZoom={14}
-            gestureHandling={"greedy"}
-            disableDefaultUI={true}
-            className="w-full h-full"
-            onClick={handleMapClick}
-          >
-            {/* OMNIBOX CONTROL */}
-            <MapControl position={ControlPosition.TOP_CENTER}>
-              <div className="m-4">
-                <Omnibox onSearch={handleSearch} isSearching={isSearching} />
+          <div className="inset-0 w-full h-full">
+            <Map
+              mapId="DEMO_MAP_ID"
+              defaultCenter={center}
+              defaultZoom={14}
+              gestureHandling={"greedy"}
+              disableDefaultUI={true}
+              className="w-full h-full"
+              onClick={handleMapClick}
+            >
+              {/* OMNIBOX CONTROL */}
+              <MapControl position={ControlPosition.TOP_CENTER}>
+                <div className="m-4">
+                  <Omnibox onSearch={handleSearch} isSearching={isSearching} />
+                </div>
+              </MapControl>
+
+              {/* SMART DISCOVERY BUTTON */}
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+                <Button
+                  onClick={handleDiscoverNearby}
+                  disabled={isSearching}
+                  className="bg-white text-black hover:bg-gray-100 shadow-xl border border-gray-200 rounded-full px-6 transition-all hover:scale-105"
+                >
+                  {isSearching ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-yellow-500 mr-2" />
+                  )}
+                  Buscar {activeCategory?.name} cercanos
+                </Button>
               </div>
-            </MapControl>
+
+              {/* Property Pin */}
+              <AdvancedMarker position={center}>
+                <div className="relative">
+                  <div className="w-10 h-10 bg-brand-void border-2 border-white dark:border-neutral-900 rounded-full flex items-center justify-center shadow-xl z-20">
+                    <Star className="w-5 h-5 text-brand-copper fill-current" />
+                  </div>
+                </div>
+              </AdvancedMarker>
+
+              {/* Suggested Pins (Gray) */}
+              {suggestedPlaces.map((place) => {
+                if (
+                  !(place as any).location &&
+                  !(place as any).geometry?.location
+                )
+                  return null;
+                const location =
+                  (place as any).location || (place as any).geometry?.location;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const placeId = (place as any).place_id || (place as any).id;
+
+                const isSelected = selectedPlaceIds.has(placeId);
+                if (isSelected) return null;
+
+                return (
+                  <AdvancedMarker
+                    key={placeId}
+                    position={location}
+                    onClick={() => setSelectedPlaceInfo(place)}
+                  >
+                    <Pin
+                      background={"#94a3b8"}
+                      borderColor={"#475569"}
+                      glyphColor={"#f1f5f9"}
+                      scale={0.8}
+                    />
+                  </AdvancedMarker>
+                );
+              })}
+
+              {/* Selected Pins (Colored) */}
+              {recFields.map((field) => {
+                if (!field.latitude || !field.longitude) return null;
+
+                const isCurrentCat =
+                  field.categoryType === activeCategory?.type;
+
+                return (
+                  <AdvancedMarker
+                    key={field.googlePlaceId || field.id}
+                    position={{
+                      lat: parseFloat(field.latitude),
+                      lng: parseFloat(field.longitude),
+                    }}
+                    zIndex={isCurrentCat ? 20 : 10}
+                  >
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-white shadow-lg transition-all border-2 border-white dark:border-neutral-900 transform",
+                        isCurrentCat
+                          ? "bg-brand-copper scale-110"
+                          : "bg-gray-400 scale-90 opacity-70",
+                      )}
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                    </div>
+                  </AdvancedMarker>
+                );
+              })}
+
+              {/* InfoWindow */}
+              {selectedPlaceInfo &&
+                ((selectedPlaceInfo as any).location ||
+                  (selectedPlaceInfo as any).geometry?.location) && (
+                  <InfoWindow
+                    position={
+                      (selectedPlaceInfo as any).location ||
+                      (selectedPlaceInfo as any).geometry?.location
+                    }
+                    onCloseClick={() => setSelectedPlaceInfo(null)}
+                    headerContent={
+                      <span className="font-bold text-sm">
+                        {(selectedPlaceInfo as any).displayName ||
+                          (selectedPlaceInfo as any).name}
+                      </span>
+                    }
+                  >
+                    <div className="p-2 min-w-[200px]">
+                      <p className="text-xs text-gray-500 mb-2 truncate">
+                        {(selectedPlaceInfo as any).formattedAddress ||
+                          (selectedPlaceInfo as any).formatted_address}
+                      </p>
+                      <Button
+                        size="sm"
+                        onClick={() => handleAddPlace(selectedPlaceInfo)}
+                        className="w-full h-8 text-xs bg-brand-void hover:bg-brand-void/90"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Agregar a {activeCategory?.name}
+                      </Button>
+                    </div>
+                  </InfoWindow>
+                )}
+            </Map>
 
             {/* SMART DISCOVERY BUTTON */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex gap-2 pointer-events-none">
               <Button
                 onClick={handleDiscoverNearby}
                 disabled={isSearching}
-                className="bg-white text-black hover:bg-gray-100 shadow-xl border border-gray-200 rounded-full px-6 transition-all hover:scale-105"
+                className="pointer-events-auto bg-white text-black hover:bg-gray-100 shadow-xl border border-gray-200 rounded-full px-6 transition-all hover:scale-105"
               >
                 {isSearching ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -606,125 +729,6 @@ function RecommendationsContent() {
                 Buscar {activeCategory?.name} cercanos
               </Button>
             </div>
-
-            {/* Property Pin */}
-            <AdvancedMarker position={center}>
-              <div className="relative">
-                <div className="w-10 h-10 bg-brand-void border-2 border-white dark:border-neutral-900 rounded-full flex items-center justify-center shadow-xl z-20">
-                  <Star className="w-5 h-5 text-brand-copper fill-current" />
-                </div>
-              </div>
-            </AdvancedMarker>
-
-            {/* Suggested Pins (Gray) */}
-            {suggestedPlaces.map((place) => {
-              if (
-                !(place as any).location &&
-                !(place as any).geometry?.location
-              )
-                return null;
-              const location =
-                (place as any).location || (place as any).geometry?.location;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const placeId = (place as any).place_id || (place as any).id;
-
-              const isSelected = selectedPlaceIds.has(placeId);
-              if (isSelected) return null;
-
-              return (
-                <AdvancedMarker
-                  key={placeId}
-                  position={location}
-                  onClick={() => setSelectedPlaceInfo(place)}
-                >
-                  <Pin
-                    background={"#94a3b8"}
-                    borderColor={"#475569"}
-                    glyphColor={"#f1f5f9"}
-                    scale={0.8}
-                  />
-                </AdvancedMarker>
-              );
-            })}
-
-            {/* Selected Pins (Colored) */}
-            {recFields.map((field) => {
-              if (!field.latitude || !field.longitude) return null;
-
-              const isCurrentCat = field.categoryType === activeCategory?.type;
-
-              return (
-                <AdvancedMarker
-                  key={field.googlePlaceId || field.id}
-                  position={{
-                    lat: parseFloat(field.latitude),
-                    lng: parseFloat(field.longitude),
-                  }}
-                  zIndex={isCurrentCat ? 20 : 10}
-                >
-                  <div
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-white shadow-lg transition-all border-2 border-white dark:border-neutral-900 transform",
-                      isCurrentCat
-                        ? "bg-brand-copper scale-110"
-                        : "bg-gray-400 scale-90 opacity-70",
-                    )}
-                  >
-                    <Navigation className="w-3.5 h-3.5" />
-                  </div>
-                </AdvancedMarker>
-              );
-            })}
-
-            {/* InfoWindow */}
-            {selectedPlaceInfo &&
-              ((selectedPlaceInfo as any).location ||
-                (selectedPlaceInfo as any).geometry?.location) && (
-                <InfoWindow
-                  position={
-                    (selectedPlaceInfo as any).location ||
-                    (selectedPlaceInfo as any).geometry?.location
-                  }
-                  onCloseClick={() => setSelectedPlaceInfo(null)}
-                  headerContent={
-                    <span className="font-bold text-sm">
-                      {(selectedPlaceInfo as any).displayName ||
-                        (selectedPlaceInfo as any).name}
-                    </span>
-                  }
-                >
-                  <div className="p-2 min-w-[200px]">
-                    <p className="text-xs text-gray-500 mb-2 truncate">
-                      {(selectedPlaceInfo as any).formattedAddress ||
-                        (selectedPlaceInfo as any).formatted_address}
-                    </p>
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddPlace(selectedPlaceInfo)}
-                      className="w-full h-8 text-xs bg-brand-void hover:bg-brand-void/90"
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      Agregar a {activeCategory?.name}
-                    </Button>
-                  </div>
-                </InfoWindow>
-              )}
-          </Map>
-
-          {/* SMART DISCOVERY BUTTON */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex gap-2 pointer-events-none">
-            <Button
-              onClick={handleDiscoverNearby}
-              disabled={isSearching}
-              className="pointer-events-auto bg-white text-black hover:bg-gray-100 shadow-xl border border-gray-200 rounded-full px-6 transition-all hover:scale-105"
-            >
-              {isSearching ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <Sparkles className="w-4 h-4 text-yellow-500 mr-2" />
-              )}
-              Buscar {activeCategory?.name} cercanos
-            </Button>
           </div>
         </div>
       </div>

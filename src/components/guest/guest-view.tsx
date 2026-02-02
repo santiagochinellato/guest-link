@@ -1,18 +1,23 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { Wifi, MapPin, ShieldCheck, Car, Utensils, Info } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Modules
-import { GuestHero } from "./modules/GuestHero";
-import { WifiCard } from "./modules/WifiCard";
-import { AccessModule } from "./modules/AccessModule";
-import { TransportModule } from "./modules/TransportModule";
-import { RulesModule } from "./modules/RulesModule";
+import { WifiGlassCard } from "./modules/WifiGlassCard";
+import { CheckInAccess } from "./modules/CheckInAccess";
+import { ActionsGrid } from "./modules/ActionsGrid";
+import { HostFab } from "./modules/HostFab";
+import { LocationButton } from "./modules/LocationButton";
+import { RulesDrawer } from "./modules/RulesDrawer";
+import { EmergencyDrawer } from "./modules/EmergencyDrawer";
+import { GuideDrawer } from "./modules/GuideDrawer";
+import { TransportDrawer } from "./modules/TransportDrawer";
 
-// Views
-import { GuestRecommendationsView } from "./views/GuestRecommendationsView";
+// Views (Legacy support for Guide) - REMOVED
+// import { GuestRecommendationsView } from "./views/GuestRecommendationsView";
+import { ArrowLeft } from "lucide-react";
 
 interface GuestViewProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,323 +27,314 @@ interface GuestViewProps {
 }
 
 export function GuestView({ property, dict: _dict }: GuestViewProps) {
-  // Navigation State
-  const [activeView, setActiveView] = useState<
-    "home" | "guide" | "transport" | "info"
-  >("home");
-  const [activeCategory, setActiveCategory] = useState("all");
+  // Normalize Property Data
+  const recommendations = property.recommendations || [];
 
-  // Scroll Position for Glassmorphism Header
-  const [scrolled, setScrolled] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const TRANSPORT_TYPES = ["transit", "bus", "taxi", "transfer"];
 
-  // Home Section Active State (for HomeNav)
-  const [activeHomeSection, setActiveHomeSection] = useState("wifi");
+  // Filter categories for guide
+  const categories = recommendations
+    ? Array.from(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        new Set<string>(recommendations.map((r: any) => r.categoryType)),
+      ).filter((c) => !TRANSPORT_TYPES.includes(c))
+    : [];
+
+  // Drawer States
+  const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const [isEmergencyOpen, setIsEmergencyOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isTransportOpen, setIsTransportOpen] = useState(false);
+
+  // Derived Data
+  const {
+    wifiSsid,
+    wifiPassword,
+    checkInTime: _checkInTime,
+    checkOutTime: _checkOutTime,
+    checkIn,
+    checkOut,
+    coverImageUrl: _coverImageUrl,
+    image,
+    name,
+    latitude,
+    longitude,
+    address,
+    hostImage,
+    hostPhone,
+    hostName,
+  } = property;
+
+  // Normalize Property Data
+  const coverImageUrl = _coverImageUrl || image;
+  const checkInTime = _checkInTime || checkIn;
+  const checkOutTime = _checkOutTime || checkOut;
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (scrollRef.current) {
-        setScrolled(scrollRef.current.scrollTop > 50);
+    // Optional: Keep a simple mount log if helpful, or remove entirely.
+    // Removing entirely for cleanup.
+  }, []);
 
-        // Simple scroll spy logic for HomeNav
-        if (activeView === "home") {
-          const wifiEl = document.getElementById("wifi-module");
-          const rulesEl = document.getElementById("rules-module");
-          const accessEl = document.getElementById("access-module");
-          const scrollPos = scrollRef.current.scrollTop + 200; // Offset
+  const safeAccess = property.access || {};
+  const effectiveAccessCode = safeAccess.accessCode || "";
+  const effectiveAlarmCode = safeAccess.alarmCode || "";
+  const effectiveAccessSteps = safeAccess.accessSteps || [];
+  const effectiveHasParking = safeAccess.hasParking || false;
+  const effectiveParkingDetails = safeAccess.parkingDetails || "";
 
-          if (accessEl && accessEl.offsetTop <= scrollPos) {
-            setActiveHomeSection("access");
-          } else if (rulesEl && rulesEl.offsetTop <= scrollPos) {
-            setActiveHomeSection("rules");
-          } else if (wifiEl) {
-            setActiveHomeSection("wifi");
-          }
-        }
+  const effectiveHouseRules = property.houseRules?.text || "";
+  const effectiveAllowed = property.houseRules?.allowed || [];
+  const effectiveProhibited = property.houseRules?.prohibited || [];
+
+  const filteredRecommendations = recommendations?.filter(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (r: any) => !TRANSPORT_TYPES.includes(r.categoryType),
+  );
+
+  // Normalize transport data (merge legacy recommendations 'transit' + separate transport array)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawTransport = property.transport || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mappedTransport = rawTransport.map((t: any) => ({
+    title: t.name,
+    description: t.description,
+    categoryType: t.type || "taxi", // Default to taxi if missing
+    originalType: t.type,
+    formattedAddress: t.scheduleInfo || "", // Fix: Now using scheduleInfo for Parada/Address
+    googleMapsLink: t.website || "", // Use website as link
+    phone: t.phone, // Map phone number for WhatsApp
+    extraInfo: t.priceInfo, // Map priceInfo to extraInfo (for detailed recommendations)
+    isTransport: true,
+  }));
+
+  const legacyTransport = recommendations?.filter(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (r: any) => TRANSPORT_TYPES.includes(r.categoryType),
+  );
+
+  const transportRecommendations = useMemo(
+    () => [...(legacyTransport || []), ...mappedTransport],
+    [legacyTransport, mappedTransport],
+  );
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const transportCategories = useMemo(
+    () =>
+      transportRecommendations
+        ? Array.from(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            new Set<string>(
+              transportRecommendations.map((r: any) => r.categoryType),
+            ),
+          )
+        : [],
+    [transportRecommendations],
+  );
+
+  // Top Recommendations (One from each main category)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const topRecommendations = filteredRecommendations.reduce(
+    (acc: any[], curr: any) => {
+      const exists = acc.find(
+        (item) => item.categoryType === curr.categoryType,
+      );
+      if (!exists && acc.length < 4) {
+        acc.push(curr);
       }
-    };
+      return acc;
+    },
+    [],
+  );
 
-    const div = scrollRef.current;
-    if (div) div.addEventListener("scroll", handleScroll);
-    return () => div?.removeEventListener("scroll", handleScroll);
-  }, [activeView]);
-
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      // Adjust scroll position to account for header + nav
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+  // Handlers
+  const openLocation = () => {
+    if (latitude && longitude) {
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`,
+        "_blank",
+      );
+    } else {
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
+        "_blank",
+      );
     }
   };
 
-  // Prepare categories for Recommendations View
-  const categories = property.recommendations
-    ? Array.from(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        new Set<string>(
-          property.recommendations.map((r: any) => r.categoryType),
-        ),
-      ).filter((c) => c !== "transit")
-    : [];
-
-  const recommendations = property.recommendations?.filter(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (r: any) => r.categoryType !== "transit",
-  );
-
   return (
-    <div className="fixed inset-0 z-50 w-full bg-[#f8fafc] dark:bg-[#000000] flex justify-center overflow-hidden font-sans text-slate-900 dark:text-white">
-      {/* MAX WIDTH CONTAINER */}
-      <div className="w-full max-w-md h-full relative flex flex-col bg-white dark:bg-black shadow-2xl overflow-hidden">
-        {/* HEADER */}
-        <header
-          className={cn(
-            "absolute top-0 left-0 right-0 z-40 transition-all duration-300 px-4 py-4 flex items-center justify-between pointer-events-none",
-            scrolled || activeView !== "home"
-              ? "bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-slate-100 dark:border-white/10"
-              : "bg-transparent",
-          )}
+    <div className="min-h-screen bg-zinc-50 dark:bg-black font-sans selection:bg-brand-copper/20">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="home"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, x: -20 }}
+          className="pb-24"
         >
-          <div
-            className={cn(
-              "font-bold text-lg transition-opacity duration-300 pointer-events-auto",
-              scrolled || activeView !== "home"
-                ? "opacity-100 text-slate-900 dark:text-white"
-                : "opacity-0 invisible",
-            )}
-          >
-            {property.name}
+          {/* 1. HERO ATMOSPHERE */}
+          <div className="relative h-[38vh] w-full overflow-hidden bg-zinc-900">
+            {/* Background Image */}
+            <div className="absolute inset-0">
+              <ImageWithFallback src={coverImageUrl} alt={name} />
+            </div>
+            {/* Gradient Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/90 to-transparent" />
+            <div className="absolute inset-0 bg-black/20" />
+
+            {/* Title */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 pb-14 z-20">
+              <motion.h1
+                initial={{ y: 20 }}
+                animate={{ y: 0 }}
+                className="text-3xl font-bold tracking-tighter text-white leading-tight shadow-sm"
+              >
+                {name}
+              </motion.h1>
+            </div>
           </div>
-          <div className="opacity-0"></div>
-        </header>
 
-        {/* SCROLLABLE CONTAINER */}
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto no-scrollbar scroll-smooth pb-32 bg-slate-50 dark:bg-neutral-950"
-        >
-          {/* VIEW: HOME */}
-          {activeView === "home" && (
-            <>
-              {/* 1. HERO SECTION (With Check-in/out) */}
-              <GuestHero
-                name={property.name}
-                address={property.address}
-                coverImage={property.image}
-                hostName={property.hostName}
-                hostImage={property.hostImage}
-                hostPhone={property.hostPhone}
-                checkInTime={property.checkInTime}
-                checkOutTime={property.checkOutTime}
+          {/* 2. UTILITY SECTION (Floating slightly over hero) */}
+          <div className="relative z-10 px-4 -mt-8">
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <CheckInAccess
+                checkInTime={checkInTime}
+                checkOutTime={checkOutTime}
+                accessCode={effectiveAccessCode}
+                alarmCode={effectiveAlarmCode}
+                hasParking={effectiveHasParking}
+                parkingDetails={effectiveParkingDetails}
+                accessSteps={effectiveAccessSteps}
               />
 
-              {/* 2. DASHBOARD FEED */}
-              <div className="px-5 -mt-6 relative z-10 flex flex-col gap-6">
-                {/* NEW: Modern Home Nav (Sticky-ish feel via placement) */}
-                <div className="flex bg-white dark:bg-neutral-900 rounded-full p-1.5 shadow-sm border border-slate-100 dark:border-neutral-800 mx-4 justify-between relative z-20 -mb-2">
-                  <button
-                    onClick={() => scrollToSection("wifi-module")}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-xs font-bold transition-all duration-300",
-                      activeHomeSection === "wifi"
-                        ? "bg-brand-void text-white shadow-md"
-                        : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5",
-                    )}
-                  >
-                    <Wifi className="w-3.5 h-3.5" /> WiFi
-                  </button>
-                  <button
-                    onClick={() => scrollToSection("rules-module")}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-xs font-bold transition-all duration-300",
-                      activeHomeSection === "rules"
-                        ? "bg-brand-void text-white shadow-md"
-                        : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5",
-                    )}
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" /> Reglas
-                  </button>
-                  <button
-                    onClick={() => scrollToSection("access-module")}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-xs font-bold transition-all duration-300",
-                      activeHomeSection === "access"
-                        ? "bg-brand-void text-white shadow-md"
-                        : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5",
-                    )}
-                  >
-                    <MapPin className="w-3.5 h-3.5" /> Llegada
-                  </button>
-                </div>
+              <WifiGlassCard ssid={wifiSsid} password={wifiPassword} />
 
-                {/* Wifi Card (Section) */}
-                <div id="wifi-module" className="scroll-mt-32">
-                  <WifiCard
-                    ssid={property.wifiSsid}
-                    password={property.wifiPassword}
-                    qrCode={property.wifiQrCode}
-                  />
-                </div>
+              <LocationButton onClick={openLocation} address={address} />
+            </motion.div>
 
-                {/* Rules Module (Section) */}
-                <div id="rules-module" className="scroll-mt-32">
-                  <RulesModule
-                    allowed={property.rulesAllowed}
-                    prohibited={property.rulesProhibited}
-                    additionalRules={property.houseRules}
-                  />
-                </div>
-
-                {/* Access (Ingreso) Module (Section) */}
-                <div id="access-module" className="scroll-mt-32">
-                  <AccessModule
-                    accessCode={property.accessCode}
-                    accessSteps={property.accessSteps}
-                    accessInstructions={property.accessInstructions}
-                    parkingDetails={property.parkingDetails}
-                    location={{
-                      lat: property.latitude,
-                      lng: property.longitude,
-                      address: property.address,
-                    }}
-                  />
-                </div>
-
-                <div className="h-10"></div>
-              </div>
-            </>
-          )}
-
-          {/* VIEW: GUIDE (RECOMMENDATIONS) */}
-          {activeView === "guide" && (
-            <div className="pt-24 px-5">
-              <GuestRecommendationsView
-                recommendations={recommendations}
-                categories={categories}
-                activeCategory={activeCategory}
-                setActiveCategory={setActiveCategory}
+            {/* 3. NAVIGATION GRID */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <ActionsGrid
+                onOpenRules={() => setIsRulesOpen(true)}
+                onOpenGuide={() => setIsGuideOpen(true)}
+                onOpenTransport={() => setIsTransportOpen(true)}
+                onOpenEmergency={() => setIsEmergencyOpen(true)}
               />
-              <div className="h-20"></div>
-            </div>
-          )}
 
-          {/* VIEW: TRANSPORT */}
-          {activeView === "transport" && (
-            <div className="pt-24 px-5">
-              <TransportModule transport={property.transport} />
-              <div className="h-20"></div>
-            </div>
-          )}
-
-          {/* VIEW: INFO */}
-          {activeView === "info" && (
-            <div className="pt-24 px-5 flex flex-col gap-6">
-              {/* Emergency */}
-              <div className="bg-red-50 dark:bg-red-900/10 p-6 rounded-3xl border border-red-100 dark:border-red-800/20">
-                <h3 className="font-bold text-red-900 dark:text-red-100 mb-2">
-                  Emergencias
-                </h3>
-                {property.emergencyContacts?.map((c: any, i: number) => (
-                  <div
-                    key={i}
-                    className="mt-2 flex justify-between text-sm items-center border-b border-red-100 dark:border-red-800/20 last:border-0 pb-2 last:pb-0"
-                  >
-                    <span className="font-medium text-red-800 dark:text-red-200">
-                      {c.name}
-                    </span>
-                    <a
-                      href={`tel:${c.phone}`}
-                      className="font-bold text-red-600 dark:text-red-400 bg-white dark:bg-red-950 px-3 py-1 rounded-full text-xs shadow-sm"
+              {/* TOP RECOMMENDATIONS PREVIEW */}
+              {topRecommendations.length > 0 && (
+                <div className="mt-8 mb-4">
+                  <div className="flex items-center justify-between mb-4 px-2">
+                    <h3 className="font-bold text-lg text-zinc-900 dark:text-white">
+                      Imperdibles
+                    </h3>
+                    <button
+                      onClick={() => setIsGuideOpen(true)}
+                      className="text-xs font-medium text-brand-copper hover:underline"
                     >
-                      {c.phone}
-                    </a>
+                      Ver todo
+                    </button>
                   </div>
-                ))}
-                {(!property.emergencyContacts ||
-                  property.emergencyContacts.length === 0) && (
-                  <p className="text-sm text-red-800 dark:text-red-200">911</p>
-                )}
-              </div>
 
-              {/* Rules Reprint */}
-              <RulesModule
-                allowed={property.rulesAllowed}
-                prohibited={property.rulesProhibited}
-                additionalRules={property.houseRules}
-              />
+                  <div className="space-y-3">
+                    {topRecommendations.map((item: any) => (
+                      <div
+                        key={item.title}
+                        onClick={() => setIsGuideOpen(true)}
+                        className="flex items-center gap-3 p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm active:scale-[0.98] transition-all"
+                      >
+                        <div className="w-16 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 overflow-hidden">
+                          {/* Placeholder or real image if available */}
+                          <div className="w-full h-full flex items-center justify-center text-zinc-300">
+                            <span className="text-xs">IMG</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] font-bold text-brand-copper uppercase tracking-wider">
+                            {item.categoryType}
+                          </span>
+                          <h4 className="font-semibold text-zinc-900 dark:text-white truncate">
+                            {item.title}
+                          </h4>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
 
-              <div className="h-20"></div>
-            </div>
-          )}
-        </div>
+          {/* 4. FAB */}
+          <HostFab
+            hostImage={hostImage}
+            hostPhone={hostPhone}
+            hostName={hostName}
+          />
+        </motion.div>
+      </AnimatePresence>
 
-        {/* BOTTOM NAVIGATION (Fixed) */}
-        <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-black/90 backdrop-blur-lg border-t border-slate-100 dark:border-white/10 px-6 py-3 flex justify-around items-center z-40 safe-area-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-          <NavIcon
-            icon={MapPin}
-            label="Inicio"
-            active={activeView === "home"}
-            onClick={() => setActiveView("home")}
-          />
-          <NavIcon
-            icon={Utensils}
-            label="Guía"
-            active={activeView === "guide"}
-            onClick={() => setActiveView("guide")}
-          />
-          <NavIcon
-            icon={Car}
-            label="Moverse"
-            active={activeView === "transport"}
-            onClick={() => setActiveView("transport")}
-          />
-          <NavIcon
-            icon={Info}
-            label="Info"
-            active={activeView === "info"}
-            onClick={() => setActiveView("info")}
-          />
-        </div>
-      </div>
+      {/* DRAWERS */}
+      <RulesDrawer
+        isOpen={isRulesOpen}
+        onOpenChange={setIsRulesOpen}
+        allowed={effectiveAllowed}
+        prohibited={effectiveProhibited}
+        houseRules={effectiveHouseRules}
+      />
+
+      <EmergencyDrawer
+        isOpen={isEmergencyOpen}
+        onOpenChange={setIsEmergencyOpen}
+        contacts={property.emergencyContacts}
+        address={address}
+        hostName={hostName}
+        hostPhone={hostPhone}
+      />
+
+      <GuideDrawer
+        isOpen={isGuideOpen}
+        onOpenChange={setIsGuideOpen}
+        recommendations={filteredRecommendations}
+        categories={categories}
+      />
+
+      <TransportDrawer
+        isOpen={isTransportOpen}
+        onOpenChange={setIsTransportOpen}
+        transportRecommendations={transportRecommendations}
+        transportCategories={transportCategories}
+      />
     </div>
   );
 }
 
-function NavIcon({
-  icon: Icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: any;
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-}) {
+function ImageWithFallback({ src, alt }: { src?: string; alt: string }) {
+  const [error, setError] = useState(false);
+
+  if (!src || error) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-brand-void to-black opacity-80 animate-in fade-in" />
+    );
+  }
+
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex flex-col items-center gap-1 transition-all duration-300",
-        active
-          ? "text-brand-void dark:text-brand-copper scale-110"
-          : "text-slate-400 dark:text-neutral-500 hover:text-slate-600 dark:hover:text-neutral-300",
-      )}
-    >
-      <Icon
-        className={cn(
-          "w-6 h-6",
-          active && "fill-current animate-in zoom-in duration-300",
-        )}
-      />
-      <span
-        className={cn(
-          "text-[10px] font-bold",
-          active ? "font-bold" : "font-medium",
-        )}
-      >
-        {label}
-      </span>
-    </button>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      className="w-full h-full object-cover opacity-90 transition-opacity duration-700"
+      onError={() => setError(true)}
+    />
   );
 }

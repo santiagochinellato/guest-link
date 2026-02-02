@@ -39,8 +39,8 @@ const PLACES = [
   {
     id: 2,
     name: "Oceanview Trail",
-    category: "Sights",
-    type: "Hiking",
+    category: "Sitios",
+    type: "Senderos",
     price: "Free",
     distance: "3.5 km",
     rating: 5.0,

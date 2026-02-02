@@ -45,6 +45,7 @@ export function RulesSection() {
     fields: allowedFields,
     append: appendAllowed,
     remove: removeAllowed,
+    update: updateAllowed,
   } = useFieldArray({
     control,
     name: "rulesAllowed",
@@ -54,6 +55,7 @@ export function RulesSection() {
     fields: prohibitedFields,
     append: appendProhibited,
     remove: removeProhibited,
+    update: updateProhibited,
   } = useFieldArray({
     control,
     name: "rulesProhibited",
@@ -83,6 +85,7 @@ export function RulesSection() {
           fields={allowedFields}
           onAdd={(val) => appendAllowed({ value: val })}
           onRemove={(idx) => removeAllowed(idx)}
+          fieldName="rulesAllowed"
         />
 
         {/* COLUMNA 2: PROHIBIDO */}
@@ -95,6 +98,7 @@ export function RulesSection() {
           fields={prohibitedFields}
           onAdd={(val) => appendProhibited({ value: val })}
           onRemove={(idx) => removeProhibited(idx)}
+          fieldName="rulesProhibited"
         />
       </div>
 
@@ -131,6 +135,7 @@ interface RuleManagerProps {
   fields: any[]; // FieldArray fields
   onAdd: (value: string) => void;
   onRemove: (index: number) => void;
+  fieldName: string;
 }
 
 function RuleCategoryManager({
@@ -142,7 +147,9 @@ function RuleCategoryManager({
   fields,
   onAdd,
   onRemove,
+  fieldName,
 }: RuleManagerProps) {
+  const { register } = useFormContext();
   const [inputValue, setInputValue] = useState("");
 
   const handleAddCustom = () => {
@@ -281,9 +288,13 @@ function RuleCategoryManager({
                       currentStyle.badge,
                     )}
                   >
-                    <span className="font-medium break-words min-w-0 flex-1 mr-2">
-                      {field.value}
-                    </span>
+                    <div className="flex-1 mr-2 relative group-input">
+                      <input
+                        {...register(`${fieldName}.${index}.value`)}
+                        className="w-full bg-transparent border-0 p-0 text-sm font-medium focus:ring-0 focus:outline-none placeholder:text-zinc-400/50"
+                        placeholder="Escribe una regla..."
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => onRemove(index)}

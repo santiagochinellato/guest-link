@@ -40,10 +40,17 @@ const explodeMultiLineSuggestion = (suggestion: any) => {
       {
         ...suggestion,
         // Si el nombre es genérico "Colectivo", intentamos ver si en la descripción dice "Línea X"
-        name:
-          parseLineNumber(suggestion.name) === "?" && rawDesc.includes("Línea")
-            ? rawDesc.match(/Línea \d+/)?.[0] || suggestion.name
-            : suggestion.name,
+        name: (() => {
+          // 1. Try to clean "Línea" from the name first
+          const cleanName = suggestion.name.replace(/Línea\s*/i, "").trim();
+          // 2. Check if the clean name is just a number (or valid short code)
+          const parsed = parseLineNumber(cleanName);
+          // 3. Implied: if parsed is "?", maybe name was "Colectivo", so try extracting from desc
+          if (parsed === "?" && rawDesc.includes("Línea")) {
+            return rawDesc.match(/Línea (\d+)/)?.[1] || cleanName;
+          }
+          return cleanName;
+        })(),
         scheduleInfo: cleanAddress(suggestion.scheduleInfo, rawDesc),
         description: rawDesc.replace("📍", "").trim(),
       },
@@ -72,11 +79,11 @@ const explodeMultiLineSuggestion = (suggestion: any) => {
     let desc = lineStr;
 
     if (separatorIndex !== -1) {
-      name = lineStr.substring(0, separatorIndex).trim(); // "Línea 20"
+      name = lineStr.substring(0, separatorIndex).replace("Línea", "").trim(); // "20"
       desc = lineStr.substring(separatorIndex + 1).trim(); // "Va a Llao Llao..."
     } else {
       // Si no hay dos puntos, asumimos que todo es el nombre o descripción
-      if (lineStr.includes("Línea")) name = lineStr;
+      if (lineStr.includes("Línea")) name = lineStr.replace("Línea", "").trim();
     }
 
     return {
@@ -236,17 +243,34 @@ export function TransportSection({
             </div>
           </div>
 
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() =>
+                appendTransport({
+                  name: "",
+                  type: "bus",
+                  description: "",
+                  scheduleInfo: "",
+                  isActive: true,
+                  priceInfo: "",
+                })
+              }
+              className="text-xs font-semibold text-brand-void dark:text-zinc-300 flex items-center gap-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 py-1.5 rounded-lg transition-colors border border-zinc-200 dark:border-zinc-800"
+            >
+              <Plus className="w-3.5 h-3.5" /> Agregar línea manualmente
+            </button>
+          </div>
+
           <div className="grid gap-3">
             {transportFields.map((field, index) => {
               const type = watch(`transport.${index}.type`) || "bus";
               if (!["bus", "train", "subway"].includes(type)) return null;
 
               const isVisible = watch(`transport.${index}.isActive`);
-              const rawName = watch(`transport.${index}.name`) || "";
 
               // Como ya separamos las tarjetas, rawName debería ser "Línea 20"
               const styles = getPublicTransportStyles(type);
-              const displayLineNumber = parseLineNumber(rawName);
 
               return (
                 <Card
@@ -262,23 +286,33 @@ export function TransportSection({
                     {/* Badge Columna Izquierda */}
                     <div
                       className={cn(
-                        "w-full sm:w-28 flex flex-row sm:flex-col items-center justify-between sm:justify-center p-3 sm:p-4 gap-2 border-b sm:border-b-0 sm:border-r border-zinc-100 dark:border-zinc-800",
+                        "w-full sm:w-28 flex flex-row sm:flex-col items-center justify-center sm:justify-center p-3 sm:p-4 gap-2 border-b sm:border-b-0 sm:border-r border-zinc-100 dark:border-zinc-800",
                         isVisible
                           ? "bg-zinc-50/50 dark:bg-zinc-900/50"
                           : "bg-transparent",
                       )}
                     >
-                      <div className="flex items-center gap-3 sm:block">
-                        <div className="relative">
+                      <div className="flex items-center justify-center gap-3 sm:block">
+                        <div className="relative flex justify-center">
                           <div
                             className={cn(
-                              "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center text-lg sm:text-2xl font-bold shadow-sm border border-black/5 dark:border-white/10 tracking-tight",
+                              "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm border border-black/5 dark:border-white/10 overflow-hidden",
                               isVisible
                                 ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                                 : "bg-zinc-200 text-zinc-400",
                             )}
                           >
-                            {displayLineNumber}
+                            <Input
+                              {...register(`transport.${index}.name` as const)}
+                              placeholder="#"
+                              className={cn(
+                                "w-full h-full border-0 bg-transparent text-center p-0 shadow-none focus-visible:ring-0",
+                                "text-lg sm:text-2xl font-bold tracking-tight placeholder:text-zinc-300 dark:placeholder:text-zinc-600",
+                                isVisible
+                                  ? "text-zinc-900 dark:text-white"
+                                  : "text-zinc-400",
+                              )}
+                            />
                           </div>
                         </div>
                         <Badge
@@ -331,29 +365,50 @@ export function TransportSection({
                         </div>
                       </div>
 
-                      {/* Recorrido */}
-                      <div className="flex items-start gap-3">
-                        <div className="mt-3">
-                          <CornerDownRight
-                            className={cn(
-                              "w-4 h-4",
-                              isVisible
-                                ? "text-brand-void dark:text-brand-copper"
-                                : "text-zinc-300",
-                            )}
-                          />
+                      {/* Recorrido + Recomendación */}
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="mt-3">
+                            <CornerDownRight
+                              className={cn(
+                                "w-4 h-4",
+                                isVisible
+                                  ? "text-brand-void dark:text-brand-copper"
+                                  : "text-zinc-300",
+                              )}
+                            />
+                          </div>
+                          <div className="flex-1 group/input min-w-0">
+                            <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block group-focus-within/input:text-brand-void dark:group-focus-within/input:text-brand-copper transition-colors">
+                              Recorrido / Destinos
+                            </Label>
+                            <Input
+                              {...register(
+                                `transport.${index}.description` as const,
+                              )}
+                              placeholder="Ej: Centro Cívico, Puerto Pañuelo..."
+                              className="border-0 border-b border-zinc-200 dark:border-zinc-800 bg-transparent rounded-none px-0 h-auto py-1 shadow-none focus-visible:ring-0 focus-visible:border-brand-void dark:focus-visible:border-brand-copper font-medium text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 w-full min-w-0"
+                            />
+                          </div>
                         </div>
-                        <div className="flex-1 group/input min-w-0">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block group-focus-within/input:text-brand-void dark:group-focus-within/input:text-brand-copper transition-colors">
-                            Recorrido / Destinos
-                          </Label>
-                          <Input
-                            {...register(
-                              `transport.${index}.description` as const,
-                            )}
-                            placeholder="Ej: Centro Cívico, Puerto Pañuelo..."
-                            className="border-0 border-b border-zinc-200 dark:border-zinc-800 bg-transparent rounded-none px-0 h-auto py-1 shadow-none focus-visible:ring-0 focus-visible:border-brand-void dark:focus-visible:border-brand-copper font-medium text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 w-full min-w-0"
-                          />
+
+                        {/* Recomendación (Mapped to priceInfo) */}
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="mt-3">
+                            <Sparkles className="w-4 h-4 text-amber-400" />
+                          </div>
+                          <div className="flex-1 group/input min-w-0">
+                            <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block group-focus-within/input:text-amber-500 transition-colors">
+                              Recomendación (Opcional)
+                            </Label>
+                            <Input
+                              {...register(
+                                `transport.${index}.priceInfo` as const,
+                              )}
+                              placeholder="Ej: Llevar tarjeta SUBE"
+                              className="border-0 border-b border-zinc-200 dark:border-zinc-800 bg-transparent rounded-none px-0 h-auto py-1 shadow-none focus-visible:ring-0 focus-visible:border-amber-500 font-medium text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 w-full min-w-0"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>

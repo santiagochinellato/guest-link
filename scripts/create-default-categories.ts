@@ -1,13 +1,6 @@
-import { db } from "@/db";
-import { categories } from "@/db/schema";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
 import { eq, and } from "drizzle-orm";
-
-/**
- * Script para crear las 7 categorías por defecto para una propiedad
- * 
- * Uso:
- * npx tsx scripts/create-default-categories.ts <propertyId>
- */
 
 const DEFAULT_CATEGORIES = [
   {
@@ -62,6 +55,9 @@ const DEFAULT_CATEGORIES = [
 ];
 
 async function createDefaultCategories(propertyId: number) {
+  const { db } = await import("@/db");
+  const { categories } = await import("@/db/schema");
+
   console.log(`\n🏗️  Creating default categories for property ${propertyId}...\n`);
 
   for (const cat of DEFAULT_CATEGORIES) {

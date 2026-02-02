@@ -44,23 +44,12 @@ export function PropertyCardActions({
   return (
     <div className="flex items-center gap-2">
       <Link
-        href={`/${lang}/stay/${slug}`}
-        target="_blank"
-        className="p-2 rounded-lg bg-gray-50 dark:bg-neutral-800 text-gray-600 dark:text-gray-300 hover:bg-brand-copper hover:text-white dark:hover:bg-brand-copper dark:hover:text-white transition-colors flex items-center gap-2 shadow-sm"
-        title="View as Guest"
-      >
-        <Eye className="w-4 h-4" />
-        <p className="text-xs font-medium hidden md:inline">
-          Vista del huésped
-        </p>
-      </Link>
-      <Link
         href={`/${lang}/dashboard/properties/${propertyId}/edit`}
         className="p-2 rounded-lg bg-gray-50 dark:bg-neutral-800 text-gray-600 dark:text-gray-300 hover:bg-brand-void hover:text-white dark:hover:bg-white dark:hover:text-brand-void transition-colors flex items-center gap-2 shadow-sm"
         title="Edit Property"
       >
         <Edit className="w-4 h-4" />
-        <p className="text-xs font-medium hidden md:inline">Editar propiedad</p>
+        <p className="text-xs font-medium hidden md:inline">Editar</p>
       </Link>
       <button
         onClick={handleDelete}
@@ -73,10 +62,19 @@ export function PropertyCardActions({
         ) : (
           <Trash2 className="w-4 h-4" />
         )}
-        <p className="text-xs font-medium hidden md:inline">
-          Eliminar propiedad
-        </p>
+        <p className="text-xs font-medium hidden md:inline">Eliminar</p>
       </button>
+      <Link
+        href={`/${lang}/stay/${slug}`}
+        target="_blank"
+        className="p-2 rounded-lg bg-gray-50 dark:bg-neutral-800 text-gray-600 dark:text-gray-300 hover:bg-brand-copper hover:text-white dark:hover:bg-brand-copper dark:hover:text-white transition-colors flex items-center gap-2 shadow-sm"
+        title="View as Guest"
+      >
+        <Eye className="w-4 h-4" />
+        <p className="text-[12px] font-medium hidden md:inline">
+          Vista del huésped
+        </p>
+      </Link>
     </div>
   );
 }

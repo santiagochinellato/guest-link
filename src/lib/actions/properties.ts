@@ -580,7 +580,11 @@ export async function getPropertyBySlug(slug: string) {
                  categoryType: r.category?.type // Keep type for filtering/icons
              })),
              emergencyContacts: emergency,
-             transport: transport
+             transport: transport,
+             // Parse Host Info from JSON
+             hostName: safeJsonParse(prop.houseRules).host?.name || "",
+             hostImage: safeJsonParse(prop.houseRules).host?.image || "",
+             hostPhone: safeJsonParse(prop.houseRules).host?.phone || "",
          }
      };
 
