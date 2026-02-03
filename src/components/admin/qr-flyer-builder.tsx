@@ -15,6 +15,7 @@ interface QrFlyerBuilderProps {
     name: string;
     wifiSsid?: string;
     wifiPassword?: string;
+    wifiQrCode?: string;
     slug?: string;
     coverImageUrl?: string;
   };
