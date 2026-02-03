@@ -17,6 +17,9 @@ export const RecommendationSchema = z.object({
   geometry: z.any().optional(),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
+  website: z.string().optional(),
+  phone: z.string().optional(),
+  openingHours: z.any().optional(), // Google Maps Opening Hours object
 });
 
 export const EmergencyContactSchema = z.object({

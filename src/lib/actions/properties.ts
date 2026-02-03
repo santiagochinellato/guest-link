@@ -390,7 +390,7 @@ export async function getProperty(id: number) {
      const [recs, emergency, transport, allCats] = await Promise.all([
          db.query.recommendations.findMany({
              where: eq(recommendations.propertyId, id),
-             with: { category: true },
+             // Removed with: { category: true } to prevent json_build_array errors
              columns: {
                id: true,
                title: true,
@@ -401,6 +401,7 @@ export async function getProperty(id: number) {
                userRatingsTotal: true,
                googlePlaceId: true,
                externalSource: true,
+               categoryId: true // Added to allow manual mapping
                // geometry: false // Exclude geometry to avoid JSON parse errors
              }
          }),
@@ -416,6 +417,9 @@ export async function getProperty(id: number) {
      ]);
 
      if (!prop) return { success: false, error: "Property not found" };
+
+     // Create Map for O(1) Access
+     const catMap = new Map(allCats.map(c => [c.id, c]));
 
      // Transform to Form Data structure if needed
      const formData: PropertyFormData = {
@@ -462,7 +466,7 @@ export async function getProperty(id: number) {
            description: r.description || "",
            formattedAddress: r.formattedAddress || "",
            googleMapsLink: r.googleMapsLink || "",
-           categoryType: r.category?.type || "sights", // Fallback
+           categoryType: (r.categoryId ? catMap.get(r.categoryId)?.type : null) || "sights", // Manual lookup
         })),
         emergencyContacts: emergency.map(c => ({
            name: c.name || "",
@@ -506,10 +510,10 @@ export async function getPropertyBySlug(slug: string) {
      if (!prop) return { success: false, error: "Property not found" };
 
      // 2. Fetch Relations separately (More robust for poolers)
-     const [recs, emergency, transport] = await Promise.all([
+     const [recs, emergency, transport, allCategories] = await Promise.all([
          db.query.recommendations.findMany({
              where: eq(recommendations.propertyId, prop.id),
-             with: { category: true },
+             // Removed 'with: { category: true }' to avoid json_build_array errors
              columns: {
                 id: true,
                 title: true,
@@ -520,6 +524,12 @@ export async function getPropertyBySlug(slug: string) {
                 userRatingsTotal: true,
                 googlePlaceId: true,
                 externalSource: true,
+                latitude: true,
+                longitude: true,
+                website: true,
+                phone: true,
+                openingHours: true,
+                categoryId: true, // Needed for manual mapping
              }
          }),
          db.query.emergencyContacts.findMany({
@@ -527,10 +537,16 @@ export async function getPropertyBySlug(slug: string) {
          }),
          db.query.transportInfo.findMany({
              where: eq(transportInfo.propertyId, prop.id)
+         }),
+         db.query.categories.findMany({
+             where: eq(categories.propertyId, prop.id)
          })
      ]);
 
      if (!prop) return { success: false, error: "Property not found" };
+
+     // Create Category Map for O(1) lookup
+     const catMap = new Map(allCategories.map(c => [c.id, c]));
 
      // Reuse similar return structure but maybe simpler for guest view? 
      // For now, returning same structure is fine or raw prop.
@@ -571,14 +587,22 @@ export async function getPropertyBySlug(slug: string) {
                       parkingDetails: parsed.access?.parkingDetails || ""
                   };
               })(),
-             recommendations: recs.map(r => ({
-                 title: r.title,
-                 description: r.description,
-                 formattedAddress: r.formattedAddress,
-                 googleMapsLink: r.googleMapsLink,
-                 category: r.category?.name || "Other", // Use category name for display
-                 categoryType: r.category?.type // Keep type for filtering/icons
-             })),
+             recommendations: recs.map(r => {
+                 const cat = r.categoryId ? catMap.get(r.categoryId) : null;
+                 return {
+                    title: r.title,
+                    description: r.description,
+                    formattedAddress: r.formattedAddress,
+                    googleMapsLink: r.googleMapsLink,
+                    latitude: r.latitude, 
+                    longitude: r.longitude,
+                    website: r.website,
+                    phone: r.phone,
+                    openingHours: r.openingHours,
+                    category: cat?.name || "Other",
+                    categoryType: cat?.type // Keep type for filtering/icons
+                 };
+             }),
              emergencyContacts: emergency,
              transport: transport,
              // Parse Host Info from JSON

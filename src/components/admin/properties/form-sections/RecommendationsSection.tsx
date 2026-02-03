@@ -305,6 +305,7 @@ function RecommendationsContent() {
       formattedAddress:
         (place as any).formattedAddress ||
         (place as any).formatted_address ||
+        (place as any).vicinity || // Fallback for nearbySearch results
         "",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       googleMapsLink: (place as any).googleMapsURI || (place as any).url || "",
@@ -319,6 +320,22 @@ function RecommendationsContent() {
         (place as any).userRatingCount ||
         (place as any).user_ratings_total ||
         undefined,
+      // Enhanced Data Extraction
+      website: (place as any).website || (place as any).websiteURI || "",
+      phone:
+        (place as any).formatted_phone_number ||
+        (place as any).international_phone_number ||
+        "",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      openingHours: (place as any).opening_hours
+        ? {
+            weekday_text: (place as any).opening_hours.weekday_text || [],
+            open_now:
+              (place as any).opening_hours.open_now ||
+              (place as any).opening_hours.isOpen?.(),
+            periods: (place as any).opening_hours.periods || [],
+          }
+        : undefined,
     });
 
     toast.success("Agregado a " + activeCategory.name);

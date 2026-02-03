@@ -307,6 +307,11 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
         onOpenChange={setIsGuideOpen}
         recommendations={filteredRecommendations}
         categories={categories}
+        propertyLocation={
+          latitude && longitude
+            ? { lat: parseFloat(latitude), lng: parseFloat(longitude) }
+            : undefined
+        }
       />
 
       <TransportDrawer

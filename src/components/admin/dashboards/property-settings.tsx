@@ -130,6 +130,7 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
     searchParams.get("tab") || "general",
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
   // Deep linking for tabs
   useEffect(() => {
@@ -160,7 +161,7 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
   } = form;
 
   const watchedData = watch();
-  const debouncedData = useDebounce(watchedData, 1000);
+  const debouncedData = useDebounce(watchedData, 2000);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Auto-save effect
@@ -168,9 +169,9 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
     const autoSave = async () => {
       // Only save if dirty and not already saving
       // We check against initialData or just rely on isDirty from RHF
-      if (!isDirty || isSaving) return;
+      if (!isDirty || isSaving || isAutoSaving) return;
 
-      setIsSaving(true);
+      setIsAutoSaving(true);
       try {
         // We use a silent update (prevent toast spam)
         const res = await updateProperty(initialData.id, debouncedData);
@@ -182,12 +183,19 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
           // Usually better to just keep it dirty until manual save?
           // "Auto-save" usually implies we sync state.
           // For now, let's strictly save what we have.
-          reset(debouncedData); // Sync form state so isDirty becomes false
+
+          // IMPORTANT: We do NOT call reset() here.
+          // Calling reset() (even with keepValues) triggers a re-render of useFieldArray
+          // components because it updates defaultValues, regenerating internal field IDs.
+          // This causes loss of focus/cursor in dynamic lists like "Access Steps".
+          // We accept that isDirty will remain true and the manual Save button stays enabled,
+          // which actually aligns better with "invisible" auto-save (no UI flashing).
+          // reset(undefined, { keepValues: true });
         }
       } catch (e) {
         console.error("Auto-save failed", e);
       } finally {
-        setIsSaving(false);
+        setIsAutoSaving(false);
       }
     };
 
@@ -246,6 +254,10 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
             {isSaving ? (
               <span className="text-xs text-brand-copper animate-pulse flex items-center gap-1">
                 <Loader2 className="w-3 h-3 animate-spin" /> Guardando...
+              </span>
+            ) : isAutoSaving ? (
+              <span className="text-xs text-gray-400 animate-pulse flex items-center gap-1 opacity-50">
+                <Loader2 className="w-3 h-3 animate-spin" /> Auto-guardado...
               </span>
             ) : lastSaved ? (
               <span className="text-xs text-gray-400 flex items-center gap-1">

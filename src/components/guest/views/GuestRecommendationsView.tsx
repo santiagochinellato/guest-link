@@ -199,7 +199,7 @@ interface GuestRecommendationsViewProps {
   categories: string[];
   activeCategory: string;
   setActiveCategory: (category: string) => void;
-  useScrollNavigation?: boolean;
+  propertyLocation?: { lat: number; lng: number };
 }
 
 export function GuestRecommendationsView({
@@ -208,7 +208,52 @@ export function GuestRecommendationsView({
   activeCategory,
   setActiveCategory,
   useScrollNavigation = false,
+  propertyLocation,
 }: GuestRecommendationsViewProps) {
+  // Helper: Calculate Haversine Distance in km
+  const calculateDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
+    return d;
+  };
+
+  const getDistanceString = (place: any) => {
+    if (
+      !propertyLocation ||
+      !place.latitude ||
+      !place.longitude ||
+      isNaN(parseFloat(place.latitude)) ||
+      isNaN(parseFloat(place.longitude))
+    ) {
+      return null;
+    }
+
+    const distKm = calculateDistance(
+      propertyLocation.lat,
+      propertyLocation.lng,
+      parseFloat(place.latitude),
+      parseFloat(place.longitude),
+    );
+
+    if (distKm < 1) {
+      return `${Math.round(distKm * 1000)}m`;
+    }
+    return `${distKm.toFixed(1)}km`;
+  };
   // State for expanded sections in Bento Grid
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
@@ -382,19 +427,21 @@ export function GuestRecommendationsView({
                           }
                         : {};
 
+                      const distance = getDistanceString(place);
+
                       return (
                         <Component
                           key={`dining-${i}`}
                           {...props}
                           className={cn(
                             "relative group overflow-hidden rounded-[1.5rem] border border-neutral-200 dark:border-neutral-800 shadow-sm flex-shrink-0 snap-center bg-white dark:bg-neutral-900 cursor-pointer block text-left",
-                            "w-[280px] h-[120px] md:w-[320px] md:h-[200px]",
+                            "w-[280px] h-[170px] md:w-[320px] md:h-[120px]",
                           )}
                         >
                           {/* Placeholder Gradient Background */}
                           <div className="absolute inset-0 bg-gradient-to-br from-brand-copper/5 via-transparent to-brand-void/5 dark:from-brand-copper/10 dark:to-brand-void/20" />
 
-                          <div className="absolute inset-0 px-4 py-2 flex flex-col justify-between">
+                          <div className="absolute inset-0 px-4 py-4 flex flex-col justify-between">
                             <div className="flex justify-between items-start">
                               <div
                                 className={cn(
@@ -404,12 +451,34 @@ export function GuestRecommendationsView({
                               >
                                 <catConfig.icon className="w-4 h-4" />
                               </div>
-                              {i < 3 && (
-                                <div className="px-2 py-0.5 rounded-full bg-brand-copper/90 text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm flex items-center gap-1">
-                                  <Star className="w-2.5 h-2.5 fill-white" />
-                                  Top {i + 1}
-                                </div>
-                              )}
+                              <div className="flex flex-col items-end gap-1">
+                                {i < 3 && (
+                                  <div className="px-2 py-0.5 rounded-full bg-brand-copper/90 text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm flex items-center gap-1">
+                                    <Star className="w-2.5 h-2.5 fill-white" />
+                                    Top {i + 1}
+                                  </div>
+                                )}
+                                {place.openingHours && (
+                                  <div
+                                    className={cn(
+                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-md backdrop-blur-sm border",
+                                      (place.openingHours as any).open_now
+                                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400"
+                                        : "bg-neutral-500/10 text-neutral-500 border-neutral-500/20 dark:text-neutral-400",
+                                    )}
+                                  >
+                                    {(place.openingHours as any).open_now
+                                      ? "Abierto"
+                                      : "Cerrado"}
+                                  </div>
+                                )}
+                                {distance && (
+                                  <span className="text-[9px] font-bold text-neutral-400 bg-white/50 dark:bg-black/50 px-1.5 py-0.5 rounded-md backdrop-blur-sm flex items-center gap-1">
+                                    <MapIcon className="w-2.5 h-2.5" />
+                                    {distance}
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             <div className="space-y-1">
@@ -419,9 +488,9 @@ export function GuestRecommendationsView({
                               <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2">
                                 {place.description}
                               </p>
-                              <div className="flex items-center gap-1 pt-1">
-                                <MapIcon className="w-3 h-3 text-neutral-400" />
-                                <span className="text-[10px] text-neutral-400 truncate max-w-[200px]">
+                              <div className="flex items-center gap-1 pt-1 opacity-100">
+                                <MapIcon className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
+                                <span className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300 truncate max-w-[200px]">
                                   {place.formattedAddress || "Ver en mapa"}
                                 </span>
                               </div>
@@ -492,9 +561,9 @@ export function GuestRecommendationsView({
                               <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2">
                                 {place.description}
                               </p>
-                              <div className="flex items-center gap-1 pt-1">
-                                <MapIcon className="w-3 h-3 text-neutral-400" />
-                                <span className="text-[10px] text-neutral-400 truncate max-w-[200px]">
+                              <div className="flex items-center gap-1 pt-1 opacity-100">
+                                <MapIcon className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
+                                <span className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300 truncate max-w-[200px]">
                                   {place.formattedAddress || "Ver en mapa"}
                                 </span>
                               </div>
@@ -565,9 +634,9 @@ export function GuestRecommendationsView({
                               <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2">
                                 {place.description}
                               </p>
-                              <div className="flex items-center gap-1 pt-1">
-                                <MapIcon className="w-3 h-3 text-neutral-400" />
-                                <span className="text-[10px] text-neutral-400 truncate max-w-[200px]">
+                              <div className="flex items-center gap-1 pt-1 opacity-100">
+                                <MapIcon className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
+                                <span className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300 truncate max-w-[200px]">
                                   {place.formattedAddress || "Ver en mapa"}
                                 </span>
                               </div>
@@ -791,42 +860,64 @@ export function GuestRecommendationsView({
                     }
 
                     // STANDARD CARD STYLE (For other categories)
-                    return (
-                      <div
-                        key={i}
-                        className="group bg-white dark:bg-brand-void rounded-[1rem] p-1 overflow-hidden shadow-sm border border-gray-100 dark:border-neutral-800 hover:shadow-lg transition-all duration-300"
-                      >
-                        <div className="p-2 space-y-4">
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="space-y-1.5 pt-1">
-                              <h4 className="font-bold text-neutral-900 dark:text-white text-md leading-tight">
-                                {place.title}
-                              </h4>
-                              <div className="flex items-center gap-2 text-xs font-medium text-neutral-400">
-                                <MapIcon className="w-3.5 h-3.5" />
-                                <span className="truncate max-w-[100px]">
-                                  {place.formattedAddress}
-                                </span>
-                              </div>
-                            </div>
+                    // Updated to match the requested Bento/Card Design
+                    const Component = place.googleMapsLink ? "a" : "div";
+                    const props = place.googleMapsLink
+                      ? {
+                          href: place.googleMapsLink,
+                          target: "_blank",
+                          rel: "noopener noreferrer",
+                        }
+                      : {};
 
-                            {place.googleMapsLink && (
-                              <a
-                                href={place.googleMapsLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2 rounded-2xl bg-brand-copper/5 text-brand-copper hover:bg-brand-copper hover:text-white transition-all shadow-sm group-hover:rotate-6"
-                              >
-                                <ExternalLink className="w-5 h-5" />
-                              </a>
+                    const distance = getDistanceString(place);
+
+                    return (
+                      <Component
+                        key={i}
+                        {...props}
+                        className={cn(
+                          "relative group overflow-hidden rounded-[1.5rem] border border-neutral-200 dark:border-neutral-800 shadow-sm bg-white dark:bg-neutral-900 cursor-pointer block text-left h-[180px] w-full transition-all hover:scale-[1.02]",
+                        )}
+                      >
+                        {/* Placeholder Gradient Background */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-brand-copper/5 via-transparent to-brand-void/5 dark:from-brand-copper/10 dark:to-brand-void/20" />
+
+                        <div className="absolute inset-0 px-4 py-3 flex flex-col justify-start">
+                          <div className="flex justify-between items-start">
+                            <div
+                              className={cn(
+                                "p-2 rounded-xl backdrop-blur-md bg-white/60 dark:bg-black/40 shadow-sm",
+                                catConfig.color,
+                              )}
+                            >
+                              <catConfig.icon className="w-5 h-5" />
+                            </div>
+                            {/* Distance Badge */}
+                            {distance && (
+                              <div className="px-2 py-0.5 rounded-full bg-white/60 dark:bg-black/40 text-neutral-500 dark:text-neutral-400 text-[10px] font-bold backdrop-blur-sm border border-neutral-100 dark:border-neutral-800 flex items-center gap-1">
+                                <MapIcon className="w-3 h-3" />
+                                {distance}
+                              </div>
                             )}
                           </div>
 
-                          <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed bg-gray-50 dark:bg-neutral-900/50 p-3 rounded-2xl">
-                            {place.description}
-                          </p>
+                          <div className="space-y-1">
+                            <h4 className="font-bold text-neutral-900 dark:text-white leading-tight decoration-neutral-900 dark:decoration-white text-lg line-clamp-1 group-hover:underline decoration-1 underline-offset-2">
+                              {place.title}
+                            </h4>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2">
+                              {place.description}
+                            </p>
+                            <div className="flex items-center gap-1 pt-1 opacity-100">
+                              <MapIcon className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
+                              <span className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300 truncate max-w-[200px]">
+                                {place.formattedAddress || "Ver en mapa"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </Component>
                     );
                   })}
                 </div>
@@ -877,7 +968,7 @@ export function GuestRecommendationsView({
         <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
           {/* CATEGORY TABS (If multiple categories exist) */}
           {categories.length > 1 && (
-            <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+            <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
               <div className="flex gap-2 w-max">
                 {categories.map((catKey) => {
                   const config = getCategoryConfig(catKey);
@@ -1039,42 +1130,149 @@ export function GuestRecommendationsView({
                 }
 
                 // STANDARD CARD (For Dining, Sights, etc.)
-                return (
-                  <div
-                    key={i}
-                    className="group bg-white dark:bg-brand-void rounded-[1rem] p-1 overflow-hidden shadow-sm border border-gray-100 dark:border-neutral-800 hover:shadow-lg transition-all duration-300"
-                  >
-                    <div className="p-2 space-y-4">
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="space-y-1.5 pt-1">
-                          <h4 className="font-bold text-neutral-900 dark:text-white text-md leading-tight">
-                            {place.title}
-                          </h4>
-                          <div className="flex items-center gap-2 text-xs font-medium text-neutral-400">
-                            <MapIcon className="w-3.5 h-3.5" />
-                            <span className="truncate max-w-[100px]">
-                              {place.formattedAddress}
-                            </span>
-                          </div>
-                        </div>
+                // Updated to match the requested Bento/Card Design
+                const catConfig = getCategoryConfig(activeCategory);
+                const Component = place.googleMapsLink ? "a" : "div";
+                const props = place.googleMapsLink
+                  ? {
+                      href: place.googleMapsLink,
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                    }
+                  : {};
 
-                        {place.googleMapsLink && (
-                          <a
-                            href={place.googleMapsLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 rounded-2xl bg-brand-copper/5 text-brand-copper hover:bg-brand-copper hover:text-white transition-all shadow-sm group-hover:rotate-6"
-                          >
-                            <ExternalLink className="w-5 h-5" />
-                          </a>
+                const distance = getDistanceString(place);
+
+                // Debugging data issues
+                console.log("Place Data:", {
+                  title: place.title,
+                  category: place.categoryType,
+                  address: place.formattedAddress,
+                  openingHours: place.openingHours,
+                  website: place.website,
+                  phone: place.phone,
+                  googlePlaceId: place.googlePlaceId,
+                });
+
+                return (
+                  <Component
+                    key={i}
+                    {...props}
+                    className={cn(
+                      "relative group overflow-hidden rounded-[1.5rem] border border-neutral-200 dark:border-neutral-800 shadow-sm bg-white dark:bg-neutral-900 cursor-pointer block text-left h-[170px] w-full transition-all hover:scale-[1.02]",
+                    )}
+                  >
+                    {/* Placeholder Gradient Background */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-brand-copper/5 via-transparent to-brand-void/5 dark:from-brand-copper/10 dark:to-brand-void/20" />
+
+                    {/* Layout ajustado para 120px: justify-between para asegurar distribución */}
+                    <div className="absolute inset-0 px-4 py-4 flex flex-col justify-between">
+                      <div className="flex justify-between items-start">
+                        <div
+                          className={cn(
+                            "p-2 rounded-xl backdrop-blur-md bg-white/60 dark:bg-black/40 shadow-sm",
+                            catConfig.color,
+                          )}
+                        >
+                          <catConfig.icon className="w-5 h-5" />
+                        </div>
+                        {/* Distance Badge */}
+                        {distance && (
+                          <div className="px-2 py-0.5 rounded-full bg-white/60 dark:bg-black/40 text-neutral-500 dark:text-neutral-400 text-[10px] font-bold backdrop-blur-sm border border-neutral-100 dark:border-neutral-800 flex items-center gap-1">
+                            <MapIcon className="w-3 h-3" />
+                            {distance}
+                          </div>
                         )}
                       </div>
 
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed bg-gray-50 dark:bg-neutral-900/50 p-3 rounded-2xl">
-                        {place.description}
-                      </p>
+                      <div className="space-y-1">
+                        <h4 className="font-bold text-neutral-900 dark:text-white leading-tight decoration-neutral-900 dark:decoration-white text-lg line-clamp-1 group-hover:underline decoration-1 underline-offset-2">
+                          {place.title}
+                        </h4>
+                        {/* Descripción oculta en tarjeta compacta (120px) para dar espacio a dirección */}
+                        <p className="hidden text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1">
+                          {place.description}
+                        </p>
+                        <div className="flex flex-col gap-1.5 pt-1">
+                          <div className="flex items-center gap-1 opacity-100 flex-wrap">
+                            <MapIcon className="w-3 h-3 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                            <span className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300 truncate max-w-[200px]">
+                              {place.formattedAddress || "Ver en mapa"}
+                            </span>
+                          </div>
+
+                          {/* Extended Info: Open Status & Buttons */}
+                          <div className="flex items-center gap-2">
+                            {/* Open Status */}
+                            {place.openingHours && (
+                              <div
+                                className={cn(
+                                  "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+                                  (place.openingHours as any).open_now
+                                    ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
+                                    : "bg-neutral-50 text-neutral-500 border-neutral-100 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700",
+                                )}
+                              >
+                                {(place.openingHours as any).open_now
+                                  ? "Abierto ahora"
+                                  : "Cerrado"}
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            {place.website && (
+                              <a
+                                href={place.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 rounded-full bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                                title="Sitio Web"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <circle cx="12" cy="12" r="10" />
+                                  <line x1="2" y1="12" x2="22" y2="12" />
+                                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                </svg>
+                              </a>
+                            )}
+                            {place.phone && (
+                              <a
+                                href={`tel:${place.phone}`}
+                                className="p-1 rounded-full bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                                title="Llamar"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                </svg>
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </Component>
                 );
               })}
           </div>

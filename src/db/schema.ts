@@ -131,6 +131,7 @@ export const recommendations = pgTable("recommendations", {
   userRatingsTotal: integer("user_ratings_total"),
   externalSource: text("external_source").default("manual"), // manual, google, osm
   geometry: json("geometry"),
+  openingHours: json("opening_hours"), // Stores Google Maps opening_hours structure
   
   categoryId: integer("category_id").references(() => categories.id),
   propertyId: integer("property_id").references(() => properties.id),
