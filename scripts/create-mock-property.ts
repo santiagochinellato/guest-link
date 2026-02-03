@@ -84,8 +84,7 @@ async function createMockProperty() {
       propertyId: newProperty.id,
       type: "host",
       name: "Concierge 24/7",
-      phone: "+54 9 294 444-4444",
-      description: "Asistencia exclusiva para huéspedes"
+      phone: "+54 9 294 444-4444"
     }
   ]);
 

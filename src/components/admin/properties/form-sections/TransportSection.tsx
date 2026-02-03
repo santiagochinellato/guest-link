@@ -1,152 +1,13 @@
 "use client";
 
 import { useFormContext, useFieldArray } from "react-hook-form";
-import {
-  Bus,
-  Car,
-  Phone,
-  Trash2,
-  Plus,
-  Info,
-  Train,
-  Plane,
-  Key,
-  Navigation,
-  Sparkles,
-  CornerDownRight,
-} from "lucide-react";
+import { Bus, Car, Plus, Sparkles } from "lucide-react";
 import { PropertyFormData } from "@/lib/schemas";
 import { TransitAutoButton } from "@/components/admin/transit-auto-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
-import { Label } from "@/components/ui/label";
-
-// --- PARSING LOGIC (La clave para separar las líneas) ---
-
-/**
- * Toma una sugerencia "sucia" que puede contener múltiples líneas y la divide
- * en objetos individuales limpios.
- */
-const explodeMultiLineSuggestion = (suggestion: any) => {
-  const rawDesc = suggestion.description || "";
-
-  // Caso 1: Si no tiene el separador de viñeta, retornamos tal cual (limpiando un poco)
-  if (!rawDesc.includes("•")) {
-    return [
-      {
-        ...suggestion,
-        // Si el nombre es genérico "Colectivo", intentamos ver si en la descripción dice "Línea X"
-        name: (() => {
-          // 1. Try to clean "Línea" from the name first
-          const cleanName = suggestion.name.replace(/Línea\s*/i, "").trim();
-          // 2. Check if the clean name is just a number (or valid short code)
-          const parsed = parseLineNumber(cleanName);
-          // 3. Implied: if parsed is "?", maybe name was "Colectivo", so try extracting from desc
-          if (parsed === "?" && rawDesc.includes("Línea")) {
-            return rawDesc.match(/Línea (\d+)/)?.[1] || cleanName;
-          }
-          return cleanName;
-        })(),
-        scheduleInfo: cleanAddress(suggestion.scheduleInfo, rawDesc),
-        description: rawDesc.replace("📍", "").trim(),
-      },
-    ];
-  }
-
-  // Caso 2: Tiene múltiples líneas (El caso de San Martín 400)
-  // Formato esperado: "📍 Parada... • Línea 20: Va a... • Línea 72: Va a..."
-  const parts = rawDesc
-    .split("•")
-    .map((p: string) => p.trim())
-    .filter(Boolean);
-
-  // La primera parte suele ser la ubicación de la parada
-  const locationPart = parts[0];
-  const cleanLoc = cleanAddress(suggestion.scheduleInfo, locationPart);
-
-  // Las partes siguientes son las líneas individuales
-  const lines = parts.slice(1);
-
-  return lines.map((lineStr: string) => {
-    // lineStr ejemplo: "Línea 20: Va a Llao Llao, Puerto Pañuelo"
-    // Separamos el Nombre (Línea 20) de la Descripción (Va a...)
-    const separatorIndex = lineStr.indexOf(":");
-    let name = "Bus";
-    let desc = lineStr;
-
-    if (separatorIndex !== -1) {
-      name = lineStr.substring(0, separatorIndex).replace("Línea", "").trim(); // "20"
-      desc = lineStr.substring(separatorIndex + 1).trim(); // "Va a Llao Llao..."
-    } else {
-      // Si no hay dos puntos, asumimos que todo es el nombre o descripción
-      if (lineStr.includes("Línea")) name = lineStr.replace("Línea", "").trim();
-    }
-
-    return {
-      ...suggestion,
-      name: name, // Ahora cada tarjeta tendrá su nombre correcto "Línea 20", "Línea 72"
-      description: desc, // Solo el destino relevante
-      scheduleInfo: cleanLoc, // La dirección limpia compartida
-      type: suggestion.type || "bus",
-      isActive: true,
-    };
-  });
-};
-
-const parseLineNumber = (rawName: string) => {
-  if (!rawName) return "?";
-  const match = rawName.match(/(\d+)/);
-  return match ? match[0] : rawName.charAt(0).toUpperCase();
-};
-
-const cleanAddress = (scheduleInfo: string, description: string) => {
-  // Prioridad 1: Texto entre paréntesis (Suele ser la calle real)
-  const addressMatch = description?.match(/\((.*?)\)/);
-  // Evitar capturar "(Plaza Belgrano)" si tenemos una dirección antes
-  // Buscamos algo que parezca dirección con números
-  if (addressMatch && /\d/.test(addressMatch[1])) return addressMatch[1];
-
-  // Prioridad 2: Limpiar el string de "📍 Parada a Xm"
-  if (description?.includes("📍")) {
-    return description.split("•")[0].replace("📍", "").trim();
-  }
-
-  // Fallback
-  return scheduleInfo || "Parada cercana";
-};
-
-// --- VISUAL STYLES ---
-const PRIVATE_TYPES = [
-  { id: "taxi", label: "Taxi / Remis", icon: Car },
-  { id: "transfer", label: "Transfer", icon: Plane },
-  { id: "rental", label: "Rent a Car", icon: Key },
-  { id: "other", label: "Otro", icon: Info },
-];
-
-const getPublicTransportStyles = (type: string) => {
-  switch (type) {
-    case "train":
-    case "subway":
-      return {
-        bg: "bg-indigo-100 dark:bg-indigo-900/40",
-        text: "text-indigo-700 dark:text-indigo-300",
-        icon: Train,
-        label: "Tren/Subte",
-      };
-    case "bus":
-    default:
-      return {
-        bg: "bg-orange-100 dark:bg-orange-900/40",
-        text: "text-orange-700 dark:text-orange-300",
-        icon: Bus,
-        label: "Colectivo",
-      };
-  }
-};
+import { explodeMultiLineSuggestion } from "@/lib/transport-utils";
+import { PublicTransportCard } from "./transport/PublicTransportCard";
+import { PrivateTransportCard } from "./transport/PrivateTransportCard";
 
 interface TransportTabProps {
   initialCity?: string;
@@ -157,8 +18,7 @@ export function TransportSection({
   initialCity,
   propertyId,
 }: TransportTabProps) {
-  const { control, register, watch, setValue } =
-    useFormContext<PropertyFormData>();
+  const { control, watch } = useFormContext<PropertyFormData>();
 
   const {
     fields: transportFields,
@@ -229,10 +89,12 @@ export function TransportSection({
                     if (suggestions && suggestions.length > 0) {
                       // AQUÍ ESTÁ LA MAGIA: Flattening & Exploding
                       // Convertimos [SuggestionCombined] -> [Line20, Line72, ...]
-                      const explodedItems = suggestions.flatMap((s) =>
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const explodedItems = suggestions.flatMap((s: any) =>
                         explodeMultiLineSuggestion(s),
                       );
 
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       explodedItems.forEach((item: any) =>
                         appendTransport(item),
                       );
@@ -267,184 +129,12 @@ export function TransportSection({
               const type = watch(`transport.${index}.type`) || "bus";
               if (!["bus", "train", "subway"].includes(type)) return null;
 
-              const isVisible = watch(`transport.${index}.isActive`);
-
-              // Como ya separamos las tarjetas, rawName debería ser "Línea 20"
-              const styles = getPublicTransportStyles(type);
-
               return (
-                <Card
+                <PublicTransportCard
                   key={field.id}
-                  className={cn(
-                    "group relative overflow-hidden transition-all duration-300 border",
-                    isVisible
-                      ? "border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-zinc-300 bg-white dark:bg-zinc-950"
-                      : "border-zinc-100 dark:border-zinc-900 bg-zinc-50/50 opacity-70",
-                  )}
-                >
-                  <CardContent className="p-0 flex flex-col sm:flex-row">
-                    {/* Badge Columna Izquierda */}
-                    <div
-                      className={cn(
-                        "w-full sm:w-28 flex flex-row sm:flex-col items-center justify-center sm:justify-center p-3 sm:p-4 gap-2 border-b sm:border-b-0 sm:border-r border-zinc-100 dark:border-zinc-800",
-                        isVisible
-                          ? "bg-zinc-50/50 dark:bg-zinc-900/50"
-                          : "bg-transparent",
-                      )}
-                    >
-                      <div className="flex items-center justify-center gap-3 sm:block">
-                        <div className="relative flex justify-center">
-                          <div
-                            className={cn(
-                              "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm border border-black/5 dark:border-white/10 overflow-hidden",
-                              isVisible
-                                ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
-                                : "bg-zinc-200 text-zinc-400",
-                            )}
-                          >
-                            <Input
-                              {...register(`transport.${index}.name` as const)}
-                              placeholder="#"
-                              className={cn(
-                                "w-full h-full border-0 bg-transparent text-center p-0 shadow-none focus-visible:ring-0",
-                                "text-lg sm:text-2xl font-bold tracking-tight placeholder:text-zinc-300 dark:placeholder:text-zinc-600",
-                                isVisible
-                                  ? "text-zinc-900 dark:text-white"
-                                  : "text-zinc-400",
-                              )}
-                            />
-                          </div>
-                        </div>
-                        <Badge
-                          variant="secondary"
-                          className={cn(
-                            "text-[9px] uppercase tracking-wider font-bold px-2 sm:mt-2",
-                            styles.bg,
-                            styles.text,
-                          )}
-                        >
-                          {styles.label}
-                        </Badge>
-                      </div>
-
-                      <div className="sm:hidden">
-                        <Switch
-                          checked={isVisible}
-                          onCheckedChange={(c) =>
-                            setValue(`transport.${index}.isActive`, c)
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    {/* Info Central */}
-                    <div className="flex-1 p-3 sm:p-5 flex flex-col justify-center gap-3 sm:gap-5">
-                      {/* Parada */}
-                      <div className="flex items-start gap-3 relative">
-                        <div className="absolute top-3 left-[5px] w-0.5 h-10 bg-gradient-to-b from-zinc-200 to-transparent dark:from-zinc-700" />
-
-                        <div className="mt-1 relative z-10">
-                          <div className="w-3 h-3 rounded-full bg-zinc-200 dark:bg-zinc-700 ring-2 ring-white dark:ring-zinc-950 flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500" />
-                          </div>
-                        </div>
-                        <div className="flex-1 -mt-0.5 min-w-0">
-                          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-0.5">
-                            Parada / Estación
-                          </p>
-                          <div className="flex items-center gap-2">
-                            {/* Input de Parada (Ahora editable y limpio) */}
-                            <Input
-                              {...register(
-                                `transport.${index}.scheduleInfo` as const,
-                              )}
-                              className="h-auto py-0 px-0 border-0 bg-transparent text-sm font-semibold text-zinc-800 dark:text-zinc-200 focus-visible:ring-0 placeholder:text-zinc-300 w-full min-w-0"
-                              placeholder="Ubicación de parada"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Recorrido + Recomendación */}
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <div className="mt-3">
-                            <CornerDownRight
-                              className={cn(
-                                "w-4 h-4",
-                                isVisible
-                                  ? "text-brand-void dark:text-brand-copper"
-                                  : "text-zinc-300",
-                              )}
-                            />
-                          </div>
-                          <div className="flex-1 group/input min-w-0">
-                            <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block group-focus-within/input:text-brand-void dark:group-focus-within/input:text-brand-copper transition-colors">
-                              Recorrido / Destinos
-                            </Label>
-                            <Input
-                              {...register(
-                                `transport.${index}.description` as const,
-                              )}
-                              placeholder="Ej: Centro Cívico, Puerto Pañuelo..."
-                              className="border-0 border-b border-zinc-200 dark:border-zinc-800 bg-transparent rounded-none px-0 h-auto py-1 shadow-none focus-visible:ring-0 focus-visible:border-brand-void dark:focus-visible:border-brand-copper font-medium text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 w-full min-w-0"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Recomendación (Mapped to priceInfo) */}
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <div className="mt-3">
-                            <Sparkles className="w-4 h-4 text-amber-400" />
-                          </div>
-                          <div className="flex-1 group/input min-w-0">
-                            <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block group-focus-within/input:text-amber-500 transition-colors">
-                              Recomendación (Opcional)
-                            </Label>
-                            <Input
-                              {...register(
-                                `transport.${index}.priceInfo` as const,
-                              )}
-                              placeholder="Ej: Llevar tarjeta SUBE"
-                              className="border-0 border-b border-zinc-200 dark:border-zinc-800 bg-transparent rounded-none px-0 h-auto py-1 shadow-none focus-visible:ring-0 focus-visible:border-amber-500 font-medium text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 w-full min-w-0"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Acciones Desktop */}
-                    <div className="hidden sm:flex flex-col items-center justify-between p-3 border-l border-zinc-100 dark:border-zinc-800 w-16 bg-zinc-50/30 dark:bg-zinc-900/10">
-                      <div className="mt-2">
-                        <Switch
-                          checked={isVisible}
-                          onCheckedChange={(checked) =>
-                            setValue(`transport.${index}.isActive`, checked)
-                          }
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => removeTransport(index)}
-                        className="mb-2 p-2 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Mobile Delete */}
-                    <div className="sm:hidden border-t border-zinc-100 dark:border-zinc-800 p-2 flex justify-end bg-zinc-50/50">
-                      <button
-                        type="button"
-                        onClick={() => removeTransport(index)}
-                        className="flex items-center gap-2 text-xs text-red-500 px-3 py-1.5"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" /> Eliminar línea
-                      </button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  index={index}
+                  onRemove={removeTransport}
+                />
               );
             })}
 
@@ -459,7 +149,7 @@ export function TransportSection({
                   Sin transporte público
                 </h4>
                 <p className="text-xs text-zinc-500 mt-1">
-                  Usa "Smart Discovery" para detectar líneas.
+                  Usa &quot;Smart Discovery&quot; para detectar líneas.
                 </p>
               </div>
             )}
@@ -494,106 +184,21 @@ export function TransportSection({
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {transportFields.map((field, index) => {
+              // Note: using watch inside map is okay for this scale, but componentizing helps pref.
+              // We do look up type to decide if we render.
+              // Actually, we can check field content if we didn't rely on 'watch' for filtering.
+              // But 'type' is in the field object usually? 'field' from useFieldArray has default values?
+              // 'field' has the values at the time of mounting usually, but watch is safer for reactive updates.
               const currentType = watch(`transport.${index}.type`);
               if (["bus", "train", "subway"].includes(currentType || ""))
                 return null;
 
               return (
-                <Card
+                <PrivateTransportCard
                   key={field.id}
-                  className="relative group overflow-hidden border-zinc-200 dark:border-zinc-800 transition-all hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm"
-                >
-                  <CardContent className="p-5 space-y-5">
-                    {/* Selector Visual */}
-                    <div className="space-y-2">
-                      <Label className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">
-                        Tipo de Servicio
-                      </Label>
-                      <div className="grid grid-cols-4 gap-2">
-                        {PRIVATE_TYPES.map((typeOption) => {
-                          const isSelected = currentType === typeOption.id;
-                          const Icon = typeOption.icon;
-                          return (
-                            <button
-                              key={typeOption.id}
-                              type="button"
-                              onClick={() =>
-                                setValue(
-                                  `transport.${index}.type`,
-                                  typeOption.id,
-                                )
-                              }
-                              className={cn(
-                                "flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg border text-[10px] font-medium transition-all",
-                                isSelected
-                                  ? "bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-black dark:border-white shadow-sm"
-                                  : "bg-transparent border-zinc-100 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900",
-                              )}
-                            >
-                              <Icon className="w-4 h-4" />
-                              <span className="hidden sm:inline">
-                                {typeOption.label.split(" ")[0]}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Inputs */}
-                    <div className="space-y-4">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">
-                          Nombre / Empresa
-                        </Label>
-                        <Input
-                          {...register(`transport.${index}.name` as const)}
-                          placeholder="Ej: Remises del Centro"
-                          className="font-semibold text-base border-zinc-200 focus-visible:ring-brand-copper/20"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">
-                            WhatsApp / Teléfono
-                          </Label>
-                          <div className="relative">
-                            <Phone className="absolute left-2.5 top-2.5 w-4 h-4 text-zinc-400" />
-                            <Input
-                              {...register(`transport.${index}.phone` as const)}
-                              placeholder="+54 9 ..."
-                              className="pl-9 text-sm"
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">
-                            Nota (Opcional)
-                          </Label>
-                          <Input
-                            {...register(
-                              `transport.${index}.description` as const,
-                            )}
-                            placeholder="Ej: Solo efectivo"
-                            className="text-sm"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 flex justify-end border-t border-zinc-100 dark:border-zinc-800/50 mt-4">
-                      <button
-                        type="button"
-                        onClick={() => removeTransport(index)}
-                        className="text-xs font-medium text-zinc-400 hover:text-red-600 flex items-center gap-1.5 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Eliminar
-                      </button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  index={index}
+                  onRemove={removeTransport}
+                />
               );
             })}
             {transportFields.filter(
