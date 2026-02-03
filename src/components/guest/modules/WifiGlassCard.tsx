@@ -59,45 +59,59 @@ export function WifiGlassCard({ ssid, password }: WifiGlassCardProps) {
 
           {/* Password Action */}
           {password && (
-            <button
-              onClick={handleCopy}
-              className="flex items-center gap-2 group/btn max-w-full text-left"
-            >
-              <div className="flex items-center gap-1.5 px-2 py-1 -ml-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                <span className="font-mono text-sm text-zinc-500 dark:text-zinc-400 group-hover/btn:text-zinc-800 dark:group-hover/btn:text-zinc-200 transition-colors truncate">
-                  {password}
-                </span>
-                <div className="relative w-3.5 h-3.5 flex items-center justify-center">
-                  <AnimatePresence mode="wait">
-                    {copied ? (
-                      <motion.div
-                        key="check"
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                      >
-                        <Check
-                          className="w-3.5 h-3.5 text-green-500"
-                          strokeWidth={2}
-                        />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="copy"
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                      >
-                        <Copy
-                          className="w-3.5 h-3.5 text-zinc-400 group-hover/btn:text-brand-copper"
-                          strokeWidth={2}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+            <div className="flex flex-col gap-2 mt-2">
+              <button
+                onClick={handleCopy}
+                className="flex items-center gap-2 group/btn max-w-full text-left"
+              >
+                <div className="flex items-center gap-1.5 px-2 py-1 -ml-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                  <span className="font-mono text-sm text-zinc-500 dark:text-zinc-400 group-hover/btn:text-zinc-800 dark:group-hover/btn:text-zinc-200 transition-colors truncate">
+                    {password}
+                  </span>
+                  <div className="relative w-3.5 h-3.5 flex items-center justify-center">
+                    <AnimatePresence mode="wait">
+                      {copied ? (
+                        <motion.div
+                          key="check"
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                        >
+                          <Check
+                            className="w-3.5 h-3.5 text-green-500"
+                            strokeWidth={2}
+                          />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="copy"
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                        >
+                          <Copy
+                            className="w-3.5 h-3.5 text-zinc-400 group-hover/btn:text-brand-copper"
+                            strokeWidth={2}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+
+              <button
+                onClick={() => {
+                  handleCopy();
+                  // Try to open WiFi scheme
+                  window.location.href = wifiString;
+                }}
+                className="w-full flex items-center justify-center gap-2 bg-brand-copper/10 hover:bg-brand-copper/20 text-brand-copper text-xs font-bold py-2 px-4 rounded-xl transition-colors active:scale-95"
+              >
+                <Wifi className="w-4 h-4" />
+                Conectarse al wifi
+              </button>
+            </div>
           )}
         </div>
       </div>

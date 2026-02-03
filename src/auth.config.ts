@@ -11,10 +11,11 @@ export const authConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       
-      // Check if the path is the dashboard, handling internationalized paths (e.g., /es/dashboard)
+      // Check if the path is the dashboard or guest view
       const isOnDashboard = nextUrl.pathname.includes("/dashboard");
-      
-      if (isOnDashboard) {
+      const isOnGuestView = nextUrl.pathname.includes("/stay");
+
+      if (isOnDashboard || isOnGuestView) {
         if (isLoggedIn) return true;
         return false; // Redirect unauthenticated users to login page
       }
