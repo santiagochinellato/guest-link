@@ -122,7 +122,7 @@ export function PropertiesGrid({ initialProperties }: PropertiesGridProps) {
                 </div>
 
                 {/* Secciones Configuradas */}
-                <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5 max-w-[90%]">
+                <div className="absolute bottom-3 left-3 flex items-center bg-black/40 backdrop-blur-md rounded-full p-1 pl-2 pr-2 gap-2 max-w-[90%] overflow-hidden border border-white/10 shadow-sm">
                   {(() => {
                     const sections = prop.sections || {
                       basic: false,
@@ -192,14 +192,14 @@ export function PropertiesGrid({ initialProperties }: PropertiesGridProps) {
                         <div
                           key={section.key}
                           className={cn(
-                            "w-7 h-7 rounded-full backdrop-blur-md border flex items-center justify-center transition-all",
+                            "flex items-center justify-center transition-all",
                             section.isConfigured
-                              ? "bg-brand-copper border-brand-copper/30 text-white shadow-sm"
-                              : "bg-gray-500/60 border-gray-400/20 text-gray-300",
+                              ? "text-brand-copper"
+                              : "text-white/20",
                           )}
                           title={`${section.label}: ${section.isConfigured ? "Configurado" : "Pendiente"}`}
                         >
-                          <Icon className="w-3.5 h-3.5" />
+                          <Icon className="w-4 h-4" />
                         </div>
                       );
                     });

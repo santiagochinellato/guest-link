@@ -99,8 +99,11 @@ export function AccessSection() {
                   <Switch
                     checked={field.value !== undefined && field.value !== null}
                     onCheckedChange={(checked) => {
+                      // Use null to forcefully clear it, or empty string to set it
+                      // checking if schema allows null, if not use undefined
                       field.onChange(checked ? "" : undefined);
                     }}
+                    ref={field.ref}
                   />
                 )}
               />

@@ -21,43 +21,66 @@ interface QrFlyerBuilderProps {
 }
 
 export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
-  const [scale, setScale] = useState(0.8);
+  const [scale, setScale] = useState(0.5);
   const [activeTab, setActiveTab] = useState("design");
   const { setValue } = useFormContext<PropertyFormData>();
   const params = useParams(); // Added hook
   const lang = params?.lang || "es"; // Fallback to 'es' if not found
 
-  const [config, setConfig] = useState<FlyerConfig>({
-    content: {
-      title: initialData?.name || "Welcome Home",
-      subtitle: "Scan to Connect",
-      welcomeMessage:
-        "Escanea el código QR para acceder a la guía de la propiedad, WiFi y recomendaciones locales.",
-      welcomeMessageEn:
-        "Scan this code to access the property guide, WiFi, and local recommendations.",
-      networkName: initialData?.wifiSsid || "Guest-WiFi",
-      networkPassword: initialData?.wifiPassword || "password123",
-      guideUrl: initialData?.slug
-        ? `https://guest-link.com/stay/${initialData.slug}`
-        : "https://guest-link.com",
-      showPassword: true,
-    },
-    branding: {
-      logo: initialData?.coverImageUrl || "/hostlyHorizontal.webp",
-      logoPosition: "center",
-      logoSize: "md",
-      qrStyle: "square",
-      qrColor: "#000000",
-      embedLogoInQr: false,
-    },
-    design: {
-      primaryColor: "#D97706", // Brand Copper
-      secondaryColor: "#1e293b",
-      backgroundColor: "#ffffff",
-      font: "inter",
-      layout: "gradient", // Default to Gradient which will be premium
-      orientation: "vertical",
-    },
+  const [config, setConfig] = useState<FlyerConfig>(() => {
+    // Attempt to load from initialData (saved JSON)
+    if (initialData?.wifiQrCode) {
+      try {
+        const savedConfig = JSON.parse(initialData.wifiQrCode);
+        // Shallow merge to ensure all new fields prevent crashes
+        return {
+          ...savedConfig,
+          content: {
+            ...savedConfig.content,
+            ...(initialData?.wifiSsid && { networkName: initialData.wifiSsid }),
+            ...(initialData?.wifiPassword && {
+              networkPassword: initialData.wifiPassword,
+            }),
+          }, // Prefer current form data for live updates
+        };
+      } catch (e) {
+        console.error("Failed to parse saved flyer config", e);
+      }
+    }
+
+    // Default Config
+    return {
+      content: {
+        title: initialData?.name || "Welcome Home",
+        subtitle: "Scan to Connect",
+        welcomeMessage:
+          "Escanea el código QR para acceder a la guía de la propiedad, WiFi y recomendaciones locales.",
+        welcomeMessageEn:
+          "Scan this code to access the property guide, WiFi, and local recommendations.",
+        networkName: initialData?.wifiSsid || "Guest-WiFi",
+        networkPassword: initialData?.wifiPassword || "password123",
+        guideUrl: initialData?.slug
+          ? `https://guest-link.com/stay/${initialData.slug}`
+          : "https://guest-link.com",
+        showPassword: true,
+      },
+      branding: {
+        logo: initialData?.coverImageUrl || "/hostlyHorizontal.webp",
+        logoPosition: "center",
+        logoSize: "md",
+        qrStyle: "square",
+        qrColor: "#000000",
+        embedLogoInQr: false,
+      },
+      design: {
+        primaryColor: "#D97706", // Brand Copper
+        secondaryColor: "#1e293b",
+        backgroundColor: "#ffffff",
+        font: "inter",
+        layout: "gradient",
+        orientation: "vertical",
+      },
+    };
   });
 
   // Sync config changes to the form data

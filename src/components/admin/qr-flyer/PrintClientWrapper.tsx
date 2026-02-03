@@ -24,6 +24,7 @@ export function PrintClientWrapper({
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         setConfig(parsed);
       } catch (e) {
         console.error("Failed to parse stored config", e);
@@ -54,9 +55,11 @@ export function PrintClientWrapper({
 
   return (
     <div className="w-full h-screen bg-gray-100 flex justify-center items-start overflow-auto p-8 print:p-0 print:bg-white print:h-auto print:overflow-visible">
-      <style jsx global>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @page {
-          size: A4;
+          size: ${config.design.orientation === "horizontal" ? "landscape" : "portrait"};
           margin: 0;
         }
         @media print {
@@ -68,18 +71,16 @@ export function PrintClientWrapper({
             padding: 0;
             background: white;
           }
-          /* Ensure we override any global print hiding if it existed */
           body * {
             visibility: visible;
           }
-          /* Hide everything by default if we were to use the approach of hiding siblings, 
-             but here we are on a dedicated page, so we trust the layout. */
         }
-        /* Hide scrollbars in print */
         ::-webkit-scrollbar {
           display: none;
         }
-      `}</style>
+      `,
+        }}
+      />
 
       {/* Container simulating A4 paper for screen view */}
       <div

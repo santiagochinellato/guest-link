@@ -387,6 +387,8 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
                       initialCity={initialData.city || ""}
                       propertyId={initialData.id}
                     />
+                  ) : activeTab === "flyer" ? (
+                    <FlyerSection propertyId={initialData.id} />
                   ) : (
                     <ActiveComponent />
                   )}

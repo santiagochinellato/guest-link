@@ -32,10 +32,10 @@ export function WifiGlassCard({ ssid, password }: WifiGlassCardProps) {
     <div className="relative group overflow-hidden rounded-3xl border border-white/20 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-sm p-4 select-none">
       <div className="flex items-center gap-5">
         {/* QR Code Section */}
-        <div className="relative shrink-0 w-16 h-16 bg-white rounded-xl overflow-hidden shadow-sm flex items-center justify-center border border-zinc-100 dark:border-zinc-800 p-1">
+        <div className="relative shrink-0 w-20 h-20 bg-white rounded-xl overflow-hidden shadow-sm flex items-center justify-center border border-zinc-100 dark:border-zinc-800 p-1">
           <QRCodeSVG
             value={wifiString}
-            size={56} // 16 * 4 = 64px container - padding
+            size={64} // 16 * 4 = 64px container - padding
             level="M"
             className="w-full h-full"
             marginSize={0}
