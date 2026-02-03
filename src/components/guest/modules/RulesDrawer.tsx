@@ -10,7 +10,7 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Ban, ScrollText } from "lucide-react";
+import { CheckCircle2, Ban, ScrollText, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RulesDrawerProps {
@@ -19,6 +19,10 @@ interface RulesDrawerProps {
   allowed?: (string | { value: string })[];
   prohibited?: (string | { value: string })[];
   houseRules?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  access?: any;
 }
 
 export function RulesDrawer({
@@ -27,6 +31,9 @@ export function RulesDrawer({
   allowed,
   prohibited,
   houseRules,
+  checkInTime,
+  checkOutTime,
+  access,
 }: RulesDrawerProps) {
   const getRuleText = (rule: string | { value: string }) => {
     if (typeof rule === "string") return rule;
@@ -38,14 +45,73 @@ export function RulesDrawer({
         <div className="mx-auto w-full max-w-sm overflow-y-auto">
           <DrawerHeader>
             <DrawerTitle className="text-2xl font-bold text-center">
-              Reglas de la Casa
+              Información y Reglas
             </DrawerTitle>
             <DrawerDescription className="text-center">
-              Normas de convivencia para una estadía feliz
+              Datos de llegada y normas de convivencia
             </DrawerDescription>
           </DrawerHeader>
 
           <div className="p-4 overflow-y-auto pb-8 space-y-6">
+            {/* 1. Arrival & Departure */}
+            {/* <div className="grid grid-cols-2 gap-3">
+              <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-4 text-center">
+                <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider mb-1">
+                  Check-in
+                </p>
+                <p className="text-xl font-bold text-zinc-900 dark:text-white">
+                  {checkInTime || "--:--"}
+                </p>
+              </div>
+              <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-4 text-center">
+                <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider mb-1">
+                  Check-out
+                </p>
+                <p className="text-xl font-bold text-zinc-900 dark:text-white">
+                  {checkOutTime || "--:--"}
+                </p>
+              </div>
+            </div> */}
+
+            {/* 2. Access Section (If exists) */}
+            {access && (access.instructions || access.accessCode) && (
+              <div className="bg-brand-void/5 dark:bg-brand-copper/10 border border-brand-void/10 dark:border-brand-copper/20 rounded-2xl p-4 space-y-3">
+                <h4 className="flex items-center gap-2 text-sm font-bold text-brand-void dark:text-brand-copper uppercase tracking-wider">
+                  <KeyRound className="w-4 h-4" /> Acceso
+                </h4>
+
+                {access.accessCode && (
+                  <div className="flex items-center justify-between bg-white dark:bg-black/50 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                    <span className="text-xs font-medium text-zinc-500">
+                      Código de entrada
+                    </span>
+                    <span className="font-mono font-bold text-lg tracking-widest text-zinc-900 dark:text-white">
+                      {access.accessCode}
+                    </span>
+                  </div>
+                )}
+
+                {access.alarmCode && (
+                  <div className="flex items-center justify-between bg-white dark:bg-black/50 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                    <span className="text-xs font-medium text-zinc-500">
+                      Alarma
+                    </span>
+                    <span className="font-mono font-bold text-lg tracking-widest text-zinc-900 dark:text-white">
+                      {access.alarmCode}
+                    </span>
+                  </div>
+                )}
+
+                {access.instructions && (
+                  <div className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
+                    {access.instructions}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="w-full h-px bg-zinc-100 dark:bg-zinc-800" />
+
             {/* Allowed / Prohibited Grid */}
             <div className="grid grid-cols-2 gap-4">
               {/* Allowed */}
@@ -101,7 +167,7 @@ export function RulesDrawer({
                 <h4 className="flex items-center gap-2 text-xs font-bold text-zinc-900 dark:text-white mb-3">
                   <ScrollText className="w-4 h-4" /> Adicionales
                 </h4>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 whitespace-pre-line leading-relaxed bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-line leading-relaxed bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl">
                   {houseRules}
                 </p>
               </div>

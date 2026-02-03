@@ -178,15 +178,15 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
               <ImageWithFallback src={coverImageUrl} alt={name} />
             </div>
             {/* Gradient Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/90 to-transparent" />
-            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black via-black/60 to-transparent" />
+            <div className="absolute inset-0 bg-black/30" />
 
             {/* Title */}
             <div className="absolute bottom-0 left-0 right-0 p-6 pb-14 z-20">
               <motion.h1
                 initial={{ y: 20 }}
                 animate={{ y: 0 }}
-                className="text-3xl font-bold tracking-tighter text-white leading-tight shadow-sm"
+                className="text-3xl font-bold tracking-tighter text-white leading-tight drop-shadow-md"
               >
                 {name}
               </motion.h1>
@@ -291,6 +291,9 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
         allowed={effectiveAllowed}
         prohibited={effectiveProhibited}
         houseRules={effectiveHouseRules}
+        checkInTime={checkInTime}
+        checkOutTime={checkOutTime}
+        access={safeAccess}
       />
 
       <EmergencyDrawer
