@@ -11,17 +11,10 @@ import {
   DrawerFooter,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import {
-  Copy,
-  Check,
-  Car,
-  ShieldCheck,
-  KeyRound,
-  Footprints,
-} from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Car } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CodeCard } from "./access-details/CodeCard";
+import { AccessSteps } from "./access-details/AccessSteps";
 
 interface AccessDetailsDrawerProps {
   children: React.ReactNode;
@@ -40,17 +33,6 @@ export function AccessDetailsDrawer({
   parkingDetails,
   accessSteps,
 }: AccessDetailsDrawerProps) {
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
-
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedCode(label);
-    toast.success(
-      `${label === "access" ? "Código de acceso" : "Código de alarma"} copiado`,
-    );
-    setTimeout(() => setCopiedCode(null), 2000);
-  };
-
   return (
     <Drawer>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
@@ -74,74 +56,10 @@ export function AccessDetailsDrawer({
               )}
             >
               {/* Door Code */}
-              {accessCode && (
-                <div className="bg-zinc-50 dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 flex flex-col items-center justify-center text-center gap-2 group relative overflow-hidden">
-                  <div className="p-2 bg-white dark:bg-black rounded-full shadow-sm mb-1">
-                    <KeyRound
-                      className="w-5 h-5 text-brand-copper"
-                      strokeWidth={1.5}
-                    />
-                  </div>
-                  <span className="text-xs uppercase font-bold text-zinc-400 tracking-wider">
-                    Puerta
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-mono font-bold tracking-widest text-zinc-900 dark:text-white">
-                      {accessCode}
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute inset-x-0 bottom-0 h-full w-full opacity-0 group-hover:opacity-100 bg-white/50 backdrop-blur-sm transition-opacity flex items-center justify-center gap-2 text-brand-void font-medium"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      copyToClipboard(accessCode, "access");
-                    }}
-                  >
-                    {copiedCode === "access" ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                    {copiedCode === "access" ? "Copiado" : "Copiar"}
-                  </Button>
-                </div>
-              )}
+              {accessCode && <CodeCard type="access" code={accessCode} />}
 
               {/* Alarm Code */}
-              {alarmCode && (
-                <div className="bg-zinc-50 dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 flex flex-col items-center justify-center text-center gap-2 group relative overflow-hidden">
-                  <div className="p-2 bg-white dark:bg-black rounded-full shadow-sm mb-1">
-                    <ShieldCheck
-                      className="w-5 h-5 text-red-500"
-                      strokeWidth={1.5}
-                    />
-                  </div>
-                  <span className="text-xs uppercase font-bold text-zinc-400 tracking-wider">
-                    Alarma
-                  </span>
-                  <span className="text-xl font-mono font-bold tracking-widest text-zinc-900 dark:text-white">
-                    {alarmCode}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute inset-x-0 bottom-0 h-full w-full opacity-0 group-hover:opacity-100 bg-white/50 backdrop-blur-sm transition-opacity flex items-center justify-center gap-2 text-brand-void font-medium"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      copyToClipboard(alarmCode, "alarm");
-                    }}
-                  >
-                    {copiedCode === "alarm" ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                    {copiedCode === "alarm" ? "Copiado" : "Copiar"}
-                  </Button>
-                </div>
-              )}
+              {alarmCode && <CodeCard type="alarm" code={alarmCode} />}
             </div>
 
             {/* Parking Details */}
@@ -168,31 +86,7 @@ export function AccessDetailsDrawer({
             )}
 
             {/* Access Steps */}
-            {accessSteps && accessSteps.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Footprints
-                    className="w-4 h-4 text-brand-copper"
-                    strokeWidth={1.5}
-                  />
-                  <h4 className="font-bold text-zinc-900 dark:text-zinc-200">
-                    Pasos de llegada
-                  </h4>
-                </div>
-                <div className="relative border-l-2 border-zinc-100 dark:border-zinc-800 ml-2 space-y-6">
-                  {accessSteps.map((step, index) => (
-                    <div key={index} className="pl-6 relative">
-                      <div className="absolute -left-[9px] top-0 w-4 h-4 bg-white dark:bg-black border-2 border-brand-copper rounded-full flex items-center justify-center">
-                        <span className="w-1.5 h-1.5 bg-brand-copper rounded-full" />
-                      </div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                        {step.text}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {accessSteps && <AccessSteps steps={accessSteps} />}
 
             <DrawerFooter className="px-0">
               <DrawerClose asChild>

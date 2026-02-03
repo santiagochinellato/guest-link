@@ -22,6 +22,37 @@ import {
   BookOpen,
 } from "lucide-react";
 
+// Category Groups
+export const DINING_CATEGORIES = [
+  "food",
+  "gastronomy",
+  "coffee",
+  "breakfast",
+  "bars",
+  "nightlife",
+];
+
+export const ACTIVITY_CATEGORIES = [
+  "monuments",
+  "sights",
+  "nature",
+  "trails",
+  "shopping",
+  "shops",
+  "culture",
+  "outdoors",
+  "kids",
+];
+
+export const SERVICES_CATEGORIES = [
+  "supermarket",
+  "pharmacy",
+  "banks",
+  "bancos_y_cajeros",
+  "laundry",
+  "essentials",
+];
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const CATEGORY_CONFIG: Record<
   string,
