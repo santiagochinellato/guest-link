@@ -69,7 +69,7 @@ export function WifiGlassCard({ ssid, password }: WifiGlassCardProps) {
                     {password}
                   </span>
                   <div className="relative w-3.5 h-3.5 flex items-center justify-center">
-                    <AnimatePresence mode="wait">
+                    {/* <AnimatePresence mode="wait">
                       {copied ? (
                         <motion.div
                           key="check"
@@ -95,7 +95,7 @@ export function WifiGlassCard({ ssid, password }: WifiGlassCardProps) {
                           />
                         </motion.div>
                       )}
-                    </AnimatePresence>
+                    </AnimatePresence> */}
                   </div>
                 </div>
               </button>
@@ -106,10 +106,10 @@ export function WifiGlassCard({ ssid, password }: WifiGlassCardProps) {
                   // Try to open WiFi scheme
                   window.location.href = wifiString;
                 }}
-                className="w-full flex items-center justify-center gap-2 bg-brand-copper/10 hover:bg-brand-copper/20 text-brand-copper text-xs font-bold py-2 px-4 rounded-xl transition-colors active:scale-95"
+                className="flex w-fit items-center justify-center gap-2 bg-brand-void/10 hover:bg-brand-void/20 text-brand-void text-xs font-bold py-2 px-4 rounded-xl transition-colors active:scale-95"
               >
                 <Wifi className="w-4 h-4" />
-                Conectarse al wifi
+                Copiar Contraseña
               </button>
             </div>
           )}
