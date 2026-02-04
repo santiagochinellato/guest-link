@@ -14,7 +14,11 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
   const isDashboard = pathname?.includes("/dashboard");
 
   useEffect(() => {
-    if (isDashboard) return;
+    // Detect touch device (mobile/tablet) to use native scroll
+    // Lenis is great for desktop mousewheel, but native mobile scroll is best.
+    const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+
+    if (isDashboard || isTouch) return;
 
     const lenis = new Lenis({
       duration: 1.2,
