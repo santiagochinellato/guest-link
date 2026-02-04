@@ -1,7 +1,7 @@
 import { MobileTopBar } from "@/components/admin/mobile-top-bar";
-import { MobileBottomNav } from "@/components/admin/mobile-bottom-nav";
+
 import { Sidebar } from "@/components/admin/sidebar";
-import { cn } from "@/lib/utils";
+import { AdminScrollArea } from "@/components/admin/admin-scroll-area";
 
 export default async function AdminLayout({
   children,
@@ -25,9 +25,7 @@ export default async function AdminLayout({
           <MobileTopBar />
         </div>
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-0">
-          {children}
-        </main>
+        <AdminScrollArea>{children}</AdminScrollArea>
       </div>
     </div>
   );

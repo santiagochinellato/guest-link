@@ -165,7 +165,10 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
           </p>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div
+          className="flex-1 overflow-y-auto custom-scrollbar"
+          data-lenis-prevent
+        >
           <Sidebar
             config={config}
             updateConfig={updateConfig}
@@ -237,7 +240,10 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 overflow-auto flex items-center justify-center p-8 md:p-20 custom-scrollbar relative">
+        <div
+          className="flex-1 overflow-auto flex items-center justify-center p-8 md:p-20 custom-scrollbar relative"
+          data-lenis-prevent
+        >
           {/* Background Grid Pattern (Dot Pattern) */}
           <div
             className="absolute inset-0 opacity-[0.05] pointer-events-none"

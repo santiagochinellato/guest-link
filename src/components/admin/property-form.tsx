@@ -242,8 +242,8 @@ export function PropertyForm({
               className={cn(
                 "bg-white dark:bg-brand-void p-4 md:p-8 rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-sm relative",
                 activeTab === "flyer"
-                  ? ""
-                  : "min-h-[600px] overflow-y-auto pr-2 custom-scrollbar",
+                  ? "p-0 bg-transparent border-0 shadow-none"
+                  : "min-h-[600px]",
               )}
             >
               {activeTab === "basic" && <BasicInfoSection />}

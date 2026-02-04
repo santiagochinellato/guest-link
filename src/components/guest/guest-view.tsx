@@ -5,20 +5,23 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useGuestData } from "@/hooks/useGuestData";
 
 // Modules
-import { GuestHero } from "./modules/GuestHero";
-import { WifiGlassCard } from "./modules/WifiGlassCard";
-import { CheckInAccess } from "./modules/CheckInAccess";
-import { ActionsGrid } from "./modules/ActionsGrid";
-import { HostFab } from "./modules/HostFab";
-import { LocationButton } from "./modules/LocationButton";
-import { RulesDrawer } from "./modules/RulesDrawer";
-import { EmergencyDrawer } from "./modules/EmergencyDrawer";
-import { GuideDrawer } from "./modules/GuideDrawer";
-import { TransportDrawer } from "./modules/TransportDrawer";
+import {
+  GuestHero,
+  WifiGlassCard,
+  CheckInAccess,
+  ActionsGrid,
+  HostFab,
+  LocationButton,
+  RulesDrawer,
+  EmergencyDrawer,
+  GuideDrawer,
+  TransportDrawer,
+} from "./modules";
+
+import { GuestProperty } from "@/types/dtos";
 
 interface GuestViewProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  property: any;
+  property: GuestProperty;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dict: any;
 }

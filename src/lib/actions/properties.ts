@@ -4,7 +4,9 @@ import { db } from "@/db";
 import { properties, recommendations, emergencyContacts, transportInfo, categories } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { PropertyFormSchema, PropertyFormData } from "@/lib/schemas"; // Import from new file
+import { mapPropertyToGuestDTO } from "@/lib/mappers";
+
+
 
 // Schema definitions moved to @/lib/schemas.ts
 
@@ -548,69 +550,15 @@ export async function getPropertyBySlug(slug: string) {
      // Create Category Map for O(1) lookup
      const catMap = new Map(allCategories.map(c => [c.id, c]));
 
-     // Reuse similar return structure but maybe simpler for guest view? 
-     // For now, returning same structure is fine or raw prop.
-     // Let's stick to a clean object for the guest view component.
-     
-     return {
-         success: true,
-         data: {
-             name: prop.name,
-             address: prop.address || "",
-             city: prop.city || "",
-             country: prop.country || "",
-             wifiSsid: prop.wifiSsid,
-             wifiPassword: prop.wifiPassword,
-             wifiQrCode: prop.wifiQrCode || "",
-             // Handle House Rules parsing for Guest View (Object Structure)
-              houseRules: (() => {
-                 const parsed: any = safeJsonParse(prop.houseRules, { text: "" });
-                 return { 
-                    text: parsed.text || "", 
-                    allowed: parsed.allowed || [], 
-                    prohibited: parsed.prohibited || [] 
-                 };
-              })(),
-             image: prop.coverImageUrl,
-             checkIn: prop.checkInTime,
-             checkOut: prop.checkOutTime,
-             latitude: prop.latitude,
-             longitude: prop.longitude,
-              access: (() => {
-                  const parsed: any = safeJsonParse(prop.houseRules);
-                  return {
-                      instructions: parsed.access?.instructions || "",
-                      accessCode: parsed.access?.accessCode || "",
-                      alarmCode: parsed.access?.alarmCode || undefined,
-                      accessSteps: (parsed.access?.accessSteps || []).map((s: string) => ({ text: s })),
-                      hasParking: parsed.access?.hasParking || false,
-                      parkingDetails: parsed.access?.parkingDetails || ""
-                  };
-              })(),
-             recommendations: recs.map(r => {
-                 const cat = r.categoryId ? catMap.get(r.categoryId) : null;
-                 return {
-                    title: r.title,
-                    description: r.description,
-                    formattedAddress: r.formattedAddress,
-                    googleMapsLink: r.googleMapsLink,
-                    latitude: r.latitude, 
-                    longitude: r.longitude,
-                    website: r.website,
-                    phone: r.phone,
-                    openingHours: r.openingHours,
-                    category: cat?.name || "Other",
-                    categoryType: cat?.type // Keep type for filtering/icons
-                 };
-             }),
-             emergencyContacts: emergency,
-             transport: transport,
-             // Parse Host Info from JSON
-             hostName: safeJsonParse(prop.houseRules).host?.name || "",
-             hostImage: safeJsonParse(prop.houseRules).host?.image || "",
-             hostPhone: safeJsonParse(prop.houseRules).host?.phone || "",
-         }
-     };
+      // Join Category Name to Recommendations for Mapper logic
+      const enhancedRecs = recs.map(r => {
+          const cat = r.categoryId ? catMap.get(r.categoryId) : null;
+          return { ...r, categoryName: cat?.name, categoryType: cat?.type };
+      });
+
+      // Use Mapper
+      const propDTO = mapPropertyToGuestDTO(prop, enhancedRecs, emergency, transport);
+      return { success: true, data: propDTO };
 
   } catch (error: any) {
     console.error("Fetch Property By Slug Error:", error);

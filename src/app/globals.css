@@ -93,6 +93,13 @@
 body {
   background-color: var(--background);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  overflow-y: auto; /* Ensure scroll is possible */
+  overscroll-behavior-y: none; /* Recommended for Lenis to prevent bounce conflicts */
+}
+
+html {
+  overflow-y: auto;
+  overscroll-behavior-y: none;
 }
 
 /* Custom Scrollbar - Global */

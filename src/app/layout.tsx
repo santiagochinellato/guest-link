@@ -8,6 +8,7 @@ import {
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
+import { SmoothScrollProvider } from "@/components/providers/smooth-scroll-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jakarta = Plus_Jakarta_Sans({
@@ -29,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning className="lenis lenis-smooth">
       <body
         suppressHydrationWarning
         className={cn(
@@ -47,8 +48,10 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
+          <SmoothScrollProvider>
+            {children}
+            <Toaster />
+          </SmoothScrollProvider>
         </ThemeProvider>
       </body>
     </html>

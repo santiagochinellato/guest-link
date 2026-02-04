@@ -235,9 +235,9 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
   // Desktop: Sidebar + Content.
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-3.5rem)] md:h-screen bg-gray-50 dark:bg-black overflow-hidden font-sans">
+    <div className="flex flex-col lg:flex-row bg-gray-50 dark:bg-black font-sans min-h-full">
       {/* INTERNAL NAVIGATION - Desktop: Sidebar, Mobile: Horizontal Tabs */}
-      <aside className="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-neutral-800 bg-white dark:bg-black flex-shrink-0 flex flex-col h-auto lg:h-full z-10">
+      <aside className="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-neutral-800 bg-white dark:bg-black flex-shrink-0 flex flex-col z-10 lg:min-h-[calc(100vh-4rem)]">
         {/* Sidebar Header - Hidden on Mobile to save space, or kept compact */}
         <div className="p-4 border-b border-gray-100 dark:border-neutral-800 lg:block hidden">
           <button
@@ -331,7 +331,7 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
           </Sheet>
         </div>
 
-        <nav className="hidden lg:flex flex-1 overflow-y-auto p-4 flex-col gap-8 custom-scrollbar items-stretch whitespace-nowrap">
+        <nav className="hidden lg:flex flex-1 p-4 flex-col gap-8 items-stretch whitespace-nowrap sticky top-0">
           {SETTINGS_TABS.map((category) => (
             <div key={category.category} className="flex flex-col gap-2">
               <h3 className="text-xs font-semibold text-gray-400 dark:text-neutral-500 uppercase tracking-wider mb-2 px-2">
@@ -365,9 +365,9 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col h-full relative overflow-hidden">
-        {/* Scrollable Form Area */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 custom-scrollbar pb-48">
+      <main className="flex-1 flex flex-col relative">
+        {/* Form Area - Allow it to grow naturally */}
+        <div className="flex-1 p-4 md:p-8 lg:p-12 pb-48">
           <div className="max-w-6xl mx-auto">
             <FormProvider {...form}>
               <form
@@ -403,8 +403,8 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
         <div
           className={cn(
             "z-20",
-            "lg:absolute lg:bottom-6 lg:right-6 lg:left-auto lg:top-auto lg:w-auto lg:transform-none lg:bg-transparent lg:border-none", // Desktop: Floating Pill
-            "fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-black border-t border-gray-100 dark:border-neutral-800", // Mobile: Fixed Bar background
+            "lg:sticky lg:bottom-6 lg:self-end lg:mr-6 lg:w-auto", // Desktop: Sticky Pill
+            "fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-black border-t border-gray-100 dark:border-neutral-800 lg:bg-transparent lg:border-none", // Mobile
           )}
         >
           <button
