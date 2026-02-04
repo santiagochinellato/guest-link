@@ -9,6 +9,7 @@ import { mapPropertyToGuestDTO } from "@/lib/mappers";
 
 
 // Schema definitions moved to @/lib/schemas.ts
+import { PropertyFormData, PropertyFormSchema } from "@/lib/schemas";
 
 // Helper for safe JSON parsing
 const safeJsonParse = (str: string | null | undefined, fallback = {}) => {
