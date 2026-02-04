@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning className="lenis lenis-smooth">
+    <html lang="es" suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className={cn(
