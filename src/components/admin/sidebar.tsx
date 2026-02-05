@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  CalendarCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -16,6 +17,7 @@ import { signOut } from "next-auth/react";
 
 const NAV_ITEMS = [
   { label: "Panel de control", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Reservas", href: "/dashboard/reservations", icon: CalendarCheck },
 
   // { label: "Analytics", href: "/dashboard/analytics", icon: BarChart2 },
   // { label: "Settings", href: "/dashboard/settings", icon: Settings },

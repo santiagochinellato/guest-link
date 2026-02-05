@@ -80,6 +80,7 @@ export const properties = pgTable("properties", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   status: text("status").default("draft"), // active, draft, archived
+  syncApiKey: text("sync_api_key").unique(), // Key for extension synchronization
 });
 
 // Relations for properties
@@ -88,6 +89,7 @@ export const propertiesRelations = relations(properties, ({ many }) => ({
   recommendations: many(recommendations),
   emergencyContacts: many(emergencyContacts),
   transportInfo: many(transportInfo),
+  reservations: many(reservations),
 }));
 
 export const categories = pgTable("categories", {
@@ -147,6 +149,30 @@ export const recommendationsRelations = relations(recommendations, ({ one }) => 
   category: one(categories, {
     fields: [recommendations.categoryId],
     references: [categories.id],
+  }),
+}));
+
+export const reservations = pgTable("reservations", {
+  id: serial("id").primaryKey(),
+  propertyId: integer("property_id").references(() => properties.id),
+  guestName: text("guest_name").notNull(),
+  reservationCode: text("reservation_code").notNull(),
+  checkIn: text("check_in").notNull(), // ISO Date String
+  checkOut: text("check_out").notNull(), // ISO Date String
+  status: text("status").notNull(), // confirmed, cancelled, pending
+  totalPrice: real("total_price"),
+  currency: text("currency"),
+  platform: text("platform").notNull(), // booking, airbnb
+  listingName: text("listing_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Relations for reservations
+export const reservationsRelations = relations(reservations, ({ one }) => ({
+  property: one(properties, {
+    fields: [reservations.propertyId],
+    references: [properties.id],
   }),
 }));
 
