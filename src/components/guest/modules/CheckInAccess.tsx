@@ -62,8 +62,8 @@ export function CheckInAccess({
         </div>
 
         {/* Helper Badge */}
-        <div className="mt-2 flex justify-center">
-          <span className="text-[10px] font-medium text-brand-copper bg-brand-copper/10 px-2 py-2 rounded-full">
+        <div className="mt-2 mb-2 flex justify-center">
+          <span className="text-[14px] font-medium text-brand-copper bg-brand-copper/30 px-4 py-2 rounded-lg">
             Toca para más información
           </span>
         </div>

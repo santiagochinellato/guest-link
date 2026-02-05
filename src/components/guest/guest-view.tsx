@@ -17,6 +17,7 @@ import {
   GuideDrawer,
   TransportDrawer,
 } from "./modules";
+import { GuestWelcomeScreen } from "./GuestWelcomeScreen";
 
 import { GuestProperty } from "@/types/dtos";
 
@@ -63,110 +64,120 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
   const [isEmergencyOpen, setIsEmergencyOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isTransportOpen, setIsTransportOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black font-sans selection:bg-brand-copper/20">
       <AnimatePresence mode="wait">
-        <motion.div
-          key="home"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0, x: -20 }}
-          className="pb-24"
-        >
-          {/* 1. HERO ATMOSPHERE */}
-          <GuestHero name={name} coverImage={coverImageUrl} />
+        {showWelcome ? (
+          <GuestWelcomeScreen
+            key="welcome"
+            propertyName={name}
+            coverImage={coverImageUrl}
+            onDismiss={() => setShowWelcome(false)}
+          />
+        ) : (
+          <motion.div
+            key="home"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="pb-24"
+          >
+            {/* 1. HERO ATMOSPHERE */}
+            <GuestHero name={name} coverImage={coverImageUrl} />
 
-          {/* 2. UTILITY SECTION (Floating slightly over hero) */}
-          <div className="relative z-10 px-4 -mt-8">
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <CheckInAccess
-                checkInTime={checkInTime}
-                checkOutTime={checkOutTime}
-                accessCode={effectiveAccessCode}
-                alarmCode={effectiveAlarmCode}
-                hasParking={effectiveHasParking}
-                parkingDetails={effectiveParkingDetails}
-                accessSteps={effectiveAccessSteps}
-              />
+            {/* 2. UTILITY SECTION (Floating slightly over hero) */}
+            <div className="relative z-10 px-4 -mt-8">
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <CheckInAccess
+                  checkInTime={checkInTime}
+                  checkOutTime={checkOutTime}
+                  accessCode={effectiveAccessCode}
+                  alarmCode={effectiveAlarmCode}
+                  hasParking={effectiveHasParking}
+                  parkingDetails={effectiveParkingDetails}
+                  accessSteps={effectiveAccessSteps}
+                />
 
-              <WifiGlassCard ssid={wifiSsid} password={wifiPassword} />
+                <WifiGlassCard ssid={wifiSsid} password={wifiPassword} />
 
-              <LocationButton onClick={openLocation} address={address} />
-            </motion.div>
+                <LocationButton onClick={openLocation} address={address} />
+              </motion.div>
 
-            {/* 3. NAVIGATION GRID */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <ActionsGrid
-                onOpenRules={() => setIsRulesOpen(true)}
-                onOpenGuide={() => setIsGuideOpen(true)}
-                onOpenTransport={() => setIsTransportOpen(true)}
-                onOpenEmergency={() => setIsEmergencyOpen(true)}
-              />
+              {/* 3. NAVIGATION GRID */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <ActionsGrid
+                  onOpenRules={() => setIsRulesOpen(true)}
+                  onOpenGuide={() => setIsGuideOpen(true)}
+                  onOpenTransport={() => setIsTransportOpen(true)}
+                  onOpenEmergency={() => setIsEmergencyOpen(true)}
+                />
 
-              {/* TOP RECOMMENDATIONS PREVIEW */}
-              {topRecommendations.length > 0 && (
-                <div className="mt-8 mb-4">
-                  <div className="flex items-center justify-between mb-4 px-2">
-                    <h3 className="font-bold text-lg text-zinc-900 dark:text-white">
-                      Imperdibles
-                    </h3>
-                    <button
-                      onClick={() => setIsGuideOpen(true)}
-                      className="text-xs font-medium text-brand-copper hover:underline"
-                    >
-                      Ver todo
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    {topRecommendations.map((item: any) => (
-                      <div
-                        key={item.title}
+                {/* TOP RECOMMENDATIONS PREVIEW */}
+                {topRecommendations.length > 0 && (
+                  <div className="mt-8 mb-4">
+                    <div className="flex items-center justify-between mb-4 px-2">
+                      <h3 className="font-bold text-lg text-zinc-900 dark:text-white">
+                        Imperdibles
+                      </h3>
+                      <button
                         onClick={() => setIsGuideOpen(true)}
-                        className="flex items-center gap-3 p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm active:scale-[0.98] transition-all"
+                        className="text-xs font-medium text-brand-copper hover:underline"
                       >
-                        <div className="w-16 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 overflow-hidden">
-                          {/* Placeholder or real image if available */}
-                          <div className="w-full h-full flex items-center justify-center text-zinc-300">
-                            <span className="text-xs">IMG</span>
+                        Ver todo
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      {topRecommendations.map((item: any) => (
+                        <div
+                          key={item.title}
+                          onClick={() => setIsGuideOpen(true)}
+                          className="flex items-center gap-3 p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm active:scale-[0.98] transition-all"
+                        >
+                          <div className="w-16 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 overflow-hidden">
+                            {/* Placeholder or real image if available */}
+                            <div className="w-full h-full flex items-center justify-center text-zinc-300">
+                              <span className="text-xs">IMG</span>
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[10px] font-bold text-brand-copper uppercase tracking-wider">
+                              {item.categoryType}
+                            </span>
+                            <h4 className="font-semibold text-zinc-900 dark:text-white truncate">
+                              {item.title}
+                            </h4>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                              {item.description}
+                            </p>
                           </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[10px] font-bold text-brand-copper uppercase tracking-wider">
-                            {item.categoryType}
-                          </span>
-                          <h4 className="font-semibold text-zinc-900 dark:text-white truncate">
-                            {item.title}
-                          </h4>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                            {item.description}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </motion.div>
-          </div>
+                )}
+              </motion.div>
+            </div>
 
-          {/* 4. FAB */}
-          <HostFab
-            hostImage={hostImage}
-            hostPhone={hostPhone}
-            hostName={hostName}
-          />
-        </motion.div>
+            {/* 4. FAB */}
+            <HostFab
+              hostImage={hostImage}
+              hostPhone={hostPhone}
+              hostName={hostName}
+            />
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* DRAWERS */}
