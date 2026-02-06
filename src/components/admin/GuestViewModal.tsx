@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Copy, Check, Key, Mail, Phone, MessageCircle, ExternalLink, FileText, Loader2 } from "lucide-react";
+import { Copy, Check, Key, Mail, Phone, MessageCircle, ExternalLink, FileText, Loader2, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +14,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { generateGuestToken } from "@/lib/actions/guest-tokens";
 import { updateReservationContact } from "@/lib/actions/reservations";
+import { GUEST_LANGUAGES } from "@/db/schema";
 import { toast } from "sonner";
 import { parseGuestInfo } from "@/lib/utils/guest-info";
 import { cn } from "@/lib/utils";
@@ -60,10 +68,21 @@ function getAccessCode(token: string): string {
   return String(num).padStart(5, "0");
 }
 
-const MESSAGE_TEMPLATES = [
-  {
-    name: "Buenos días",
-    text: `Buenos días! Muchas gracias por elegir #nombrepropiedad.
+const LANGUAGE_LABELS: Record<(typeof GUEST_LANGUAGES)[number], string> = {
+  es: "Español",
+  en: "English",
+  pt: "Português",
+};
+
+/** Plantillas de mensaje por idioma */
+const MESSAGE_TEMPLATES: Record<
+  (typeof GUEST_LANGUAGES)[number],
+  ReadonlyArray<{ name: string; text: string }>
+> = {
+  es: [
+    {
+      name: "Buenos días",
+      text: `Buenos días! Muchas gracias por elegir #nombrepropiedad.
 
 A continuación te acercamos el detalle de tu reserva, cómo llegar, wifi y recomendaciones pensadas para que aproveches al máximo tu estadía.
 
@@ -72,10 +91,10 @@ Tu CÓDIGO DE ACCESO es #codigo
 [link a la web]
 
 ¡Te esperamos!`,
-  },
-  {
-    name: "Hola casual",
-    text: `¡Hola! Gracias por elegir #nombrepropiedad 👋
+    },
+    {
+      name: "Hola casual",
+      text: `¡Hola! Gracias por elegir #nombrepropiedad 👋
 
 Te compartimos tu guía digital con el detalle de tu reserva, cómo llegar, wifi y recomendaciones.
 
@@ -84,22 +103,97 @@ Tu código de acceso es #codigo
 Accede aquí: [link a la web]
 
 ¡Que disfrutes tu estadía!`,
-  },
-  {
-    name: "Check-in directo",
-    text: `Tu guía digital está lista.
+    },
+    {
+      name: "Check-in directo",
+      text: `Tu guía digital está lista.
 
 Check-in: #checkin | Check-out: #checkout
 
 Tu CÓDIGO DE ACCESO es #codigo
 
 🔗 Accede a tu guía: [link a la web]`,
-  },
-] as const;
+    },
+  ],
+  en: [
+    {
+      name: "Good morning",
+      text: `Good morning! Thank you for choosing #nombrepropiedad.
+
+Here is the detail of your reservation, how to get there, wifi and recommendations to make the most of your stay.
+
+Your ACCESS CODE is #codigo
+
+[link a la web]
+
+We look forward to welcoming you!`,
+    },
+    {
+      name: "Hello casual",
+      text: `Hello! Thanks for choosing #nombrepropiedad 👋
+
+We're sharing your digital guide with your reservation details, directions, wifi and recommendations.
+
+Your access code is #codigo
+
+Access here: [link a la web]
+
+Enjoy your stay!`,
+    },
+    {
+      name: "Check-in direct",
+      text: `Your digital guide is ready.
+
+Check-in: #checkin | Check-out: #checkout
+
+Your ACCESS CODE is #codigo
+
+🔗 Access your guide: [link a la web]`,
+    },
+  ],
+  pt: [
+    {
+      name: "Bom dia",
+      text: `Bom dia! Muito obrigado por escolher #nombrepropiedad.
+
+A seguir enviamos o detalhe da sua reserva, como chegar, wifi e recomendações para aproveitar ao máximo sua estadia.
+
+Seu CÓDIGO DE ACESSO é #codigo
+
+[link a la web]
+
+Esperamos por você!`,
+    },
+    {
+      name: "Olá casual",
+      text: `Olá! Obrigado por escolher #nombrepropiedad 👋
+
+Compartilhamos sua guia digital com o detalhe da reserva, como chegar, wifi e recomendações.
+
+Seu código de acesso é #codigo
+
+Acesse aqui: [link a la web]
+
+Aproveite sua estadia!`,
+    },
+    {
+      name: "Check-in direto",
+      text: `Sua guia digital está pronta.
+
+Check-in: #checkin | Check-out: #checkout
+
+Seu CÓDIGO DE ACESSO é #codigo
+
+🔗 Acesse sua guia: [link a la web]`,
+    },
+  ],
+};
 
 function GuestViewContent({
   reservation,
   lang,
+  guestLanguage,
+  setGuestLanguage,
   email,
   setEmail,
   phone,
@@ -127,6 +221,8 @@ function GuestViewContent({
 }: {
   reservation: GuestViewReservation;
   lang: string;
+  guestLanguage: (typeof GUEST_LANGUAGES)[number];
+  setGuestLanguage: (v: (typeof GUEST_LANGUAGES)[number]) => void;
   email: string;
   setEmail: (v: string) => void;
   phone: string;
@@ -138,7 +234,7 @@ function GuestViewContent({
   isGenerating: boolean;
   setIsGenerating: (v: boolean) => void;
   isSaving: boolean;
-  saveContact: (email: string, phone: string) => Promise<void>;
+  saveContact: (email: string, phone: string, guestLang?: (typeof GUEST_LANGUAGES)[number]) => Promise<void>;
   scheduleSave: () => void;
   handleBlur: () => void;
   copied: boolean;
@@ -165,7 +261,9 @@ function GuestViewContent({
     [propertyName, accessCode, guestUrl, reservation.checkIn, reservation.checkOut]
   );
 
-  const handleSelectTemplate = (template: (typeof MESSAGE_TEMPLATES)[number]) => {
+  const templates = MESSAGE_TEMPLATES[guestLanguage];
+
+  const handleSelectTemplate = (template: (typeof templates)[number]) => {
     setShareMessage(resolveMessage(template.text));
     toast.success(`Plantilla "${template.name}" aplicada`);
   };
@@ -178,12 +276,13 @@ function GuestViewContent({
       setToken(result.token);
       setExpiresAt(result.expiresAt || null);
       const code = getAccessCode(result.token);
-      const defaultTemplate = MESSAGE_TEMPLATES[0];
+      const guestLink = `${typeof window !== "undefined" ? window.location.origin : ""}/${lang}/stay/token/${result.token}`;
+      const defaultTemplate = templates[0];
       setShareMessage(
         defaultTemplate.text
           .replace(/#nombrepropiedad/g, propertyName)
           .replace(/#codigo/g, code)
-          .replace(/\[link a la web\]/g, `${typeof window !== "undefined" ? window.location.origin : ""}/${lang}/stay/token/${result.token}`)
+          .replace(/\[link a la web\]/g, guestLink)
           .replace(/#checkin/g, formatDate(reservation.checkIn))
           .replace(/#checkout/g, formatDate(reservation.checkOut))
       );
@@ -221,6 +320,34 @@ function GuestViewContent({
       {!showLoading && (
         <div className="space-y-4">
           <div className="flex gap-4 flex-wrap">
+            <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Languages className="w-4 h-4" />
+                Idioma del huésped
+              </Label>
+              <Select
+                value={guestLanguage}
+                onValueChange={(v) => {
+                  const newLang = v as (typeof GUEST_LANGUAGES)[number];
+                  setGuestLanguage(newLang);
+                  saveContact(email, phone, newLang);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GUEST_LANGUAGES.map((l) => (
+                    <SelectItem key={l} value={l}>
+                      {LANGUAGE_LABELS[l]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Define el idioma de las plantillas y de la guía.
+              </p>
+            </div>
             <div className="flex flex-col gap-2 flex-1 min-w-[200px]">
               <Label className="text-sm font-medium flex items-center gap-2">
                 <Mail className="w-4 h-4" />
@@ -342,7 +469,7 @@ function GuestViewContent({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {MESSAGE_TEMPLATES.map((tpl) => (
+            {templates.map((tpl) => (
               <Button
                 key={tpl.name}
                 variant="outline"
@@ -408,6 +535,11 @@ export function GuestViewModal({
   reservation,
   lang = "es",
 }: GuestViewModalProps) {
+  const guestLangInit =
+    reservation.guestLanguage && GUEST_LANGUAGES.includes(reservation.guestLanguage as (typeof GUEST_LANGUAGES)[number])
+      ? (reservation.guestLanguage as (typeof GUEST_LANGUAGES)[number])
+      : "es";
+  const [guestLanguage, setGuestLanguage] = useState<(typeof GUEST_LANGUAGES)[number]>(guestLangInit);
   const [email, setEmail] = useState(reservation.guestEmail || "");
   const [phone, setPhone] = useState(reservation.guestPhone || "");
   const [token, setToken] = useState<string | null>(null);
@@ -442,9 +574,14 @@ export function GuestViewModal({
   }, []);
 
   useEffect(() => {
+    const lang =
+      reservation.guestLanguage && GUEST_LANGUAGES.includes(reservation.guestLanguage as (typeof GUEST_LANGUAGES)[number])
+        ? (reservation.guestLanguage as (typeof GUEST_LANGUAGES)[number])
+        : "es";
     if (isModal && open) {
       setEmail(reservation.guestEmail || "");
       setPhone(reservation.guestPhone || "");
+      setGuestLanguage(lang);
       setToken(null);
       setExpiresAt(null);
       setShareMessage("");
@@ -452,30 +589,32 @@ export function GuestViewModal({
     if (!isModal) {
       setEmail(reservation.guestEmail || "");
       setPhone(reservation.guestPhone || "");
+      setGuestLanguage(lang);
     }
-  }, [isModal, open, reservation.guestEmail, reservation.guestPhone]);
+  }, [isModal, open, reservation.guestEmail, reservation.guestPhone, reservation.guestLanguage]);
 
   const saveContact = useCallback(
-    async (newEmail: string, newPhone: string) => {
-      if (
-        newEmail.trim() === (reservation.guestEmail || "").trim() &&
-        newPhone.trim() === (reservation.guestPhone || "").trim()
-      ) {
-        return;
-      }
+    async (newEmail: string, newPhone: string, newGuestLang?: (typeof GUEST_LANGUAGES)[number]) => {
+      const emailChanged = newEmail.trim() !== (reservation.guestEmail || "").trim();
+      const phoneChanged = newPhone.trim() !== (reservation.guestPhone || "").trim();
+      const langToSave = newGuestLang ?? guestLanguage;
+      const langChanged = langToSave !== (reservation.guestLanguage ?? "es");
+      if (!emailChanged && !phoneChanged && !langChanged) return;
       setIsSaving(true);
       const result = await updateReservationContact(reservation.id, {
         guestEmail: newEmail.trim() || undefined,
         guestPhone: newPhone.trim() || undefined,
+        guestLanguage: langToSave,
       });
       setIsSaving(false);
       if (result.success) {
         toast.success("Contacto guardado");
+        if (newGuestLang) setGuestLanguage(newGuestLang);
       } else {
         toast.error(result.error || "Error al guardar");
       }
     },
-    [reservation.id, reservation.guestEmail, reservation.guestPhone]
+    [reservation.id, reservation.guestEmail, reservation.guestPhone, reservation.guestLanguage, guestLanguage]
   );
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -518,6 +657,8 @@ export function GuestViewModal({
     <GuestViewContent
       reservation={reservation}
       lang={lang}
+      guestLanguage={guestLanguage}
+      setGuestLanguage={setGuestLanguage}
       email={email}
       setEmail={setEmail}
       phone={phone}
