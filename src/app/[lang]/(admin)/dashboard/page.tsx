@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { getProperties } from "@/lib/actions/properties";
 import { getReservations } from "@/lib/actions/reservations";
 import { getPropertyAnalytics } from "@/lib/actions/analytics";
+import { getLastSyncTime } from "@/lib/actions/sync";
 import { PropertiesGrid } from "@/components/admin/properties-grid";
 import { SyncStatusCard } from "@/components/admin/SyncStatusCard";
 import { PropertyCardWithMetrics } from "@/components/admin/PropertyCardWithMetrics";
@@ -68,6 +69,11 @@ async function PropertyMetricsCard({
       lang={lang}
     />
   );
+}
+
+async function SyncStatusCardWrapper({ propertyId }: { propertyId: number }) {
+  const lastSync = await getLastSyncTime(propertyId);
+  return <SyncStatusCard propertyId={propertyId} lastSync={lastSync} />;
 }
 
 export default async function DashboardPage({
@@ -158,10 +164,7 @@ export default async function DashboardPage({
         {/* Sync Status Card (Replacements QR Scans) */}
         <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center">
           {syncedProperty ? (
-            <SyncStatusCard
-              propertyId={syncedProperty.id}
-              lastSync={null} // TODO: Fetch real last sync time from syncLogs
-            />
+            <SyncStatusCardWrapper propertyId={syncedProperty.id} />
           ) : (
             <div className="bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 h-full flex flex-col justify-center items-center text-center opacity-70">
               <p className="text-sm font-medium text-gray-500">

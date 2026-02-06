@@ -65,12 +65,30 @@ export async function POST(req: NextRequest) {
         ),
       });
 
+      const guestEmail = "guestEmail" in res
+        ? (typeof res.guestEmail === "string" && res.guestEmail.trim() ? res.guestEmail.trim() : null)
+        : existing?.guestEmail ?? null;
+      const guestPhone = "guestPhone" in res
+        ? (typeof res.guestPhone === "string" && res.guestPhone.trim() ? res.guestPhone.trim() : null)
+        : existing?.guestPhone ?? null;
+      const validLang = (l: unknown): l is "es" | "en" | "pt" =>
+        typeof l === "string" && ["es", "en", "pt"].includes(l);
+      const guestLanguage =
+        "guestLanguage" in res && validLang(res.guestLanguage)
+          ? res.guestLanguage
+          : (existing?.guestLanguage && validLang(existing.guestLanguage)
+              ? existing.guestLanguage
+              : "es");
+
       if (existing) {
         // Update
         const updated = await db
           .update(reservations)
           .set({
             guestName: res.guestName,
+            guestEmail,
+            guestPhone,
+            guestLanguage,
             checkIn: res.checkIn,
             checkOut: res.checkOut,
             status: res.status,
@@ -89,6 +107,9 @@ export async function POST(req: NextRequest) {
           .values({
             propertyId: property.id,
             guestName: res.guestName,
+            guestEmail: guestEmail,
+            guestPhone: guestPhone,
+            guestLanguage,
             reservationCode: res.reservationCode,
             checkIn: res.checkIn,
             checkOut: res.checkOut,

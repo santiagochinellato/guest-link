@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { reservations, syncLogs, properties } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -144,5 +144,29 @@ export async function saveSyncedData(apiKey: string, data: any) {
   } catch (error) {
     console.error("Error saving synced data:", error);
     return { success: false, error: "Database error" };
+  }
+}
+
+/**
+ * Get the last successful sync time for a property
+ */
+export async function getLastSyncTime(propertyId: number): Promise<Date | null> {
+  try {
+    const [latestSync] = await db
+      .select()
+      .from(syncLogs)
+      .where(
+        and(
+          eq(syncLogs.propertyId, propertyId),
+          eq(syncLogs.status, 'success')
+        )
+      )
+      .orderBy(desc(syncLogs.completedAt))
+      .limit(1);
+
+    return latestSync?.completedAt || latestSync?.createdAt || null;
+  } catch (error) {
+    console.error("Error fetching last sync time:", error);
+    return null;
   }
 }

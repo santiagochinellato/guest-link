@@ -91,6 +91,11 @@ export const PropertyFormSchema = z.object({
   // Status
   status: z.enum(["active", "draft", "archived"]).optional(),
 
+  // Automations
+  autoSendGuide: z.boolean().optional(),
+  autoCheckoutReminder: z.boolean().optional(),
+  autoReviewRequest: z.boolean().optional(),
+
   // Access & Parking
   accessInstructions: z.string().optional(),
   accessCode: z.string().optional(),

@@ -28,15 +28,29 @@ async function main() {
   const { properties } = await import("@/db/schema");
   const { eq } = await import("drizzle-orm");
 
-  const allProperties = await db.query.properties.findMany();
-
+  // Usar select explícito para evitar columnas que no existen en la DB
+  const allProperties = await db
+    .select({
+      id: properties.id,
+      name: properties.name,
+      syncApiKey: properties.syncApiKey,
+    })
+    .from(properties);
 
   if (allProperties.length === 0) {
     console.log("No existen propiedades en la base de datos.");
     return;
   }
 
-  const property = allProperties[0];
+  // Priorizar San Martín 460 si existe, sino usar la primera
+  const property =
+    allProperties.find(
+      (p) =>
+        p.name?.toLowerCase().includes("san martin") ||
+        p.name?.toLowerCase().includes("san martín") ||
+        p.name?.toLowerCase().includes("460")
+    ) ?? allProperties[0];
+
   console.log(`Propiedad encontrada: ${property.name} (ID: ${property.id})`);
 
   if (property.syncApiKey) {

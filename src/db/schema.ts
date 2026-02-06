@@ -81,6 +81,9 @@ export const properties = pgTable("properties", {
   updatedAt: timestamp("updated_at").defaultNow(),
   status: text("status").default("draft"), // active, draft, archived
   syncApiKey: text("sync_api_key").unique(), // Key for extension synchronization
+  autoSendGuide: boolean("auto_send_guide").default(true),
+  autoCheckoutReminder: boolean("auto_checkout_reminder").default(true),
+  autoReviewRequest: boolean("auto_review_request").default(true),
 });
 
 // Relations for properties
@@ -146,10 +149,18 @@ export const recommendationsRelations = relations(recommendations, ({ one }) => 
   }),
 }));
 
+/** Idiomas soportados para el huésped: define mensajes WhatsApp/email y pantalla de la guía */
+export const GUEST_LANGUAGES = ["es", "en", "pt"] as const;
+export type GuestLanguage = (typeof GUEST_LANGUAGES)[number];
+
 export const reservations = pgTable("reservations", {
   id: serial("id").primaryKey(),
   propertyId: integer("property_id").references(() => properties.id),
   guestName: text("guest_name").notNull(),
+  guestEmail: text("guest_email"),
+  guestPhone: text("guest_phone"),
+  /** Idioma/nacionalidad del huésped: es, en, pt. Define idioma de mensajes y pantalla guía */
+  guestLanguage: text("guest_language").default("es"),
   reservationCode: text("reservation_code").notNull(),
   checkIn: text("check_in").notNull(), // ISO Date String
   checkOut: text("check_out").notNull(), // ISO Date String
@@ -158,15 +169,55 @@ export const reservations = pgTable("reservations", {
   currency: text("currency"),
   platform: text("platform").notNull(), // booking, airbnb
   listingName: text("listing_name"),
+  preArrivalSent: boolean("pre_arrival_sent").default(false),
+  checkoutReminderSent: boolean("checkout_reminder_sent").default(false),
+  reviewRequestSent: boolean("review_request_sent").default(false),
+  notes: text("notes"),
+  amountPaid: real("amount_paid"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const automationLogs = pgTable("automation_logs", {
+  id: serial("id").primaryKey(),
+  reservationId: integer("reservation_id").references(() => reservations.id),
+  type: text("type").notNull(),
+  channel: text("channel").notNull(),
+  status: text("status").notNull(),
+  sentAt: timestamp("sent_at").defaultNow(),
+  error: text("error"),
+});
+
 // Relations for reservations
-export const reservationsRelations = relations(reservations, ({ one }) => ({
+export const reservationsRelations = relations(reservations, ({ one, many }) => ({
   property: one(properties, {
     fields: [reservations.propertyId],
     references: [properties.id],
+  }),
+  automationLogs: many(automationLogs),
+  guestTokens: many(guestTokens),
+}));
+
+export const automationLogsRelations = relations(automationLogs, ({ one }) => ({
+  reservation: one(reservations, {
+    fields: [automationLogs.reservationId],
+    references: [reservations.id],
+  }),
+}));
+
+export const guestTokens = pgTable("guest_tokens", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  reservationId: integer("reservation_id").references(() => reservations.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  usedAt: timestamp("used_at"),
+});
+
+export const guestTokensRelations = relations(guestTokens, ({ one }) => ({
+  reservation: one(reservations, {
+    fields: [guestTokens.reservationId],
+    references: [reservations.id],
   }),
 }));
 
@@ -188,8 +239,6 @@ export const syncLogsRelations = relations(syncLogs, ({ one }) => ({
     references: [properties.id],
   }),
 }));
-
-
 
 // Table for Emergency Contacts
 export const emergencyContacts = pgTable("emergency_contacts", {

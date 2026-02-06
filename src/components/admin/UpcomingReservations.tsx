@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { format, parseISO, isToday, isTomorrow, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { parseGuestInfo } from "@/lib/utils/guest-info";
 
 interface Reservation {
   id: number;
@@ -156,9 +157,21 @@ export function UpcomingReservations({
                           {formatDate(date)} {time}
                         </span>
                       </div>
-                      <p className="text-sm font-semibold text-brand-void dark:text-white truncate mt-0.5">
-                        {reservation.guestName}
-                      </p>
+                      {(() => {
+                        const { name, guestCountText } = parseGuestInfo(reservation.guestName);
+                        return (
+                          <>
+                            <p className="text-sm font-semibold text-brand-void dark:text-white truncate mt-0.5">
+                              {name}
+                            </p>
+                            {guestCountText && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {guestCountText}
+                              </p>
+                            )}
+                          </>
+                        );
+                      })()}
                       {reservation.propertyName && (
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                           {reservation.propertyName}

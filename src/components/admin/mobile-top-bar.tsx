@@ -24,6 +24,7 @@ export function MobileTopBar() {
             src="/hostlyLogo.webp"
             alt="Hostly Logo"
             fill
+            sizes="32px"
             className="object-contain"
             priority
           />

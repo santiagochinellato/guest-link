@@ -1,186 +1,246 @@
-import { getReservations } from "@/lib/actions/reservations";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { Search } from "lucide-react";
-import Image from "next/image";
+import Link from "next/link";
+import { getReservationCountsByProperty } from "@/lib/actions/reservations";
+import { getProperties } from "@/lib/actions/properties";
+import {
+  CalendarCheck,
+  Home,
+  ChevronRight,
+  CircleDot,
+  Clock,
+  CalendarDays,
+  BarChart3,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export default async function ReservationsPage({
-  searchParams,
+export default async function ReservationsMainPage({
+  params,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  params: Promise<{ lang: string }>;
 }) {
-  const { q: query = "" } = await searchParams;
-  const { data: reservations, error } = await getReservations(query);
+  const { lang } = await params;
+  const [countsResult, propertiesResult] = await Promise.all([
+    getReservationCountsByProperty(),
+    getProperties(),
+  ]);
 
-  if (error) {
-    return (
-      <div className="p-8 text-center text-red-500">
-        Error al cargar reservas. Intenta recargar la página.
-      </div>
-    );
-  }
+  const propertyCounts = countsResult.success ? countsResult.data : [];
+  const properties = propertiesResult.success && propertiesResult.data
+    ? propertiesResult.data
+    : [];
 
-  // Helper function to safely format dates
-  const safeDate = (dateStr: string) => {
-    try {
-      // If valid ISO/parseable date
-      const date = new Date(dateStr);
-      if (!isNaN(date.getTime())) {
-        return format(date, "dd MMM yyyy", { locale: es });
-      }
-      return dateStr; // fallback to raw string
-    } catch {
-      return dateStr;
-    }
-  };
+  // Properties without reservations (from getProperties but not in counts)
+  const propertiesWithCounts = new Set(propertyCounts.map((p) => p.id));
+  const propertiesWithoutReservations = properties.filter(
+    (p) => !propertiesWithCounts.has(p.id)
+  );
+
+  const totalActive = propertyCounts.reduce((acc, p) => acc + p.active, 0);
+  const totalUpcoming = propertyCounts.reduce((acc, p) => acc + p.upcoming, 0);
+  const totalCheckInsToday = propertyCounts.reduce(
+    (acc, p) => acc + p.checkInsToday,
+    0);
 
   return (
     <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white font-serif tracking-tight">
-            Reservas
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Gestiona y visualiza las reservas sincronizadas de tus propiedades.
-          </p>
+      <header>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white font-serif tracking-tight">
+          Reservas
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">
+          Gestiona las reservas de cada propiedad. Selecciona una para ver el
+          listado completo.
+        </p>
+      </header>
+
+      {/* Stats Summary */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-brand-void p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Activas
+              </p>
+              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                {totalActive}
+              </p>
+            </div>
+            <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+              <CircleDot className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            </div>
+          </div>
         </div>
+        <div className="bg-white dark:bg-brand-void p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Próximas
+              </p>
+              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                {totalUpcoming}
+              </p>
+            </div>
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-brand-void p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Check-ins hoy
+              </p>
+              <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                {totalCheckInsToday}
+              </p>
+            </div>
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <CalendarDays className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-brand-void p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Propiedades
+              </p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                {properties.length}
+              </p>
+            </div>
+            <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <Home className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+            </div>
+          </div>
+        </div>
+      </section>
 
-        {/* Search Bar - Simple Form that refreshes via URL params */}
-        <form className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            name="q"
-            defaultValue={query}
-            placeholder="Buscar por huésped, código..."
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-brand-void-light focus:outline-none focus:ring-2 focus:ring-brand-copper/20 transition-all text-sm"
-          />
-        </form>
-      </div>
+      {/* Properties with Reservations */}
+      <section>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <CalendarCheck className="w-5 h-5 text-brand-copper" />
+          Tus propiedades
+        </h2>
 
-      {/* Table Card */}
-      <div className="bg-white dark:bg-brand-void border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-900/50 text-left border-b border-gray-200 dark:border-gray-800">
-              <tr>
-                <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">
-                  Huésped
-                </th>
-                <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">
-                  Fechas
-                </th>
-                <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">
-                  Propiedad
-                </th>
-                <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">
-                  Total
-                </th>
-                <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300 text-center">
-                  Estado
-                </th>
-                <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300 text-right">
-                  Plataforma
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {reservations && reservations.length > 0 ? (
-                reservations.map((res) => (
-                  <tr
-                    key={res.id}
-                    className="group hover:bg-gray-50 dark:hover:bg-brand-void-light/30 transition-colors"
-                  >
-                    {/* Guest */}
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-gray-900 dark:text-white">
-                          {res.guestName}
-                        </span>
-                        <span className="text-xs text-gray-500 font-mono mt-0.5">
-                          #{res.reservationCode}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Dates */}
-                    <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
-                      <div className="flex flex-col text-xs font-medium">
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                          IN: {safeDate(res.checkIn)}
-                        </span>
-                        <span className="text-red-500/80 dark:text-red-400/80 mt-0.5">
-                          OUT: {safeDate(res.checkOut)}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Property */}
-                    <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
-                      <p className="truncate max-w-[200px]">
-                        {res.listingName || res.propertyName || "Unknown"}
-                      </p>
-                    </td>
-
-                    {/* Price */}
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white font-mono">
-                      {res.totalPrice} {res.currency}
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4 text-center">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          res.status === "confirmed"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800/30"
-                            : res.status === "cancelled"
-                              ? "bg-red-50 text-red-700 border-red-100 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800/30"
-                              : "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/30"
-                        }`}
-                      >
-                        {res.status === "confirmed" && "Confirmada"}
-                        {res.status === "cancelled" && "Cancelada"}
-                        {res.status === "pending" && "Pendiente"}
-                      </span>
-                    </td>
-
-                    {/* Platform */}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end">
-                        {res.platform === "booking" && (
-                          <span className="bg-[#003580]/10 text-[#003580] dark:bg-[#003580]/30 dark:text-blue-200 px-2 py-1 rounded text-xs font-bold">
-                            Booking
-                          </span>
-                        )}
-                        {res.platform === "airbnb" && (
-                          <span className="bg-[#FF5A5F]/10 text-[#FF5A5F] dark:bg-[#FF5A5F]/30 dark:text-red-200 px-2 py-1 rounded text-xs font-bold">
-                            Airbnb
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-gray-500"
-                  >
-                    <p className="text-base font-medium">
-                      No se encontraron reservas
-                    </p>
-                    <p className="text-sm mt-1">
-                      Sincroniza desde la extensión para ver datos aquí.
-                    </p>
-                  </td>
-                </tr>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {propertyCounts.map((prop) => (
+            <Link
+              key={prop.id}
+              href={`/${lang}/dashboard/reservations/properties/${prop.id}`}
+              className={cn(
+                "block bg-white dark:bg-brand-void rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-6",
+                "hover:shadow-lg hover:border-brand-copper/30 transition-all group"
               )}
-            </tbody>
-          </table>
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-brand-copper transition-colors">
+                    {prop.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    {prop.slug}
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-brand-copper transition-colors flex-shrink-0" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="text-center p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Activas
+                  </p>
+                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                    {prop.active}
+                  </p>
+                </div>
+                <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Próximas
+                  </p>
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                    {prop.upcoming}
+                  </p>
+                </div>
+                <div className="text-center p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Total
+                  </p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    {prop.total}
+                  </p>
+                </div>
+              </div>
+
+              {prop.checkInsToday > 0 && (
+                <div className="mb-4 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-sm text-purple-700 dark:text-purple-300">
+                  📅 {prop.checkInsToday} check-in{prop.checkInsToday > 1 ? "s" : ""} hoy
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
+                <span className="text-sm font-medium text-brand-copper group-hover:text-brand-copper/80">
+                  Ver reservas
+                </span>
+                <BarChart3 className="w-4 h-4 text-gray-400" />
+              </div>
+            </Link>
+          ))}
+
+          {/* Properties without reservations */}
+          {propertiesWithoutReservations.map((prop) => (
+            <Link
+              key={prop.id}
+              href={`/${lang}/dashboard/reservations/properties/${prop.id}`}
+              className={cn(
+                "block bg-white dark:bg-brand-void rounded-xl border border-dashed border-gray-200 dark:border-gray-700 p-6",
+                "hover:border-brand-copper/50 hover:bg-gray-50/50 dark:hover:bg-brand-void-light/30 transition-all group"
+              )}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-brand-copper transition-colors">
+                    {prop.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    Sin reservas sincronizadas
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-brand-copper transition-colors flex-shrink-0" />
+              </div>
+
+              <div className="text-center py-4 text-gray-400 dark:text-gray-500 text-sm">
+                Sincroniza desde la extensión para ver reservas
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
+                <span className="text-sm font-medium text-brand-copper group-hover:text-brand-copper/80">
+                  Ir a reservas
+                </span>
+              </div>
+            </Link>
+          ))}
         </div>
-      </div>
+
+        {properties.length === 0 && (
+          <div className="text-center py-16 bg-white dark:bg-brand-void rounded-xl border border-gray-200 dark:border-gray-800">
+            <Home className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+            <p className="text-gray-500 dark:text-gray-400 font-medium">
+              No tienes propiedades creadas
+            </p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+              Crea una propiedad para empezar a gestionar reservas
+            </p>
+            <Link
+              href={`/${lang}/dashboard/properties/new`}
+              className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-brand-copper text-white rounded-lg hover:bg-brand-copper/90 transition-colors"
+            >
+              Crear propiedad
+            </Link>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

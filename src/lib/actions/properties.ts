@@ -213,7 +213,10 @@ export async function updateProperty(id: number, data: PropertyFormData) {
           }
         }),
         updatedAt: new Date(),
-        status: p.status || "draft"
+        status: p.status || "draft",
+        autoSendGuide: p.autoSendGuide ?? true,
+        autoCheckoutReminder: p.autoCheckoutReminder ?? true,
+        autoReviewRequest: p.autoReviewRequest ?? true,
       }).where(eq(properties.id, id));
 
       // 2. Sync Categories (Optimized)
@@ -447,7 +450,10 @@ export async function getProperty(id: number) {
         hostPhone: safeJsonParse(prop.houseRules).host?.phone || "",
         // Status from DB prop
         status: (prop.status as "active" | "draft" | "archived") || "draft",
-        
+        autoSendGuide: prop.autoSendGuide ?? true,
+        autoCheckoutReminder: prop.autoCheckoutReminder ?? true,
+        autoReviewRequest: prop.autoReviewRequest ?? true,
+
         houseRules: (() => {
           const parsed: any = safeJsonParse(prop.houseRules, { text: "" });
           return parsed.text || prop.houseRules || "";

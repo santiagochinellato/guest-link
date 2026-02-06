@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/send-pre-arrival",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/send-checkout-reminder",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/send-review-request",
+      "schedule": "0 18 * * *"
+    }
+  ]
+}

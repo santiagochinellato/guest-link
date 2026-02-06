@@ -21,6 +21,7 @@ import {
   Check,
   Key,
   Menu,
+  Zap,
 } from "lucide-react";
 
 import {
@@ -45,6 +46,7 @@ import { TransportSection } from "../properties/form-sections/TransportSection";
 import { RulesSection } from "../properties/form-sections/RulesSection";
 import { EmergencySection } from "../properties/form-sections/EmergencySection";
 import { FlyerSection } from "../properties/form-sections/FlyerSection";
+import { AutomationSection } from "../properties/form-sections/AutomationSection";
 
 interface PropertySettingsProps {
   initialData: Partial<PropertyFormData> & { id: number };
@@ -101,6 +103,12 @@ const SETTINGS_TABS = [
   {
     category: "Operativo",
     items: [
+      {
+        id: "automations",
+        label: "Automatizaciones",
+        icon: Zap,
+        component: AutomationSection,
+      },
       {
         id: "access",
         label: "Llegada & Acceso",
@@ -389,6 +397,8 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
                     />
                   ) : activeTab === "flyer" ? (
                     <FlyerSection propertyId={initialData.id} />
+                  ) : activeTab === "automations" ? (
+                    <AutomationSection />
                   ) : (
                     <ActiveComponent />
                   )}
