@@ -2,6 +2,7 @@ import { TrendingUp, Eye, Home, Scan } from "lucide-react";
 import Link from "next/link";
 import { getProperties } from "@/lib/actions/properties";
 import { PropertiesGrid } from "@/components/admin/properties-grid";
+import { SyncStatusCard } from "@/components/admin/SyncStatusCard";
 
 export default async function DashboardPage({
   params,
@@ -17,8 +18,9 @@ export default async function DashboardPage({
     (acc, curr) => acc + (curr.views || 0),
     0,
   );
-  // qrScans is not yet supported in DB
-  const totalScans = 0;
+
+  // Find first property enabled for sync
+  const syncedProperty = properties.find((p) => p.syncApiKey);
 
   return (
     <div className=" mx-auto px-2 md:px-8 py-6 flex flex-col gap-8">
@@ -78,25 +80,26 @@ export default async function DashboardPage({
           </div>
         </div>
 
-        {/* Stat Card 3 */}
-        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-brand-copper/30 transition-colors group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-purple-600 dark:text-purple-400 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
-              <Scan className="w-5 h-5" />
+        {/* Sync Status Card (Replacements QR Scans) */}
+        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center">
+          {syncedProperty ? (
+            <SyncStatusCard
+              propertyId={syncedProperty.id}
+              lastSync={null} // TODO: Fetch real last sync time from syncLogs
+            />
+          ) : (
+            <div className="bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 h-full flex flex-col justify-center items-center text-center opacity-70">
+              <p className="text-sm font-medium text-gray-500">
+                Sincronización no configurada
+              </p>
+              <Link
+                href={`/${lang}/dashboard/properties`}
+                className="text-xs text-brand-copper mt-2 underline"
+              >
+                Configurar en Extension
+              </Link>
             </div>
-            <span className="flex items-center text-emerald-600 text-sm font-medium bg-emerald-50 px-2 py-1 rounded-full">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              +5%
-            </span>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-brand-void dark:text-white">
-              QR Scans
-            </p>
-            <h3 className="text-3xl font-bold text-brand-void dark:text-white mt-1">
-              {totalScans}
-            </h3>
-          </div>
+          )}
         </div>
       </section>
 

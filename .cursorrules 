@@ -1,0 +1,254 @@
+# GUEST-LINK (HOSTLY) PROJECT RULES
+
+## Contexto del Proyecto
+Aplicación web para anfitriones de alojamientos vacacionales (Airbnb, Booking) que permite crear y gestionar guías digitales para huéspedes. Incluye sincronización de reservas, generación de QR, impresión de flyers y recomendaciones geolocalizadas.
+
+## Stack Principal
+- Next.js 16.1.4 (App Router)
+- React 19 (usa 'use' hook y useActionState)
+- TypeScript 5 (strict mode)
+- Tailwind CSS v4 (CSS variables en globals.css, sin tailwind.config.js)
+- Drizzle ORM + PostgreSQL (puerto 5434 en Docker)
+- NextAuth v5 beta (con Drizzle adapter)
+
+## Framework UI
+- Radix UI (accordion, dialog, popover, switch, tabs)
+- Shadcn/ui (via components.json)
+- Framer Motion v12 (animaciones con reducedMotion)
+- Lucide React (iconos únicamente)
+- React Hook Form + Zod (formularios y validación)
+
+## Servicios Externos Integrados
+- Google Maps API + Google Places API + Google Transit API
+- Maplibre GL / react-map-gl / @vis.gl/react-google-maps
+- use-places-autocomplete (autocompletado de direcciones)
+- Foursquare API (descubrimiento de lugares)
+- Overpass API (OpenStreetMap para datos geo)
+- Supabase (parcialmente integrado)
+
+## Internacionalización
+- next-intl para i18n
+- Idiomas soportados: español (es), inglés (en), portugués (pt)
+- Archivos en `src/i18n/locales/`
+- Rutas con prefijo de idioma: `/[lang]/...`
+
+## Estructura de Archivos
+```
+src/
+├── app/
+│   ├── [lang]/                # Rutas con idioma
+│   │   ├── (admin)/           # Área privada: dashboard
+│   │   │   └── dashboard/
+│   │   │       ├── properties/      # CRUD propiedades
+│   │   │       ├── qr-builder/      # Generador QR
+│   │   │       ├── reservations/    # Reservas
+│   │   │       └── settings/
+│   │   ├── (guest)/           # Layout huéspedes
+│   │   ├── flyer/             # Flyer imprimible (html2canvas + jsPDF)
+│   │   ├── stay/[slug]/       # Vista pública huésped
+│   │   ├── login/
+│   │   └── register/
+│   └── api/
+│       ├── auth/[...nextauth]/
+│       ├── reservations/
+│       │   ├── sync/          # POST: sincronización desde extensión
+│       │   └── verify/        # GET: validar syncApiKey
+│       └── ...
+├── components/
+│   ├── admin/                 # Componentes panel admin
+│   ├── guest/                 # Componentes vista huésped
+│   └── ui/                    # Componentes base Shadcn
+├── db/
+│   ├── schema.ts              # Esquema Drizzle
+│   ├── index.ts
+│   └── seed-demo.ts
+├── lib/
+│   ├── actions/               # Server Actions
+│   │   ├── auth.ts
+│   │   ├── properties.ts
+│   │   ├── reservations.ts
+│   │   └── sync.ts
+│   ├── services/              # Integraciones externas
+│   │   ├── google-places.ts
+│   │   ├── google-transit.ts
+│   │   ├── foursquare.ts
+│   │   ├── overpass.ts
+│   │   └── places-service.ts
+│   └── i18n/
+├── i18n/locales/              # Traducciones (es.json, en.json, pt.json)
+├── hooks/
+└── types/
+```
+
+## Modelo de Datos (Drizzle Schema)
+- **users** – Usuarios (NextAuth + roles)
+- **accounts**, **sessions**, **verificationTokens** – Auth
+- **properties** – Propiedades (nombre, slug, WiFi, horarios, syncApiKey)
+- **categories** – Categorías de recomendaciones
+- **recommendations** – Recomendaciones con datos de Google/OSM
+- **reservations** – Reservas sincronizadas desde Booking/Airbnb
+- **syncLogs** – Logs de sincronización
+- **emergencyContacts** – Contactos de emergencia por propiedad
+- **transportInfo** – Taxi, bus, alquiler de autos
+- **busLines**, **busStops**, **busRouteStops** – Transporte público
+
+## Convenciones de Código
+
+### Componentes
+- Server Components por defecto (sin 'use client')
+- 'use client' SOLO en componentes leaf (interactivos, con hooks, eventos)
+- Layouts y páginas principales SIEMPRE Server Components
+- Formularios: React Hook Form + Zod + useActionState (React 19)
+
+### Server Actions
+- Ubicación: `src/lib/actions/`
+- Directiva 'use server' obligatoria
+- Validación con Zod antes de cualquier mutación
+- Error handling explícito con try-catch
+- Retornar objetos tipados `{ success: boolean, data?, error? }`
+
+### Estilos
+- Tailwind CSS v4 únicamente (CSS variables en globals.css)
+- Usar `cn()` de tailwind-merge para clases condicionales
+- NO usar estilos inline
+- Responsive-first (mobile first)
+
+### TypeScript
+- Strict mode habilitado
+- NO usar `any` type (usa `unknown` si es necesario)
+- Interfaces para props de componentes
+- Types para respuestas de API y DB
+
+### Mapas y Geolocalización
+- Usar Maplibre GL para renderizado de mapas
+- Google Places API para autocompletado y búsqueda
+- Google Transit API para transporte público
+- Overpass API como fallback para datos OSM
+
+### Internacionalización
+- TODAS las strings visibles deben usar `useTranslations()` de next-intl
+- Keys de traducción en snake_case: `property.wifi.password`
+- Soporte obligatorio para es, en, pt
+
+### QR y Exportación
+- qrcode.react para generación de QR
+- html2canvas + jsPDF para exportar flyers
+- Generar QR con URL absoluta: `${process.env.NEXT_PUBLIC_URL}/[lang]/stay/[slug]`
+
+## Performance y Optimización
+- Lazy load componentes pesados (mapas, charts) con React.lazy
+- Usar next/image para TODAS las imágenes
+- Server Actions para mutaciones (NO crear API routes CRUD innecesarias)
+- Streaming con Suspense boundaries en páginas con datos lentos
+- Optimistic UI con useOptimistic para mejor UX
+
+## Prohibited Patterns
+❌ 'use client' en layouts o páginas principales
+❌ API routes para CRUD simple (usa Server Actions)
+❌ Fetch sin error handling y loading states
+❌ Hardcoded strings (usa i18n)
+❌ `any` type en TypeScript
+❌ Tailwind classes inline sin `cn()`
+❌ Importar todo Google Maps (lazy load)
+❌ Console.log en producción (usa proper logging)
+
+## Testing y Debug
+- Scripts disponibles: `npm run dev`, `npm run build`, `npm run lint`
+- DB: `npm run db:migrate`, `npm run db:push`, `npm run db:seed`
+- Docker: `docker-compose up` para PostgreSQL en puerto 5434
+- Variables de entorno requeridas: DATABASE_URL, NEXTAUTH_*, GOOGLE_MAPS_API_KEY, GOOGLE_PLACES_API_KEY
+
+## Flujos Críticos del Sistema
+
+### 1. Creación de Propiedad
+Server Action → Validar Zod → Generar slug único → Generar syncApiKey → Insert DB → Revalidate path
+
+### 2. Sincronización de Reservas
+Extensión browser → POST /api/reservations/sync con syncApiKey → Validar key → Parse datos → Upsert reservations → Log en syncLogs
+
+### 3. Vista Huésped Pública
+/[lang]/stay/[slug] → Fetch property + recommendations + transport → SSR → Cache 1 hora → Streaming con Suspense
+
+### 4. Generación de QR
+Dashboard → Input URL + opciones → Generate QR canvas → Download o Print → Opcional: Exportar flyer PDF
+
+## Accessibility
+- Todas las imágenes con `alt` descriptivo
+- Formularios con labels explícitos
+- Keyboard navigation en componentes interactivos
+- ARIA labels en iconos clickeables
+- Focus states visibles (Tailwind ring utilities)
+- Color contrast mínimo WCAG AA
+
+## Security
+- NextAuth session validation en rutas admin
+- syncApiKey único por propiedad (UUID)
+- Rate limiting en API routes de sync
+- Sanitizar inputs de usuario antes de DB
+- CORS configurado para extensión browser
+- No exponer API keys en cliente
+
+## Prioridades en Código Generado
+1. **Corrección funcional** (que funcione según requerimientos)
+2. **Type safety** (TypeScript estricto)
+3. **Performance** (Server Components, lazy loading)
+4. **i18n** (soporte multi-idioma completo)
+5. **Accesibilidad** (WCAG AA)
+6. **DX** (código legible, comentarios en lógica compleja)
+
+---
+
+## Ejemplos de Código Esperado
+
+### Server Action típico
+```typescript
+'use server'
+
+import { z } from 'zod'
+import { revalidatePath } from 'next/cache'
+import { db } from '@/db'
+import { properties } from '@/db/schema'
+
+const schema = z.object({
+  name: z.string().min(3),
+  address: z.string().min(5),
+})
+
+export async function createProperty(formData: FormData) {
+  try {
+    const data = schema.parse({
+      name: formData.get('name'),
+      address: formData.get('address'),
+    })
+    
+    const result = await db.insert(properties).values(data).returning()
+    
+    revalidatePath('/dashboard/properties')
+    return { success: true, data: result[0] }
+  } catch (error) {
+    return { success: false, error: 'Failed to create property' }
+  }
+}
+```
+
+### Componente con i18n
+```typescript
+'use client'
+
+import { useTranslations } from 'next-intl'
+
+export function PropertyCard({ property }) {
+  const t = useTranslations('property')
+  
+  return (
+    <div>
+      <h3>{property.name}</h3>
+      <p>{t('wifi.password')}: {property.wifiPassword}</p>
+    </div>
+  )
+}
+```
+
+---
+
+**IMPORTANTE**: Al generar código, SIEMPRE considera el contexto de este proyecto específico. No generes código genérico de Next.js sin tener en cuenta las integraciones con Google Maps, la estructura i18n, el modelo de datos Drizzle y los flujos de sincronización de reservas.

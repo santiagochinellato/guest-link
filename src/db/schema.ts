@@ -84,13 +84,7 @@ export const properties = pgTable("properties", {
 });
 
 // Relations for properties
-export const propertiesRelations = relations(properties, ({ many }) => ({
-  categories: many(categories),
-  recommendations: many(recommendations),
-  emergencyContacts: many(emergencyContacts),
-  transportInfo: many(transportInfo),
-  reservations: many(reservations),
-}));
+
 
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -176,6 +170,28 @@ export const reservationsRelations = relations(reservations, ({ one }) => ({
   }),
 }));
 
+// ... existing relations ...
+
+export const syncLogs = pgTable("sync_logs", {
+  id: serial("id").primaryKey(),
+  propertyId: integer("property_id").references(() => properties.id),
+  status: text("status").notNull(), // pending, success, error
+  triggeredBy: text("triggered_by").notNull(), // auto, manual
+  log: text("log"),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const syncLogsRelations = relations(syncLogs, ({ one }) => ({
+  property: one(properties, {
+    fields: [syncLogs.propertyId],
+    references: [properties.id],
+  }),
+}));
+
+
+
+// Table for Emergency Contacts
 export const emergencyContacts = pgTable("emergency_contacts", {
   id: serial("id").primaryKey(),
   propertyId: integer("property_id").references(() => properties.id),
@@ -263,4 +279,14 @@ export const busRouteStopsRelations = relations(busRouteStops, ({ one }) => ({
     fields: [busRouteStops.stopId],
     references: [busStops.id],
   }),
+}));
+
+// Final Relations (Moved to end to avoid reference errors)
+export const propertiesRelations = relations(properties, ({ many }) => ({
+  categories: many(categories),
+  recommendations: many(recommendations),
+  emergencyContacts: many(emergencyContacts),
+  transportInfo: many(transportInfo),
+  reservations: many(reservations),
+  syncLogs: many(syncLogs),
 }));

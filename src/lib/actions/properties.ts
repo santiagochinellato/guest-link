@@ -320,6 +320,7 @@ export async function getProperties() {
        longitude: properties.longitude,
        checkInTime: properties.checkInTime,
        checkOutTime: properties.checkOutTime,
+       syncApiKey: properties.syncApiKey,
     })
     .from(properties)
     .orderBy(properties.createdAt);
@@ -361,6 +362,7 @@ export async function getProperties() {
       coverImageUrl: prop.coverImageUrl,
       wifiSsid: prop.wifiSsid,
       houseRules: prop.houseRules,
+      syncApiKey: prop.syncApiKey,
       sections: sectionsMap.get(prop.id) || {
         basic: false,
         location: false,
