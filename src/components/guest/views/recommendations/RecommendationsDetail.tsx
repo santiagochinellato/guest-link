@@ -13,6 +13,7 @@ interface RecommendationsDetailProps {
   recommendations: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDistanceString: (place: any) => string | null;
+  propertyId?: number;
 }
 
 export function RecommendationsDetail({
@@ -21,6 +22,7 @@ export function RecommendationsDetail({
   setActiveCategory,
   recommendations,
   getDistanceString,
+  propertyId,
 }: RecommendationsDetailProps) {
   const TRANSPORT_CATEGORIES = ["bus", "transit", "transfer", "taxi", "rental"];
 
@@ -79,6 +81,7 @@ export function RecommendationsDetail({
                 place={place}
                 index={i}
                 distance={getDistanceString(place)}
+                propertyId={propertyId}
               />
             );
           })}

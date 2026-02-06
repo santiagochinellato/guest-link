@@ -20,6 +20,7 @@ interface GuideDrawerProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   recommendations: any[];
   categories: string[];
+  propertyId?: number;
   propertyLocation?: { lat: number; lng: number };
 }
 
@@ -28,6 +29,7 @@ export function GuideDrawer({
   onOpenChange,
   recommendations,
   categories,
+  propertyId,
   propertyLocation,
 }: GuideDrawerProps) {
   const [activeCategory, setActiveCategory] = useState("");
@@ -76,6 +78,7 @@ export function GuideDrawer({
             categories={categories}
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}
+            propertyId={propertyId}
             propertyLocation={propertyLocation}
           />
         </div>

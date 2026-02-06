@@ -19,6 +19,7 @@ interface RecommendationsOverviewProps {
   useScrollNavigation?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDistanceString: (place: any) => string | null;
+  propertyId?: number;
 }
 
 export function RecommendationsOverview({
@@ -27,6 +28,7 @@ export function RecommendationsOverview({
   setActiveCategory,
   useScrollNavigation,
   getDistanceString,
+  propertyId,
 }: RecommendationsOverviewProps) {
   // Filter categories that actually have recommendations
   const validCategories = useMemo(
@@ -86,6 +88,7 @@ export function RecommendationsOverview({
             icon={Utensils}
             items={topDining}
             getDistanceString={getDistanceString}
+            propertyId={propertyId}
           />
 
           <CategoryCarousel
@@ -93,6 +96,7 @@ export function RecommendationsOverview({
             icon={TreePine}
             items={topActivities}
             getDistanceString={getDistanceString}
+            propertyId={propertyId}
           />
 
           <CategoryCarousel
@@ -100,6 +104,7 @@ export function RecommendationsOverview({
             icon={Zap}
             items={topServices}
             getDistanceString={getDistanceString}
+            propertyId={propertyId}
           />
         </div>
       )}
@@ -125,6 +130,7 @@ export function RecommendationsOverview({
             catKey={catKey}
             items={catRecs}
             getDistanceString={getDistanceString}
+            propertyId={propertyId}
           />
         );
       })}

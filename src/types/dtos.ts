@@ -1,5 +1,6 @@
 
 export interface GuestRecommendation {
+  id?: number;
   title: string;
   description?: string;
   formattedAddress?: string;
@@ -8,6 +9,8 @@ export interface GuestRecommendation {
   longitude?: string;
   website?: string;
   phone?: string;
+  rating?: number;
+  priceRange?: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   openingHours?: any;
   category: string;
@@ -52,6 +55,7 @@ export interface GuestHost {
 }
 
 export interface GuestProperty {
+  id?: number;
   name: string;
   address: string;
   city: string;

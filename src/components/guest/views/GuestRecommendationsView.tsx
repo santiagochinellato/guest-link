@@ -11,6 +11,7 @@ interface GuestRecommendationsViewProps {
   setActiveCategory: (category: string) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useScrollNavigation?: boolean;
+  propertyId?: number;
   propertyLocation?: { lat: number; lng: number };
 }
 
@@ -20,6 +21,7 @@ export function GuestRecommendationsView({
   activeCategory,
   setActiveCategory,
   useScrollNavigation = false,
+  propertyId,
   propertyLocation,
 }: GuestRecommendationsViewProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,6 +76,7 @@ export function GuestRecommendationsView({
           setActiveCategory={setActiveCategory}
           useScrollNavigation={useScrollNavigation}
           getDistanceString={getDistanceString}
+          propertyId={propertyId}
         />
       )}
 
@@ -85,6 +88,7 @@ export function GuestRecommendationsView({
           setActiveCategory={setActiveCategory}
           recommendations={recommendations}
           getDistanceString={getDistanceString}
+          propertyId={propertyId}
         />
       )}
     </div>

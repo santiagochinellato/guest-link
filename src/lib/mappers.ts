@@ -19,6 +19,7 @@ export function mapPropertyToGuestDTO(prop: any, recs: any[], emergency: any[], 
   // Map Recommendations
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recommendations: GuestRecommendation[] = recs.map((r: any) => ({
+    id: r.id,
     title: r.title,
     description: r.description,
     formattedAddress: r.formattedAddress,
@@ -27,8 +28,10 @@ export function mapPropertyToGuestDTO(prop: any, recs: any[], emergency: any[], 
     longitude: r.longitude,
     website: r.website,
     phone: r.phone,
+    rating: r.rating,
+    priceRange: r.priceRange,
     openingHours: r.openingHours,
-    category: r.categoryName || "Other", // Assuming query joins category
+    category: r.categoryName || "Other",
     categoryType: r.categoryType
   }));
 
@@ -53,6 +56,7 @@ export function mapPropertyToGuestDTO(prop: any, recs: any[], emergency: any[], 
   }));
 
   return {
+    id: prop.id,
     name: prop.name,
     address: prop.address || "",
     city: prop.city || "",

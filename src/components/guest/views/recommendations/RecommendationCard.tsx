@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Star, Map as MapIcon } from "lucide-react";
 import { getCategoryConfig } from "@/config/recommendations";
+import { posthog } from "@/lib/posthog";
 
 interface RecommendationCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -10,6 +11,7 @@ interface RecommendationCardProps {
   index: number;
   highlight?: boolean;
   distance?: string | null;
+  propertyId?: number;
   className?: string;
 }
 
@@ -18,9 +20,24 @@ export function RecommendationCard({
   index,
   highlight = false,
   distance,
+  propertyId,
   className,
 }: RecommendationCardProps) {
   const catConfig = getCategoryConfig(place.categoryType);
+
+  const handleClick = () => {
+    if (propertyId) {
+      posthog.capture("recommendation_clicked", {
+        property_id: propertyId,
+        recommendation_id: place.id,
+        recommendation_name: place.title,
+        category: place.categoryType,
+        address: place.formattedAddress,
+        rating: place.rating,
+        price_range: place.priceRange,
+      });
+    }
+  };
 
   // Construct a valid Google Maps URL if one doesn't exist
   const mapsUrl =
@@ -34,6 +51,7 @@ export function RecommendationCard({
     href: mapsUrl,
     target: "_blank",
     rel: "noopener noreferrer",
+    onClick: handleClick,
   };
 
   return (

@@ -13,12 +13,14 @@ interface CategorySectionProps {
   items: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDistanceString?: (place: any) => string | null;
+  propertyId?: number;
 }
 
 export function CategorySection({
   catKey,
   items,
   getDistanceString,
+  propertyId,
 }: CategorySectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const catConfig = getCategoryConfig(catKey);
@@ -50,6 +52,7 @@ export function CategorySection({
               place={place}
               index={i}
               distance={getDistanceString ? getDistanceString(place) : null}
+              propertyId={propertyId}
               className="h-[180px]"
             />
           ),

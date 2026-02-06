@@ -10,6 +10,7 @@ interface CategoryCarouselProps {
   items: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDistanceString?: (place: any) => string | null;
+  propertyId?: number;
 }
 
 export function CategoryCarousel({
@@ -17,6 +18,7 @@ export function CategoryCarousel({
   icon: Icon,
   items,
   getDistanceString,
+  propertyId,
 }: CategoryCarouselProps) {
   if (!items || items.length === 0) return null;
 
@@ -36,6 +38,7 @@ export function CategoryCarousel({
             index={i}
             highlight={true}
             distance={getDistanceString ? getDistanceString(place) : null}
+            propertyId={propertyId}
             className="w-[280px] h-[180px] md:w-[320px] md:h-[180px]"
           />
         ))}

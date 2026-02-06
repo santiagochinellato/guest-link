@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useGuestData } from "@/hooks/useGuestData";
+import { posthog } from "@/lib/posthog";
 
 // Modules
 import {
@@ -66,6 +67,33 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
   const [isTransportOpen, setIsTransportOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
 
+  // Analytics: track guest_guide_viewed when user dismisses welcome
+  useEffect(() => {
+    if (!showWelcome && property.id) {
+      const device =
+        typeof window !== "undefined" && window.innerWidth < 768
+          ? "mobile"
+          : "desktop";
+      posthog.capture("guest_guide_viewed", {
+        property_id: property.id,
+        device,
+      });
+    }
+  }, [showWelcome, property.id]);
+
+  // Analytics: rules_viewed, transport_viewed when drawers open
+  useEffect(() => {
+    if (isRulesOpen && property.id) {
+      posthog.capture("rules_viewed", { property_id: property.id });
+    }
+  }, [isRulesOpen, property.id]);
+
+  useEffect(() => {
+    if (isTransportOpen && property.id) {
+      posthog.capture("transport_viewed", { property_id: property.id });
+    }
+  }, [isTransportOpen, property.id]);
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black font-sans selection:bg-brand-copper/20">
       <AnimatePresence mode="wait">
@@ -104,9 +132,23 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
                   accessSteps={effectiveAccessSteps}
                 />
 
-                <WifiGlassCard ssid={wifiSsid} password={wifiPassword} />
+                <WifiGlassCard
+                  ssid={wifiSsid}
+                  password={wifiPassword}
+                  propertyId={property.id}
+                />
 
-                <LocationButton onClick={openLocation} address={address} />
+                <LocationButton
+                  onClick={() => {
+                    if (property.id) {
+                      posthog.capture("map_opened", {
+                        property_id: property.id,
+                      });
+                    }
+                    openLocation();
+                  }}
+                  address={address}
+                />
               </motion.div>
 
               {/* 3. NAVIGATION GRID */}
@@ -206,6 +248,7 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
         onOpenChange={setIsGuideOpen}
         recommendations={filteredRecommendations}
         categories={categories}
+        propertyId={property.id}
         propertyLocation={
           latitude && longitude
             ? { lat: parseFloat(latitude), lng: parseFloat(longitude) }
@@ -218,6 +261,7 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
         onOpenChange={setIsTransportOpen}
         transportRecommendations={transportRecommendations}
         transportCategories={transportCategories}
+        propertyId={property.id}
       />
     </div>
   );

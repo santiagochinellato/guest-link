@@ -19,6 +19,7 @@ interface TransportDrawerProps {
   transportRecommendations: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transportCategories: any[];
+  propertyId?: number;
 }
 
 export function TransportDrawer({
@@ -26,6 +27,7 @@ export function TransportDrawer({
   onOpenChange,
   transportRecommendations,
   transportCategories,
+  propertyId,
 }: TransportDrawerProps) {
   // Sort categories to put 'bus' first
   const sortedCategories = [...transportCategories].sort((a, b) => {
@@ -57,6 +59,7 @@ export function TransportDrawer({
             activeCategory=""
             setActiveCategory={() => {}}
             useScrollNavigation={true}
+            propertyId={propertyId}
           />
         </div>
 

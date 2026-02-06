@@ -1,18 +1,40 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import html2canvas from "html2canvas";
 import { Download, Printer, RefreshCw } from "lucide-react";
 import { QrFlyer } from "@/components/admin/qr-flyer";
 
-export default function QrBuilderPage() {
-  const flyerRef = useRef<HTMLDivElement>(null);
-  const [config, setConfig] = useState({
+function getInitialConfig(searchParams: URLSearchParams | null) {
+  const name = searchParams?.get("name");
+  const slug = searchParams?.get("slug");
+  const wifi = searchParams?.get("wifi");
+  const lang = searchParams?.get("lang") || "es";
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://guest-link.com";
+
+  if (name && slug) {
+    return {
+      propertyName: decodeURIComponent(name),
+      wifiSsid: wifi ? decodeURIComponent(wifi) : "CasaAzul_Guest",
+      qrValue: `${origin}/${lang}/stay/${decodeURIComponent(slug)}`,
+      accentColor: "#d97706",
+    };
+  }
+
+  return {
     propertyName: "Casa Azul - Ocean View",
     wifiSsid: "CasaAzul_Guest",
     qrValue: "https://guest-link.com/stay/casa-azul",
-    accentColor: "#2563ea",
-  });
+    accentColor: "#d97706",
+  };
+}
+
+export default function QrBuilderPage() {
+  const searchParams = useSearchParams();
+  const flyerRef = useRef<HTMLDivElement>(null);
+  const [config, setConfig] = useState(getInitialConfig(searchParams));
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleDownload = async () => {

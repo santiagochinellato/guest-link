@@ -1,8 +1,74 @@
-import { TrendingUp, Eye, Home, Scan } from "lucide-react";
+import { TrendingUp, Eye, Home } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { getProperties } from "@/lib/actions/properties";
+import { getReservations } from "@/lib/actions/reservations";
+import { getPropertyAnalytics } from "@/lib/actions/analytics";
 import { PropertiesGrid } from "@/components/admin/properties-grid";
 import { SyncStatusCard } from "@/components/admin/SyncStatusCard";
+import { PropertyCardWithMetrics } from "@/components/admin/PropertyCardWithMetrics";
+import { UpcomingReservations } from "@/components/admin/UpcomingReservations";
+import { Skeleton } from "@/components/ui/skeleton";
+
+async function PropertyMetricsGrid({
+  properties,
+  lang,
+}: {
+  properties: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    address: string | null;
+    status: string | null;
+    coverImageUrl?: string | null;
+  }>;
+  lang: string;
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {properties.map((property) => (
+        <Suspense
+          key={property.id}
+          fallback={
+            <PropertyCardWithMetrics
+              property={property}
+              analytics={null}
+              isLoading={true}
+              lang={lang}
+            />
+          }
+        >
+          <PropertyMetricsCard property={property} lang={lang} />
+        </Suspense>
+      ))}
+    </div>
+  );
+}
+
+async function PropertyMetricsCard({
+  property,
+  lang,
+}: {
+  property: {
+    id: number;
+    name: string;
+    slug: string;
+    address: string | null;
+    status: string | null;
+    coverImageUrl?: string | null;
+  };
+  lang: string;
+}) {
+  const analytics = await getPropertyAnalytics(property.id);
+  return (
+    <PropertyCardWithMetrics
+      property={property}
+      analytics={analytics}
+      isLoading={false}
+      lang={lang}
+    />
+  );
+}
 
 export default async function DashboardPage({
   params,
@@ -10,8 +76,17 @@ export default async function DashboardPage({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
-  const result = await getProperties();
-  const properties = result.success && result.data ? result.data : [];
+  const [propertiesResult, reservationsResult] = await Promise.all([
+    getProperties(),
+    getReservations(),
+  ]);
+
+  const properties = propertiesResult.success && propertiesResult.data
+    ? propertiesResult.data
+    : [];
+  const reservations = reservationsResult.success && reservationsResult.data
+    ? reservationsResult.data
+    : [];
 
   const activePropertiesCount = properties.length;
   const totalViews = properties.reduce(
@@ -117,7 +192,12 @@ export default async function DashboardPage({
             <span>Agregar Propiedad</span>
           </Link>
         </div>
-        <PropertiesGrid initialProperties={properties as any} />
+        <PropertyMetricsGrid properties={properties} lang={lang} />
+      </section>
+
+      {/* Upcoming Reservations Section */}
+      <section className="mt-8">
+        <UpcomingReservations reservations={reservations} lang={lang} />
       </section>
     </div>
   );

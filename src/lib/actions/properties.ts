@@ -534,6 +534,7 @@ export async function getPropertyBySlug(slug: string) {
                 website: true,
                 phone: true,
                 openingHours: true,
+                priceRange: true,
                 categoryId: true, // Needed for manual mapping
              }
          }),

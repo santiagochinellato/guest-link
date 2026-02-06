@@ -5,13 +5,19 @@ import { Wifi, Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
+import { posthog } from "@/lib/posthog";
 
 interface WifiGlassCardProps {
   ssid?: string | null;
   password?: string | null;
+  propertyId?: number;
 }
 
-export function WifiGlassCard({ ssid, password }: WifiGlassCardProps) {
+export function WifiGlassCard({
+  ssid,
+  password,
+  propertyId,
+}: WifiGlassCardProps) {
   const [copied, setCopied] = useState(false);
 
   if (!ssid) return null;
@@ -23,6 +29,9 @@ export function WifiGlassCard({ ssid, password }: WifiGlassCardProps) {
   const handleCopy = () => {
     if (!password) return;
     navigator.clipboard.writeText(password);
+    if (propertyId) {
+      posthog.capture("wifi_password_copied", { property_id: propertyId });
+    }
     setCopied(true);
     toast.success("Contraseña copiada al portapapeles");
     setTimeout(() => setCopied(false), 2000);
