@@ -26,9 +26,11 @@ interface GuestViewProps {
   property: GuestProperty;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dict: any;
+  /** Fechas de la reserva (solo cuando se accede por token) */
+  reservation?: { checkIn: string; checkOut: string };
 }
 
-export function GuestView({ property, dict: _dict }: GuestViewProps) {
+export function GuestView({ property, dict: _dict, reservation }: GuestViewProps) {
   // Data Hook
   const {
     name,
@@ -125,6 +127,8 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
                 <CheckInAccess
                   checkInTime={checkInTime}
                   checkOutTime={checkOutTime}
+                  checkInDate={reservation?.checkIn}
+                  checkOutDate={reservation?.checkOut}
                   accessCode={effectiveAccessCode}
                   alarmCode={effectiveAlarmCode}
                   hasParking={effectiveHasParking}
@@ -231,6 +235,8 @@ export function GuestView({ property, dict: _dict }: GuestViewProps) {
         houseRules={effectiveHouseRules}
         checkInTime={checkInTime}
         checkOutTime={checkOutTime}
+        checkInDate={reservation?.checkIn}
+        checkOutDate={reservation?.checkOut}
         access={safeAccess}
       />
 

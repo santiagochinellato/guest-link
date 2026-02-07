@@ -4,9 +4,26 @@ import { LogIn, LogOut } from "lucide-react";
 import { AccessDetailsDrawer } from "./AccessDetailsDrawer";
 import { cn } from "@/lib/utils";
 
+function formatReservationDate(iso: string): string {
+  try {
+    const d = new Date(iso + "T12:00:00");
+    return d.toLocaleDateString("es-ES", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 interface CheckInAccessProps {
   checkInTime?: string | null;
   checkOutTime?: string | null;
+  /** Fecha de check-in (ISO string) - solo cuando viene de reserva por token */
+  checkInDate?: string | null;
+  /** Fecha de check-out (ISO string) - solo cuando viene de reserva por token */
+  checkOutDate?: string | null;
   // Access Details Props
   accessCode?: string;
   alarmCode?: string;
@@ -18,12 +35,16 @@ interface CheckInAccessProps {
 export function CheckInAccess({
   checkInTime,
   checkOutTime,
+  checkInDate,
+  checkOutDate,
   accessCode,
   alarmCode,
   hasParking,
   parkingDetails,
   accessSteps,
 }: CheckInAccessProps) {
+  const hasDates = !!(checkInDate && checkOutDate);
+
   return (
     <AccessDetailsDrawer
       accessCode={accessCode}
@@ -42,9 +63,20 @@ export function CheckInAccess({
                 Ingreso
               </span>
             </div>
-            <span className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white font-sans tracking-tight">
-              {checkInTime || "15:00"}
-            </span>
+            {hasDates ? (
+              <div className="text-center">
+                <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white font-sans tracking-tight">
+                  {formatReservationDate(checkInDate!)}
+                </p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {checkInTime || "15:00"}
+                </p>
+              </div>
+            ) : (
+              <span className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white font-sans tracking-tight">
+                {checkInTime || "15:00"}
+              </span>
+            )}
           </div>
 
           {/* Check Out */}
@@ -55,9 +87,20 @@ export function CheckInAccess({
                 Salida
               </span>
             </div>
-            <span className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white font-sans tracking-tight">
-              {checkOutTime || "11:00"}
-            </span>
+            {hasDates ? (
+              <div className="text-center">
+                <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white font-sans tracking-tight">
+                  {formatReservationDate(checkOutDate!)}
+                </p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {checkOutTime || "11:00"}
+                </p>
+              </div>
+            ) : (
+              <span className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white font-sans tracking-tight">
+                {checkOutTime || "11:00"}
+              </span>
+            )}
           </div>
         </div>
 

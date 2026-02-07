@@ -1,5 +1,6 @@
 import { getReservations } from "@/lib/actions/reservations";
 import { getProperties } from "@/lib/actions/properties";
+import { getReservationsTokenStatus } from "@/lib/actions/guest-tokens";
 import { Search } from "lucide-react";
 import { ReservationsFilters } from "@/components/admin/ReservationsFilters";
 import { ExportReservationsButton } from "@/components/admin/ExportReservationsButton";
@@ -53,6 +54,10 @@ export default async function PropertyReservationsPage({
   const properties = propertiesResult.success && propertiesResult.data
     ? propertiesResult.data.map((p) => ({ id: p.id, name: p.name }))
     : [];
+
+  const reservationIds = (reservations || []).map((r) => r.id);
+  const tokenStatusResult = reservationIds.length > 0 ? await getReservationsTokenStatus(reservationIds) : { success: true, status: {} as Record<number, boolean> };
+  const tokenStatus = tokenStatusResult.success ? tokenStatusResult.status : {};
 
   const currentProperty = properties.find((p) => p.id === propertyId);
   if (!currentProperty) notFound();
@@ -112,7 +117,7 @@ export default async function PropertyReservationsPage({
         </div>
       </div>
 
-      <ReservationsView reservations={reservations || []} />
+      <ReservationsView reservations={reservations || []} tokenStatus={tokenStatus} />
     </div>
   );
 }

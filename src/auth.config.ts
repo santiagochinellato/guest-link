@@ -11,7 +11,11 @@ export const authConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       
-      // Check if the path is the dashboard or guest view
+      // Guest token page does NOT require auth (guests access via link)
+      const isGuestTokenPage = nextUrl.pathname.includes("/stay/token/");
+      if (isGuestTokenPage) return true;
+
+      // Dashboard requires auth
       const isOnDashboard = nextUrl.pathname.includes("/dashboard");
       const isOnGuestView = nextUrl.pathname.includes("/stay");
 

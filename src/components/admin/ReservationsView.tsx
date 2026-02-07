@@ -23,9 +23,11 @@ interface Reservation {
 
 interface ReservationsViewProps {
   reservations: Reservation[];
+  /** Map reservationId -> has active guest token */
+  tokenStatus?: Record<number, boolean>;
 }
 
-export function ReservationsView({ reservations }: ReservationsViewProps) {
+export function ReservationsView({ reservations, tokenStatus }: ReservationsViewProps) {
   const [view, setView] = useState<"table" | "calendar">("table");
 
   return (
@@ -38,7 +40,7 @@ export function ReservationsView({ reservations }: ReservationsViewProps) {
       {/* Conditional Rendering */}
       {view === "table" ? (
         <div className="bg-white dark:bg-brand-void border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm overflow-hidden">
-          <ReservationsTable reservations={reservations} />
+          <ReservationsTable reservations={reservations} tokenStatus={tokenStatus} />
         </div>
       ) : (
         <ReservationsCalendar reservations={reservations} />

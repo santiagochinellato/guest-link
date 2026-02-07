@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Building2,
   DollarSign,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GuestViewModal } from "./GuestViewModal";
@@ -40,6 +41,7 @@ interface ReservationRow {
 
 interface ReservationsTableProps {
   reservations: ReservationRow[];
+  tokenStatus?: Record<number, boolean>;
 }
 
 function safeDate(dateStr: string) {
@@ -64,9 +66,10 @@ function getBookingUrl(platform: string, reservationCode: string): string | null
   return null;
 }
 
-export function ReservationsTable({ reservations }: ReservationsTableProps) {
+export function ReservationsTable({ reservations, tokenStatus = {} }: ReservationsTableProps) {
   const [guestViewReservation, setGuestViewReservation] = useState<ReservationRow | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const lang = pathname?.split("/")[1] || "es";
 
   return (
@@ -98,6 +101,7 @@ export function ReservationsTable({ reservations }: ReservationsTableProps) {
               reservations.map((res) => {
                 const { name, guestCountText } = parseGuestInfo(res.guestName);
                 const bookingUrl = getBookingUrl(res.platform, res.reservationCode);
+                const hasToken = tokenStatus[res.id] ?? false;
                 return (
                   <tr
                     key={res.id}
@@ -171,8 +175,17 @@ export function ReservationsTable({ reservations }: ReservationsTableProps) {
                           className="gap-1.5"
                           onClick={() => setGuestViewReservation(res)}
                         >
-                          <LogIn className="w-4 h-4" />
-                          Generar check-in
+                          {hasToken ? (
+                            <>
+                              <Check className="w-4 h-4" />
+                              Link generado
+                            </>
+                          ) : (
+                            <>
+                              <LogIn className="w-4 h-4" />
+                              Generar check-in
+                            </>
+                          )}
                         </Button>
                         <Button asChild variant="ghost" size="sm" className="gap-1.5">
                           <Link href={`/${lang}/dashboard/reservations/${res.id}`}>
@@ -203,6 +216,7 @@ export function ReservationsTable({ reservations }: ReservationsTableProps) {
           reservations.map((res) => {
             const { name, guestCountText } = parseGuestInfo(res.guestName);
             const bookingUrl = getBookingUrl(res.platform, res.reservationCode);
+            const hasToken = tokenStatus[res.id] ?? false;
             return (
               <div
                 key={res.id}
@@ -272,8 +286,17 @@ export function ReservationsTable({ reservations }: ReservationsTableProps) {
                     className="flex-1 gap-2"
                     onClick={() => setGuestViewReservation(res)}
                   >
-                    <LogIn className="w-4 h-4" />
-                    Generar check-in
+                    {hasToken ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Link generado
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-4 h-4" />
+                        Generar check-in
+                      </>
+                    )}
                   </Button>
                   <Button asChild variant="default" size="sm" className="flex-1 gap-2">
                     <Link href={`/${lang}/dashboard/reservations/${res.id}`}>
@@ -302,6 +325,8 @@ export function ReservationsTable({ reservations }: ReservationsTableProps) {
             propertySlug: (guestViewReservation as ReservationRow & { propertySlug?: string }).propertySlug,
           }}
           lang={(guestViewReservation.guestLanguage as "es" | "en" | "pt") || "es"}
+          hasToken={tokenStatus[guestViewReservation.id]}
+          onTokenGenerated={() => router.refresh()}
         />
       )}
     </>

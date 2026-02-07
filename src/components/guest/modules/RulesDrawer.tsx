@@ -13,6 +13,19 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Ban, ScrollText, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+function formatReservationDate(iso: string): string {
+  try {
+    const d = new Date(iso + "T12:00:00");
+    return d.toLocaleDateString("es-ES", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 interface RulesDrawerProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -21,6 +34,8 @@ interface RulesDrawerProps {
   houseRules?: string;
   checkInTime?: string;
   checkOutTime?: string;
+  checkInDate?: string;
+  checkOutDate?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   access?: any;
 }
@@ -33,6 +48,8 @@ export function RulesDrawer({
   houseRules,
   checkInTime,
   checkOutTime,
+  checkInDate,
+  checkOutDate,
   access,
 }: RulesDrawerProps) {
   const getRuleText = (rule: string | { value: string }) => {
@@ -54,13 +71,15 @@ export function RulesDrawer({
 
           <div className="p-4 overflow-y-auto pb-8 space-y-6">
             {/* 1. Arrival & Departure */}
-            {/* <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-4 text-center">
                 <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider mb-1">
                   Check-in
                 </p>
                 <p className="text-xl font-bold text-zinc-900 dark:text-white">
-                  {checkInTime || "--:--"}
+                  {checkInDate
+                    ? `${formatReservationDate(checkInDate)} · ${checkInTime || "15:00"}`
+                    : checkInTime || "--:--"}
                 </p>
               </div>
               <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-4 text-center">
@@ -68,10 +87,12 @@ export function RulesDrawer({
                   Check-out
                 </p>
                 <p className="text-xl font-bold text-zinc-900 dark:text-white">
-                  {checkOutTime || "--:--"}
+                  {checkOutDate
+                    ? `${formatReservationDate(checkOutDate)} · ${checkOutTime || "11:00"}`
+                    : checkOutTime || "--:--"}
                 </p>
               </div>
-            </div> */}
+            </div>
 
             {/* 2. Access Section (If exists) */}
             {access && (access.instructions || access.accessCode) && (

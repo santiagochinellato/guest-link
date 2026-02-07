@@ -2,9 +2,11 @@
 
 import { db } from "@/db";
 import { guestTokens, reservations } from "@/db/schema";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, inArray } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomBytes } from "crypto";
+import { getPropertyForGuest } from "@/lib/actions/properties";
 
 /**
  * Generate a unique guest token for a reservation
@@ -67,7 +69,9 @@ export async function generateGuestToken(reservationId: number) {
 }
 
 /**
- * Validate a guest token and return reservation/property info
+ * Validate a guest token and return reservation/property info.
+ * Uses raw SQL for reservation lookup and getPropertyForGuest to avoid
+ * schema/DB column mismatch (e.g. when migrations 0004-0006 aren't applied).
  */
 export async function validateGuestToken(token: string) {
   try {
@@ -86,16 +90,20 @@ export async function validateGuestToken(token: string) {
       return { success: false, error: "Token expired" };
     }
 
-    // Get reservation with property
-    const reservation = await db.query.reservations.findFirst({
-      where: eq(reservations.id, tokenRecord.reservationId),
-      with: {
-        property: true,
-      },
-    });
-
-    if (!reservation || !reservation.property) {
+    // Raw SQL: property_id and dates to avoid schema/DB column mismatch
+    const rows = await db.execute(
+      sql`SELECT property_id, check_in, check_out FROM reservations WHERE id = ${tokenRecord.reservationId} LIMIT 1`
+    );
+    const row = Array.isArray(rows) ? rows[0] : (rows as { rows?: unknown[] }).rows?.[0];
+    const resRow = row as { property_id?: number; check_in?: string; check_out?: string };
+    const propertyId = resRow?.property_id;
+    if (!propertyId) {
       return { success: false, error: "Reservation or property not found" };
+    }
+
+    const propertyResult = await getPropertyForGuest(propertyId);
+    if (!propertyResult.success || !propertyResult.data) {
+      return { success: false, error: "Property not found" };
     }
 
     // Mark token as used (optional, for analytics)
@@ -108,12 +116,84 @@ export async function validateGuestToken(token: string) {
 
     return {
       success: true,
-      reservation,
-      property: reservation.property,
+      reservation: {
+        id: tokenRecord.reservationId,
+        propertyId,
+        checkIn: resRow.check_in ?? null,
+        checkOut: resRow.check_out ?? null,
+      },
+      property: propertyResult.data,
     };
   } catch (error) {
     console.error("Error validating guest token:", error);
     return { success: false, error: "Failed to validate token" };
+  }
+}
+
+/**
+ * Get the active (non-expired) token for a reservation
+ */
+export async function getActiveTokenForReservation(reservationId: number) {
+  try {
+    const token = await db.query.guestTokens.findFirst({
+      where: and(
+        eq(guestTokens.reservationId, reservationId),
+        gt(guestTokens.expiresAt, new Date())
+      ),
+    });
+    return token ? { success: true, token: token.token, expiresAt: token.expiresAt } : { success: true, token: null, expiresAt: null };
+  } catch (error) {
+    console.error("Error fetching active token:", error);
+    return { success: false, error: "Failed to fetch token", token: null, expiresAt: null };
+  }
+}
+
+/**
+ * Regenerate guest token: revoke existing and create new
+ */
+export async function regenerateGuestToken(reservationId: number) {
+  try {
+    const reservation = await db.query.reservations.findFirst({
+      where: eq(reservations.id, reservationId),
+    });
+    if (!reservation) {
+      return { success: false, error: "Reservation not found" };
+    }
+
+    await db
+      .update(guestTokens)
+      .set({ expiresAt: new Date() })
+      .where(eq(guestTokens.reservationId, reservationId));
+
+    return generateGuestToken(reservationId);
+  } catch (error) {
+    console.error("Error regenerating token:", error);
+    return { success: false, error: "Failed to regenerate token" };
+  }
+}
+
+/**
+ * Get which reservations have active tokens (for list views)
+ */
+export async function getReservationsTokenStatus(reservationIds: number[]) {
+  try {
+    if (reservationIds.length === 0) return { success: true, status: {} as Record<number, boolean> };
+    const rows = await db
+      .select({ reservationId: guestTokens.reservationId })
+      .from(guestTokens)
+      .where(
+        and(
+          inArray(guestTokens.reservationId, reservationIds),
+          gt(guestTokens.expiresAt, new Date())
+        )
+      );
+    const status: Record<number, boolean> = {};
+    reservationIds.forEach((id) => (status[id] = false));
+    rows.forEach((r) => { if (r.reservationId != null) status[r.reservationId] = true; });
+    return { success: true, status };
+  } catch (error) {
+    console.error("Error fetching token status:", error);
+    return { success: false, status: {} as Record<number, boolean> };
   }
 }
 

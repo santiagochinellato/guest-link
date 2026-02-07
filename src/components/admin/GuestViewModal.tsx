@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Copy, Check, Key, Mail, Phone, MessageCircle, ExternalLink, FileText, Loader2, Languages } from "lucide-react";
+import { Copy, Check, Key, Mail, Phone, MessageCircle, ExternalLink, FileText, Loader2, Languages, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { generateGuestToken } from "@/lib/actions/guest-tokens";
+import { generateGuestToken, regenerateGuestToken, getActiveTokenForReservation } from "@/lib/actions/guest-tokens";
 import { updateReservationContact } from "@/lib/actions/reservations";
 import { GUEST_LANGUAGES } from "@/db/schema";
 import { toast } from "sonner";
@@ -48,6 +48,12 @@ interface GuestViewModalProps {
   variant?: "modal" | "inline";
   reservation: GuestViewReservation;
   lang?: string;
+  /** Token existente (cuando el padre ya lo tiene, ej. ReservationDetailCard) */
+  existingToken?: { token: string; expiresAt: Date } | null;
+  /** Si la reserva tiene token pero no lo pasamos; el modal lo cargará al abrir */
+  hasToken?: boolean;
+  /** Se llama cuando se genera o regenera un token, para refrescar el padre */
+  onTokenGenerated?: () => void;
 }
 
 function formatDate(dateStr: string) {
@@ -218,6 +224,7 @@ function GuestViewContent({
   openWhatsApp,
   openEmail,
   isActive,
+  onTokenGenerated,
 }: {
   reservation: GuestViewReservation;
   lang: string;
@@ -247,6 +254,7 @@ function GuestViewContent({
   openWhatsApp: (text: string) => void;
   openEmail: (text: string) => void;
   isActive: boolean;
+  onTokenGenerated?: () => void;
 }) {
   const propertyName = reservation.propertyName || "tu alojamiento";
 
@@ -262,6 +270,31 @@ function GuestViewContent({
   );
 
   const templates = MESSAGE_TEMPLATES[guestLanguage];
+
+  const handleRegenerateToken = async () => {
+    setIsGenerating(true);
+    const result = await regenerateGuestToken(reservation.id);
+    setIsGenerating(false);
+    if (result.success && "token" in result && result.token) {
+      setToken(result.token);
+      setExpiresAt(result.expiresAt ?? null);
+      const code = getAccessCode(result.token);
+      const guestLink = `${typeof window !== "undefined" ? window.location.origin : ""}/${lang}/stay/token/${result.token}`;
+      const defaultTemplate = templates[0];
+      setShareMessage(
+        defaultTemplate.text
+          .replace(/#nombrepropiedad/g, propertyName)
+          .replace(/#codigo/g, code)
+          .replace(/\[link a la web\]/g, guestLink)
+          .replace(/#checkin/g, formatDate(reservation.checkIn))
+          .replace(/#checkout/g, formatDate(reservation.checkOut))
+      );
+      toast.success("Link regenerado");
+      onTokenGenerated?.();
+    } else {
+      toast.error(result.error || "Error al regenerar");
+    }
+  };
 
   const handleSelectTemplate = (template: (typeof templates)[number]) => {
     setShareMessage(resolveMessage(template.text));
@@ -287,6 +320,7 @@ function GuestViewContent({
           .replace(/#checkout/g, formatDate(reservation.checkOut))
       );
       toast.success("Token generado");
+      onTokenGenerated?.();
     } else {
       toast.error(result.error || "Error al generar token");
     }
@@ -433,6 +467,16 @@ function GuestViewContent({
                   Ver guía
                 </a>
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={handleRegenerateToken}
+                disabled={isGenerating}
+              >
+                <RefreshCw className="w-4 h-4" />
+                Regenerar link
+              </Button>
             </div>
               <div className="">
             <Label className="text-xs font-medium text-muted-foreground">Código de acceso</Label>
@@ -534,6 +578,9 @@ export function GuestViewModal({
   variant = "modal",
   reservation,
   lang = "es",
+  existingToken,
+  hasToken,
+  onTokenGenerated,
 }: GuestViewModalProps) {
   const guestLangInit =
     reservation.guestLanguage && GUEST_LANGUAGES.includes(reservation.guestLanguage as (typeof GUEST_LANGUAGES)[number])
@@ -582,16 +629,59 @@ export function GuestViewModal({
       setEmail(reservation.guestEmail || "");
       setPhone(reservation.guestPhone || "");
       setGuestLanguage(lang);
-      setToken(null);
-      setExpiresAt(null);
-      setShareMessage("");
+      if (existingToken) {
+        setToken(existingToken.token);
+        setExpiresAt(existingToken.expiresAt);
+        const code = getAccessCode(existingToken.token);
+        const guestLink = `${typeof window !== "undefined" ? window.location.origin : ""}/${lang}/stay/token/${existingToken.token}`;
+        const tmplLang = (reservation.guestLanguage && GUEST_LANGUAGES.includes(reservation.guestLanguage as (typeof GUEST_LANGUAGES)[number])) ? reservation.guestLanguage as (typeof GUEST_LANGUAGES)[number] : "es";
+        const defaultTemplate = MESSAGE_TEMPLATES[tmplLang][0];
+        const propertyName = reservation.propertyName || "tu alojamiento";
+        setShareMessage(
+          defaultTemplate.text
+            .replace(/#nombrepropiedad/g, propertyName)
+            .replace(/#codigo/g, code)
+            .replace(/\[link a la web\]/g, guestLink)
+            .replace(/#checkin/g, formatDate(reservation.checkIn))
+            .replace(/#checkout/g, formatDate(reservation.checkOut))
+        );
+      } else {
+        setToken(null);
+        setExpiresAt(null);
+        setShareMessage("");
+      }
     }
     if (!isModal) {
       setEmail(reservation.guestEmail || "");
       setPhone(reservation.guestPhone || "");
       setGuestLanguage(lang);
     }
-  }, [isModal, open, reservation.guestEmail, reservation.guestPhone, reservation.guestLanguage]);
+  }, [isModal, open, reservation.guestEmail, reservation.guestPhone, reservation.guestLanguage, reservation.checkIn, reservation.checkOut, reservation.propertyName, existingToken]);
+
+  useEffect(() => {
+    if (open && hasToken && !existingToken && !token) {
+      getActiveTokenForReservation(reservation.id).then((r) => {
+        if (r.success && r.token) {
+          setToken(r.token);
+          setExpiresAt(r.expiresAt);
+          const code = getAccessCode(r.token);
+          const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+          const guestLink = `${baseUrl}/${lang}/stay/token/${r.token}`;
+          const guestLang = (reservation.guestLanguage && GUEST_LANGUAGES.includes(reservation.guestLanguage as (typeof GUEST_LANGUAGES)[number])) ? reservation.guestLanguage as (typeof GUEST_LANGUAGES)[number] : "es";
+          const defaultTemplate = MESSAGE_TEMPLATES[guestLang][0];
+          const propertyName = reservation.propertyName || "tu alojamiento";
+          setShareMessage(
+            defaultTemplate.text
+              .replace(/#nombrepropiedad/g, propertyName)
+              .replace(/#codigo/g, code)
+              .replace(/\[link a la web\]/g, guestLink)
+              .replace(/#checkin/g, formatDate(reservation.checkIn))
+              .replace(/#checkout/g, formatDate(reservation.checkOut))
+          );
+        }
+      });
+    }
+  }, [open, hasToken, existingToken, token, reservation.id, reservation.guestLanguage, reservation.checkIn, reservation.checkOut, reservation.propertyName, lang]);
 
   const saveContact = useCallback(
     async (newEmail: string, newPhone: string, newGuestLang?: (typeof GUEST_LANGUAGES)[number]) => {
@@ -683,6 +773,7 @@ export function GuestViewModal({
       openWhatsApp={openWhatsApp}
       openEmail={openEmail}
       isActive={isActive}
+      onTokenGenerated={onTokenGenerated}
     />
   );
 

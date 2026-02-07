@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   Calendar,
@@ -15,6 +16,7 @@ import {
   PenLine,
   ExternalLink,
   Languages,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -135,6 +137,7 @@ export function ReservationDetailCard({
   const [isSavingNotes, setIsSavingNotes] = useState(false);
 
   const [guestModalOpen, setGuestModalOpen] = useState(false);
+  const router = useRouter();
 
   const [email, setEmail] = useState(reservation.guestEmail ?? "");
   const [phone, setPhone] = useState(reservation.guestPhone ?? "");
@@ -215,6 +218,10 @@ export function ReservationDetailCard({
     }
   };
 
+  const now = new Date();
+  const activeTokens = tokens.filter((t) => new Date(t.expiresAt) > now);
+  const activeToken = activeTokens.length > 0 ? activeTokens[activeTokens.length - 1] : null;
+
   const tokensWithAccess = tokens.filter((t) => t.usedAt);
   const firstAccess =
     tokensWithAccess.length > 0
@@ -225,8 +232,8 @@ export function ReservationDetailCard({
   const accessCount = tokensWithAccess.length;
 
   const guestLocale = guestLanguage;
-  const guestUrl = tokens.length > 0
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/${guestLocale}/stay/token/${tokens[tokens.length - 1].token}`
+  const guestUrl = activeToken
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/${guestLocale}/stay/token/${activeToken.token}`
     : null;
 
   const backHref = propertyId
@@ -451,7 +458,17 @@ export function ReservationDetailCard({
               className="w-full bg-white/20 hover:bg-white/30 border border-white/30 backdrop-blur-sm text-white"
               onClick={() => setGuestModalOpen(true)}
             >
-              Generar link
+              {activeToken ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Link generado
+                </>
+              ) : (
+                <>
+                  <KeyRound className="w-4 h-4" />
+                  Generar link
+                </>
+              )}
             </Button>
             <div className="grid grid-cols-2 gap-2">
               {guestUrl ? (
@@ -515,6 +532,8 @@ export function ReservationDetailCard({
             propertySlug: reservation.propertySlug,
           }}
           lang={guestLanguage}
+          existingToken={activeToken ? { token: activeToken.token, expiresAt: activeToken.expiresAt } : undefined}
+          onTokenGenerated={() => router.refresh()}
         />
 
         {/* Payment Card - row-span-2 */}

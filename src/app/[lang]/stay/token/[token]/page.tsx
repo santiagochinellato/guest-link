@@ -21,5 +21,15 @@ export default async function GuestTokenPage({ params }: PageProps) {
     return notFound();
   }
 
-  return <GuestView property={result.property} dict={dict} />;
+  return (
+    <GuestView
+      property={result.property}
+      dict={dict}
+      reservation={
+        result.reservation?.checkIn && result.reservation?.checkOut
+          ? { checkIn: result.reservation.checkIn, checkOut: result.reservation.checkOut }
+          : undefined
+      }
+    />
+  );
 }

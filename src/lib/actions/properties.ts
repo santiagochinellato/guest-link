@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { properties, recommendations, emergencyContacts, transportInfo, categories } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { mapPropertyToGuestDTO } from "@/lib/mappers";
 
@@ -574,4 +574,94 @@ export async function getPropertyBySlug(slug: string) {
     console.error("Fetch Property By Slug Error:", error);
     return { success: false, error: error.message };
   } 
+}
+
+/** Fetches property by ID in GuestProperty format (for token-based guest view).
+ * Uses raw SQL to avoid schema/DB column mismatch when migrations aren't applied.
+ */
+export async function getPropertyForGuest(id: number) {
+  try {
+    const propRows = await db.execute(
+      sql`SELECT id, name, slug, address, city, country, latitude, longitude, wifi_ssid, wifi_password, wifi_qr_code, house_rules_text, cover_image_url, check_in_time, check_out_time FROM properties WHERE id = ${id} LIMIT 1`
+    );
+    const propRow = Array.isArray(propRows) ? propRows[0] : (propRows as { rows?: unknown[] }).rows?.[0];
+    if (!propRow) return { success: false, error: "Property not found" };
+
+    const p = propRow as Record<string, unknown>;
+    const prop = {
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      address: p.address,
+      city: p.city,
+      country: p.country,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      wifiSsid: p.wifi_ssid,
+      wifiPassword: p.wifi_password,
+      wifiQrCode: p.wifi_qr_code,
+      houseRules: p.house_rules_text,
+      coverImageUrl: p.cover_image_url,
+      checkInTime: p.check_in_time,
+      checkOutTime: p.check_out_time,
+    };
+
+    const [recsRows, emergencyRows, transportRows, catsRows] = await Promise.all([
+      db.execute(sql`SELECT id, title, description, formatted_address, google_maps_link, latitude, longitude, website, phone, price_range, category_id FROM recommendations WHERE property_id = ${id}`),
+      db.execute(sql`SELECT id, type, name, phone, address FROM emergency_contacts WHERE property_id = ${id}`),
+      db.execute(sql`SELECT id, type, name, description, phone, website, schedule_info, price_info FROM transport_info WHERE property_id = ${id}`),
+      db.execute(sql`SELECT id, name, type FROM categories WHERE property_id = ${id}`),
+    ]);
+
+    const toArr = (r: unknown) => (Array.isArray(r) ? r : (r as { rows?: unknown[] }).rows ?? []);
+    const recs = toArr(recsRows).map((r: Record<string, unknown>) => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      formattedAddress: r.formatted_address,
+      googleMapsLink: r.google_maps_link,
+      rating: r.rating ?? null,
+      userRatingsTotal: r.user_ratings_total ?? null,
+      latitude: r.latitude,
+      longitude: r.longitude,
+      website: r.website,
+      phone: r.phone,
+      openingHours: r.opening_hours ?? null,
+      priceRange: r.price_range,
+      categoryId: r.category_id,
+      categoryName: null as string | null,
+      categoryType: null as string | null,
+    }));
+    const allCategories = toArr(catsRows).map((c: Record<string, unknown>) => ({
+      id: c.id,
+      name: c.name,
+      type: c.type,
+    }));
+    const catMap = new Map(allCategories.map((c: { id: number; name?: string; type?: string }) => [c.id, c]));
+    const enhancedRecs = recs.map((r) => {
+      const cat = r.categoryId ? catMap.get(r.categoryId as number) : null;
+      return { ...r, categoryName: cat?.name ?? null, categoryType: cat?.type ?? null };
+    });
+
+    const emergency = toArr(emergencyRows).map((e: Record<string, unknown>) => ({
+      name: e.name,
+      phone: e.phone,
+      type: e.type,
+    }));
+    const transport = toArr(transportRows).map((t: Record<string, unknown>) => ({
+      name: t.name,
+      type: t.type,
+      description: t.description,
+      scheduleInfo: t.schedule_info,
+      priceInfo: t.price_info,
+      website: t.website,
+      phone: t.phone,
+    }));
+
+    const propDTO = mapPropertyToGuestDTO(prop, enhancedRecs, emergency, transport);
+    return { success: true, data: propDTO };
+  } catch (error: any) {
+    console.error("Fetch Property For Guest Error:", error);
+    return { success: false, error: error.message };
+  }
 }
