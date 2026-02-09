@@ -633,11 +633,11 @@ export async function getPropertyForGuest(id: number) {
       categoryType: null as string | null,
     }));
     const allCategories = toArr(catsRows).map((c: Record<string, unknown>) => ({
-      id: c.id,
-      name: c.name,
-      type: c.type,
+      id: c.id as number,
+      name: c.name as string | undefined,
+      type: c.type as string | undefined,
     }));
-    const catMap = new Map(allCategories.map((c: { id: number; name?: string; type?: string }) => [c.id, c]));
+    const catMap = new Map(allCategories.map((c) => [c.id, c]));
     const enhancedRecs = recs.map((r) => {
       const cat = r.categoryId ? catMap.get(r.categoryId as number) : null;
       return { ...r, categoryName: cat?.name ?? null, categoryType: cat?.type ?? null };

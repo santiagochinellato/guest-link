@@ -15,7 +15,7 @@ const UpdateContactSchema = z.object({
   guestLanguage: z.enum(GUEST_LANGUAGES).optional(),
 });
 
-interface GetReservationsFilters {
+export interface GetReservationsFilters {
   search?: string;
   status?: string;
   platform?: string;

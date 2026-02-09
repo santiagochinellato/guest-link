@@ -2,9 +2,16 @@
 
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Hostly <onboarding@resend.dev>";
+
+// Lazy initialization to avoid errors during build
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY not configured");
+  }
+  return new Resend(apiKey);
+}
 
 export interface SendEmailOptions {
   to: string;
@@ -20,6 +27,7 @@ export async function sendEmail({ to, subject, html, replyTo }: SendEmailOptions
   }
 
   try {
+    const resend = getResend();
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],

@@ -64,9 +64,9 @@ type Reservation = {
 type GuestToken = {
   id: number;
   token: string;
-  reservationId: number;
+  reservationId: number | null;
   expiresAt: Date;
-  createdAt: Date;
+  createdAt: Date | null;
   usedAt: Date | null;
 };
 
