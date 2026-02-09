@@ -54,6 +54,11 @@ export interface GuestHost {
   phone?: string;
 }
 
+export interface GuestPreCheckIn {
+  steps: { text: string }[];
+  notes?: string;
+}
+
 export interface GuestProperty {
   id?: number;
   name: string;
@@ -73,6 +78,7 @@ export interface GuestProperty {
   latitude?: string;
   longitude?: string;
   access: GuestAccess;
+  preCheckIn?: GuestPreCheckIn;
   recommendations: GuestRecommendation[];
   emergencyContacts: GuestEmergencyContact[];
   transport: GuestTransport[];

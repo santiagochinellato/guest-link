@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useGuestData } from "@/hooks/useGuestData";
+import { useReservationState } from "@/hooks/useReservationState";
 import { posthog } from "@/lib/posthog";
 
 // Modules
@@ -18,7 +19,13 @@ import {
   GuideDrawer,
   TransportDrawer,
 } from "./modules";
+import { PreCheckInInstructions } from "./modules/PreCheckInInstructions";
+import { TimeBasedRecommendations } from "./modules/TimeBasedRecommendations";
+import { EmergencyCard } from "./modules/EmergencyCard";
+import { CheckInDayInfo } from "./modules/CheckInDayInfo";
+import { WifiCard } from "./modules/WifiCard";
 import { GuestWelcomeScreen } from "./GuestWelcomeScreen";
+import { PostCheckoutScreen } from "./PostCheckoutScreen";
 
 import { GuestProperty } from "@/types/dtos";
 
@@ -27,10 +34,35 @@ interface GuestViewProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dict: any;
   /** Fechas de la reserva (solo cuando se accede por token) */
-  reservation?: { checkIn: string; checkOut: string };
+  reservation?: { checkIn: string; checkOut: string; guestName?: string };
+  /** Nombre del huésped (solo cuando se accede por token) */
+  guestName?: string;
+  /** Override para desarrollo/preview - forzar hora del día */
+  timeOfDayOverride?: "morning" | "afternoon" | "evening" | "night";
+  /** Override para desarrollo/preview - forzar estado de reserva */
+  stateOverride?: "BEFORE_CHECKIN" | "CHECKIN_DAY" | "DURING_STAY" | "AFTER_CHECKOUT" | "NO_RESERVATION";
 }
 
-export function GuestView({ property, dict: _dict, reservation }: GuestViewProps) {
+export function GuestView({ property, dict: _dict, reservation, guestName, timeOfDayOverride, stateOverride }: GuestViewProps) {
+  // Validar que haya reserva o acceso válido (token generado)
+  // Si no hay reserva y no hay guestName (acceso por token), no mostrar la vista
+  const hasValidAccess = reservation || guestName;
+  
+  if (!hasValidAccess) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center p-6">
+        <div className="text-center space-y-4 max-w-md">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            Acceso no disponible
+          </h1>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            Esta guía solo está disponible para huéspedes con reserva confirmada o con un enlace de acceso generado.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Data Hook
   const {
     name,
@@ -54,6 +86,8 @@ export function GuestView({ property, dict: _dict, reservation }: GuestViewProps
     effectiveHouseRules,
     effectiveAllowed,
     effectiveProhibited,
+    effectivePreCheckInSteps,
+    effectivePreCheckInNotes,
     filteredRecommendations,
     categories,
     topRecommendations,
@@ -61,6 +95,19 @@ export function GuestView({ property, dict: _dict, reservation }: GuestViewProps
     transportCategories,
     openLocation,
   } = useGuestData(property);
+
+  // Reservation State Hook
+  const {
+    state: reservationState,
+    shouldShowAccessCodes,
+    timeOfDay,
+  } = useReservationState({
+    checkInDate: reservation?.checkIn,
+    checkOutDate: reservation?.checkOut,
+    checkInTime: checkInTime || undefined,
+    timeOfDayOverride,
+    stateOverride,
+  });
 
   // Drawer States
   const [isRulesOpen, setIsRulesOpen] = useState(false);
@@ -99,11 +146,19 @@ export function GuestView({ property, dict: _dict, reservation }: GuestViewProps
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black font-sans selection:bg-brand-copper/20">
       <AnimatePresence mode="wait">
-        {showWelcome ? (
+        {reservationState === "AFTER_CHECKOUT" ? (
+          <PostCheckoutScreen
+            key="post-checkout"
+            propertyName={name}
+            coverImage={coverImageUrl}
+            guestName={guestName || reservation?.guestName}
+          />
+        ) : showWelcome ? (
           <GuestWelcomeScreen
             key="welcome"
             propertyName={name}
             coverImage={coverImageUrl}
+            guestName={guestName || reservation?.guestName}
             onDismiss={() => setShowWelcome(false)}
           />
         ) : (
@@ -118,12 +173,13 @@ export function GuestView({ property, dict: _dict, reservation }: GuestViewProps
             <GuestHero name={name} coverImage={coverImageUrl} />
 
             {/* 2. UTILITY SECTION (Floating slightly over hero) */}
-            <div className="relative z-10 px-4 -mt-8">
+            <div className="relative z-10 px-4 -mt-8 flex flex-col">
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
+                {/* CheckInAccess: Siempre visible en todas las pantallas */}
                 <CheckInAccess
                   checkInTime={checkInTime}
                   checkOutTime={checkOutTime}
@@ -134,25 +190,84 @@ export function GuestView({ property, dict: _dict, reservation }: GuestViewProps
                   hasParking={effectiveHasParking}
                   parkingDetails={effectiveParkingDetails}
                   accessSteps={effectiveAccessSteps}
+                  showCodes={reservationState === "NO_RESERVATION" ? true : shouldShowAccessCodes}
                 />
 
-                <WifiGlassCard
-                  ssid={wifiSsid}
-                  password={wifiPassword}
-                  propertyId={property.id}
-                />
+                {/* BEFORE_CHECKIN: Mostrar PreCheckInInstructions */}
+                {reservationState === "BEFORE_CHECKIN" && (
+                  <PreCheckInInstructions
+                    accessSteps={effectivePreCheckInSteps.length > 0 ? effectivePreCheckInSteps : effectiveAccessSteps}
+                    preCheckInNotes={effectivePreCheckInNotes}
+                    checkInDate={reservation?.checkIn}
+                    checkInTime={checkInTime || undefined}
+                    hostPhone={hostPhone}
+                    hostName={hostName}
+                    address={address}
+                    latitude={latitude}
+                    longitude={longitude}
+                  />
+                )}
 
-                <LocationButton
-                  onClick={() => {
-                    if (property.id) {
-                      posthog.capture("map_opened", {
-                        property_id: property.id,
-                      });
-                    }
-                    openLocation();
-                  }}
-                  address={address}
-                />
+                {/* CHECKIN_DAY: Mostrar información completa del día de check-in */}
+                {reservationState === "CHECKIN_DAY" && (
+                  <CheckInDayInfo
+                    address={address}
+                    latitude={latitude}
+                    longitude={longitude}
+                    accessCode={effectiveAccessCode}
+                    alarmCode={effectiveAlarmCode}
+                    accessSteps={effectiveAccessSteps}
+                    accessInstructions={safeAccess?.instructions || ""}
+                    hostPhone={hostPhone}
+                    hostName={hostName}
+                    houseRules={effectiveHouseRules}
+                    rulesAllowed={effectiveAllowed}
+                    rulesProhibited={effectiveProhibited}
+                  />
+                )}
+
+                {/* WifiCard: Visible solo si no es BEFORE_CHECKIN */}
+                {wifiSsid && reservationState !== "BEFORE_CHECKIN" && (
+                  <WifiCard
+                    ssid={wifiSsid}
+                    password={wifiPassword}
+                    qrCode={property.wifiQrCode}
+                  />
+                )}
+
+                {/* LocationButton: Solo si no es BEFORE_CHECKIN ni CHECKIN_DAY */}
+                {reservationState !== "BEFORE_CHECKIN" && reservationState !== "CHECKIN_DAY" && (
+                  <LocationButton
+                    onClick={() => {
+                      if (property.id) {
+                        posthog.capture("map_opened", {
+                          property_id: property.id,
+                        });
+                      }
+                      openLocation();
+                    }}
+                    address={address}
+                  />
+                )}
+
+                {/* Time-based Recommendations durante la estadía */}
+                {reservationState === "DURING_STAY" && (
+                  <TimeBasedRecommendations
+                    recommendations={filteredRecommendations}
+                    timeOfDay={timeOfDay}
+                    propertyId={property.id}
+                    onOpenGuide={() => setIsGuideOpen(true)}
+                  />
+                )}
+
+                {/* Emergency Card en madrugada durante la estadía */}
+                {reservationState === "DURING_STAY" && timeOfDay === "night" && (
+                  <EmergencyCard
+                    emergencyContacts={property.emergencyContacts}
+                    hostPhone={hostPhone}
+                    hostName={hostName}
+                  />
+                )}
               </motion.div>
 
               {/* 3. NAVIGATION GRID */}
@@ -168,8 +283,8 @@ export function GuestView({ property, dict: _dict, reservation }: GuestViewProps
                   onOpenEmergency={() => setIsEmergencyOpen(true)}
                 />
 
-                {/* TOP RECOMMENDATIONS PREVIEW */}
-                {topRecommendations.length > 0 && (
+                {/* TOP RECOMMENDATIONS PREVIEW - Solo si NO es durante la estadía (ya que usamos TimeBasedRecommendations) */}
+                {reservationState !== "DURING_STAY" && topRecommendations.length > 0 && (
                   <div className="mt-8 mb-4">
                     <div className="flex items-center justify-between mb-4 px-2">
                       <h3 className="font-bold text-lg text-zinc-900 dark:text-white">
@@ -217,11 +332,11 @@ export function GuestView({ property, dict: _dict, reservation }: GuestViewProps
             </div>
 
             {/* 4. FAB */}
-            <HostFab
+            {/* <HostFab
               hostImage={hostImage}
               hostPhone={hostPhone}
               hostName={hostName}
-            />
+            /> */}
           </motion.div>
         )}
       </AnimatePresence>

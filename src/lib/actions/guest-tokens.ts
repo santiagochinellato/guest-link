@@ -90,12 +90,23 @@ export async function validateGuestToken(token: string) {
       return { success: false, error: "Token expired" };
     }
 
-    // Raw SQL: property_id and dates to avoid schema/DB column mismatch
+    // Raw SQL: property_id, dates, and guest_name to avoid schema/DB column mismatch
     const rows = await db.execute(
-      sql`SELECT property_id, check_in, check_out FROM reservations WHERE id = ${tokenRecord.reservationId} LIMIT 1`
+      sql`SELECT property_id, check_in, check_out, guest_name FROM reservations WHERE id = ${tokenRecord.reservationId} LIMIT 1`
     );
     const row = Array.isArray(rows) ? rows[0] : (rows as { rows?: unknown[] }).rows?.[0];
-    const resRow = row as { property_id?: number; check_in?: string; check_out?: string };
+    const resRow = row as { property_id?: number; check_in?: string; check_out?: string; guest_name?: string };
+    
+    // Debug: verificar qué fechas están llegando de la base de datos
+    console.log("validateGuestToken - Fechas de BD:", {
+      reservationId: tokenRecord.reservationId,
+      check_in: resRow?.check_in,
+      check_out: resRow?.check_out,
+      check_in_type: typeof resRow?.check_in,
+      check_out_type: typeof resRow?.check_out,
+      row: resRow,
+    });
+    
     const propertyId = resRow?.property_id;
     if (!propertyId) {
       return { success: false, error: "Reservation or property not found" };
@@ -114,14 +125,19 @@ export async function validateGuestToken(token: string) {
         .where(eq(guestTokens.id, tokenRecord.id));
     }
 
+    const reservationData = {
+      id: tokenRecord.reservationId,
+      propertyId,
+      checkIn: resRow.check_in ?? null,
+      checkOut: resRow.check_out ?? null,
+      guestName: resRow.guest_name ?? null,
+    };
+    
+    console.log("validateGuestToken - Reservation data a retornar:", reservationData);
+
     return {
       success: true,
-      reservation: {
-        id: tokenRecord.reservationId,
-        propertyId,
-        checkIn: resRow.check_in ?? null,
-        checkOut: resRow.check_out ?? null,
-      },
+      reservation: reservationData,
       property: propertyResult.data,
     };
   } catch (error) {

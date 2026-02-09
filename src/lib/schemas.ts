@@ -103,6 +103,10 @@ export const PropertyFormSchema = z.object({
   accessSteps: z.array(z.object({ text: z.string() })).optional(),
   hasParking: z.boolean().optional(),
   parkingDetails: z.string().optional(),
+
+  // Pre Check-in
+  preCheckInSteps: z.array(z.object({ text: z.string() })).optional(),
+  preCheckInNotes: z.string().optional(),
 });
 
 export type PropertyFormData = z.infer<typeof PropertyFormSchema>;

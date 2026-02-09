@@ -1,0 +1,731 @@
+{
+    "property_name": "Bariloche",
+    "location": "San Carlos de Bariloche, Río Negro, Argentina",
+    "categories": {
+      "gastronomy": {
+        "type": "gastronomy",
+        "label": "Gastronomía",
+        "icon": "Utensils",
+        "color": "Naranja oscuro",
+        "isSystemCategory": true,
+        "displayOrder": 1,
+        "places": [
+          {
+            "name": "La Fonda del Tío",
+            "place_id": "ChIJZfumh2R7GpYRxgwiD4nfRTU",
+            "address": "Mitre 1130, R8400 San Carlos de Bariloche",
+            "latitude": -41.1351052,
+            "longitude": -71.2936528,
+            "rating": 4.6,
+            "rating_count": 20190,
+            "price_level": 1,
+            "description": "Famoso por sus milanesas napolitanas. Porciones generosas, excelente relación calidad-precio. Esperar fila en horario pico."
+          },
+          {
+            "name": "Alto El Fuego",
+            "place_id": "ChIJgaqFqBJ7GpYR6EUAbprDDf4",
+            "address": "20 de Febrero 451, R8400 San Carlos de Bariloche",
+            "latitude": -41.1353418,
+            "longitude": -71.3114325,
+            "rating": 4.7,
+            "rating_count": 5169,
+            "price_level": 2,
+            "description": "Parrilla excepcional con carnes a la brasa. Ambiente acogedor entre árboles, excelente servicio."
+          },
+          {
+            "name": "Refugio Viejo",
+            "place_id": "ChIJqa7EAxF7GpYRNP5wQorJWlI",
+            "address": "Av. Exequiel Bustillo 868, R8400 San Carlos de Bariloche",
+            "latitude": -41.1320845,
+            "longitude": -71.3224415,
+            "rating": 4.8,
+            "rating_count": 606,
+            "description": "Restaurante moderno con trucha patagónica y platos de caza. Excelente servicio y ambiente elegante."
+          },
+          {
+            "name": "Experiencia Patacon by Lucho Remiro",
+            "place_id": "ChIJ0zkKewd3GpYRHpekTlvsvPk",
+            "address": "Ruta, Antiguo Camino Llao Llao Km 6,900, R8400 San Carlos de Bariloche",
+            "latitude": -41.119461,
+            "longitude": -71.38548420000001,
+            "rating": 4.9,
+            "rating_count": 1181,
+            "description": "Carnes argentinas premium, chorizo excepcional. Vistas panorámicas, servicio atento."
+          },
+          {
+            "name": "El Mallín",
+            "place_id": "ChIJKZj__SpxGpYREMlx1WLVPAQ",
+            "address": "Av. Exequiel Bustillo KM 11600, R8400 San Carlos de Bariloche",
+            "latitude": -41.109635,
+            "longitude": -71.433264,
+            "rating": 4.6,
+            "rating_count": 4322,
+            "price_level": 2,
+            "description": "Trucha patagónica, cordero y opciones vegetarianas. Ambiente cálido tipo cabaña de esquí."
+          },
+          {
+            "name": "La Casita Restaurante Bariloche",
+            "place_id": "ChIJM2xDgnJ7GpYRsPPVTSYDnZc",
+            "address": "Quaglia 342 R8400, R8400 San Carlos de Bariloche",
+            "latitude": -41.1352134,
+            "longitude": -71.3084562,
+            "rating": 4.5,
+            "rating_count": 3284,
+            "price_level": 2,
+            "description": "Cocina suiza-patagónica. Fondue excepcional, cordero con hongos patagónicos, spätzle."
+          },
+          {
+            "name": "Restaurant Punto Panorámico",
+            "place_id": "ChIJpVPjbQh1GpYRCi96eCaJi_E",
+            "address": "Ruta Provincial 77, Cto. Chico 300, 8400 Km 23",
+            "latitude": -41.073614,
+            "longitude": -71.526749,
+            "rating": 4.5,
+            "rating_count": 5225,
+            "price_level": 2,
+            "description": "Vistas espectaculares del Circuito Chico. Goulash, trucha, milanesas. Ideal para almuerzo."
+          },
+          {
+            "name": "El Piso Café & Cava Oculta",
+            "place_id": "ChIJJQAd2Hl7GpYRWwQUJNFIy2U",
+            "address": "San Martín 494, R8400 San Carlos de Bariloche",
+            "latitude": -41.1337578,
+            "longitude": -71.3159421,
+            "rating": 4.8,
+            "rating_count": 448,
+            "description": "Restaurante íntimo con chef talentoso. Platos originales, excelente cava de vinos. Abre pocas noches."
+          }
+        ]
+      },
+      "coffee": {
+        "type": "coffee",
+        "label": "Cafeterías",
+        "icon": "Coffee",
+        "color": "Ámbar",
+        "isSystemCategory": false,
+        "displayOrder": 8,
+        "places": [
+          {
+            "name": "La Dulciteca",
+            "place_id": "ChIJy-o8b7p7GpYRGjm9BZS-ta4",
+            "address": "Mitre 609, R8400 San Carlos de Bariloche",
+            "latitude": -41.134634999999996,
+            "longitude": -71.3009867,
+            "rating": 4.7,
+            "rating_count": 613,
+            "description": "Café artesanal y chocolates. Degustación de chocolates incluida. Postres exquisitos, ambiente acogedor."
+          },
+          {
+            "name": "Blanco es negro",
+            "place_id": "ChIJu8us7g57GpYR_Ke36bZX66A",
+            "address": "Francisco Pascasio Moreno 105, R8400 San Carlos de Bariloche",
+            "latitude": -41.1348437,
+            "longitude": -71.3082641,
+            "rating": 4.6,
+            "rating_count": 736,
+            "description": "Café especializado, medialunas y pasteles. Pequeño y acogedor."
+          },
+          {
+            "name": "Entre Migas y Café",
+            "place_id": "ChIJ-8F8FCR7GpYRVqKaY9Xx_t8",
+            "address": "Av. Ángel Gallardo 306, R8400 San Carlos de Bariloche",
+            "latitude": -41.1371524,
+            "longitude": -71.305944,
+            "rating": 4.7,
+            "rating_count": 173,
+            "description": "Tostadas de aguacate increíbles. Medialunas hechas en casa. Abierto domingos."
+          },
+          {
+            "name": "El Barco",
+            "place_id": "ChIJSypRTGl7GpYRCr4-zN5xrSM",
+            "address": "Santiago Albarracín 451, R8400 San Carlos de Bariloche",
+            "latitude": -41.139631099999995,
+            "longitude": -71.30431070000002,
+            "rating": 4.7,
+            "rating_count": 2911,
+            "price_level": 1,
+            "description": "Mejor café de Bariloche. Tuestan sus propios granos. Precios razonables, personal amable."
+          }
+        ]
+      },
+      "bars": {
+        "type": "bars",
+        "label": "Bares",
+        "icon": "Music",
+        "color": "Púrpura",
+        "isSystemCategory": true,
+        "displayOrder": 6,
+        "places": [
+          {
+            "name": "Manush Centro",
+            "place_id": "ChIJWYH2WG17GpYR1PnpTTSTyu8",
+            "address": "Dr. Juan Javier Neumeyer 20, R8400 San Carlos de Bariloche",
+            "latitude": -41.1358314,
+            "longitude": -71.31033049999999,
+            "rating": 4.5,
+            "rating_count": 24988,
+            "price_level": 2,
+            "description": "Bar-restaurante popular. Hamburguesa Big Manush, estofado de res (cocinado 14 horas), cervezas artesanales."
+          },
+          {
+            "name": "Cervecería Patagonia - Circuito Chico",
+            "place_id": "ChIJhe1tGxJ1GpYR8eZuYV9fc2s",
+            "address": "RP 77 Circuito Chico - Cervecería, KM 24.7",
+            "latitude": -41.071480699999995,
+            "longitude": -71.53903729999999,
+            "rating": 4.5,
+            "rating_count": 34452,
+            "price_level": 2,
+            "description": "Cervecería icónica con vistas al lago Moreno. Tour de fábrica, vasos reutilizables, terraza amplia."
+          },
+          {
+            "name": "Berkana Bar de Lago",
+            "place_id": "ChIJIZOgKF97GpYRh_OOoxFSqIs",
+            "address": "Juan Manuel de Rosas 480, R8400 San Carlos de Bariloche",
+            "latitude": -41.1324647,
+            "longitude": -71.3166889,
+            "rating": 4.6,
+            "rating_count": 882,
+            "price_level": 2,
+            "description": "Bar junto al lago. Café helado excepcional, música en vivo ocasional, vistas panorámicas."
+          },
+          {
+            "name": "Nené Bar",
+            "place_id": "ChIJp43uhsx7GpYRtuKPIWb3yTY",
+            "address": "San Martín 672, R8400 San Carlos de Bariloche",
+            "latitude": -41.133071699999995,
+            "longitude": -71.31905809999999,
+            "rating": 4.3,
+            "rating_count": 1409,
+            "price_level": 2,
+            "description": "Bar-restaurante con ambiente único. Caldillo de trucha, cócteles cuidados, música de los 80s."
+          },
+          {
+            "name": "Cervecería Bachmann",
+            "place_id": "ChIJmcnIZG17GpYRt5n5Dcx3at8",
+            "address": "Ada María Elflein 90, R8400 San Carlos de Bariloche",
+            "latitude": -41.1356648,
+            "longitude": -71.3088622,
+            "rating": 4.3,
+            "rating_count": 8179,
+            "price_level": 2,
+            "description": "Cervecería local con variedades de cerveza artesanal. Carnes, hamburguesas, pizzas."
+          },
+          {
+            "name": "Cervecería La Cruz",
+            "place_id": "ChIJDyTKfHd6GpYRX5X-gyIqGBo",
+            "address": "Nilpi 789, R8400 San Carlos de Bariloche",
+            "latitude": -41.127319199999995,
+            "longitude": -71.378776,
+            "rating": 4.4,
+            "rating_count": 2839,
+            "price_level": 2,
+            "description": "Cervecería artesanal local. Hamburguesas, pizzas, ambiente rústico con patio exterior."
+          },
+          {
+            "name": "Cervecería Artesanal Lowther",
+            "place_id": "ChIJ3ReDgGR7GpYRrLiuRAqzO1E",
+            "address": "Mitre 1160, R8400 San Carlos de Bariloche",
+            "latitude": -41.135109,
+            "longitude": -71.293343,
+            "rating": 4.4,
+            "rating_count": 1697,
+            "price_level": 2,
+            "description": "Gema escondida con vistas increíbles. Fajitas, wok dishes, variedad de cervezas."
+          },
+          {
+            "name": "Kunstmann",
+            "place_id": "ChIJD-iZw5dwGpYRRqLsfTkJHTI",
+            "address": "Av. Exequiel Bustillo 7966, R8402 San Carlos de Bariloche",
+            "latitude": -41.1216369,
+            "longitude": -71.3966174,
+            "rating": 4.4,
+            "rating_count": 15396,
+            "price_level": 2,
+            "description": "Cervecería chilena en Bariloche. Vistas al lago, carnes, salmón bagel, empanadas. Descuento en tienda."
+          }
+        ]
+      },
+      "sights": {
+        "type": "sights",
+        "label": "Sitios de Interés",
+        "icon": "Map",
+        "color": "Azul",
+        "isSystemCategory": true,
+        "displayOrder": 2,
+        "places": [
+          {
+            "name": "Parque Nacional Nahuel Huapi",
+            "place_id": "ChIJRzZxt3J7GpYRc92kL-Yu4bE",
+            "address": "Av. San Martín 24 - San Carlos de Bariloche R8400ALN",
+            "latitude": -41.0037375,
+            "longitude": -71.5014593,
+            "rating": 4.8,
+            "rating_count": 39601,
+            "description": "Parque nacional emblemático. Lagos cristalinos, montañas nevadas, múltiples miradores panorámicos."
+          },
+          {
+            "name": "Centro Cívico Bariloche",
+            "place_id": "ChIJ4Qi323J7GpYRlKog-JJ-G9k",
+            "address": "Centro Cívico, Libertad 56, R8400 San Carlos de Bariloche",
+            "latitude": -41.133496,
+            "longitude": -71.3102123,
+            "rating": 4.6,
+            "rating_count": 10241,
+            "description": "Plaza pública histórica construida en 1940. Arquitectura de piedra y madera, vista al lago."
+          },
+          {
+            "name": "Teleférico Cerro Otto",
+            "place_id": "ChIJYT7W9Zx8GpYRt4Ylc0b28bE",
+            "address": "Av. de los Pioneros 5000, R8400 San Carlos de Bariloche",
+            "latitude": -41.1293532,
+            "longitude": -71.36954399999999,
+            "rating": 4.4,
+            "rating_count": 24737,
+            "description": "Teleférico al Cerro Otto. Vista 360° de la ciudad, restaurante giratorio, actividades. Servicio de bus gratuito."
+          },
+          {
+            "name": "Piedra de Habsburgo",
+            "place_id": "ChIJnT8CrrVxGpYRilZrc8_dlh0",
+            "address": "San Carlos de Bariloche, Río Negro Province",
+            "latitude": -41.157489,
+            "longitude": -71.388606,
+            "rating": 4.8,
+            "rating_count": 239,
+            "description": "Mirador escondido. Caminata corta y fácil con vistas espectaculares de los Andes y lago Nahuel Huapi."
+          }
+        ]
+      },
+      "trails": {
+        "type": "trails",
+        "label": "Senderos",
+        "icon": "TreePine",
+        "color": "Verde oscuro",
+        "isSystemCategory": true,
+        "displayOrder": 4,
+        "places": [
+          {
+            "name": "Sendero de los Arrayanes",
+            "place_id": "ChIJb1vD32B1GpYRtTLY_S5L174",
+            "address": "Cto. Chico km 25, R8400 San Carlos de Bariloche",
+            "latitude": -41.0521062,
+            "longitude": -71.5408827,
+            "rating": 4.7,
+            "rating_count": 3693,
+            "description": "Caminata fácil por el bosque de arrayanes. Playa al final, vistas al lago. 45 min ida y vuelta."
+          },
+          {
+            "name": "Cerro Llao Llao trailhead",
+            "place_id": "ChIJU_2Cldd1GpYRTwr3H_NMquU",
+            "address": "RP77, R8400 San Carlos de Bariloche",
+            "latitude": -41.050605,
+            "longitude": -71.5445539,
+            "rating": 4.7,
+            "rating_count": 557,
+            "description": "Sendero de 2-3 horas. Primeros 30 min fáciles, luego empinado. Vistas increíbles en la cima."
+          },
+          {
+            "name": "Cascada de los Duendes",
+            "place_id": "ChIJJ6jG4yZwGpYRhElQAmSm0YI",
+            "address": "San Carlos de Bariloche, Río Negro Province",
+            "latitude": -41.1822965,
+            "longitude": -71.4188167,
+            "rating": 4.6,
+            "rating_count": 8594,
+            "description": "Caminata corta y fácil a cascada bonita. Mayormente plana, perfecta para mediodía."
+          },
+          {
+            "name": "Refugio extremo encantado",
+            "place_id": "ChIJu1yh50l3GpYREzlPCkYsttU",
+            "address": "Colonia Suiza, Ruta 79 Km 23, R8400 San Carlos de Bariloche",
+            "latitude": -41.1008949,
+            "longitude": -71.530996,
+            "rating": 4.7,
+            "rating_count": 199,
+            "description": "Refugio con vistas espectaculares. 1 hora de caminata o 4x4. Comida disponible, ideal para chocolate caliente."
+          }
+        ]
+      },
+      "nature": {
+        "type": "nature",
+        "label": "Naturaleza",
+        "icon": "TreePine",
+        "color": "Verde",
+        "isSystemCategory": false,
+        "displayOrder": 9,
+        "places": [
+          {
+            "name": "Parque Nahuelito",
+            "place_id": "ChIJry-c0g91GpYRvSIpRm2ZMPQ",
+            "address": "Ruta 77 km 24,5, R8400 San Carlos de Bariloche",
+            "latitude": -41.073704,
+            "longitude": -71.53619499999999,
+            "rating": 4.7,
+            "rating_count": 7529,
+            "description": "Parque temático de dinosaurios. Tour de 1 hora con guías, 30 especies diferentes. Perfecto para familias."
+          },
+          {
+            "name": "Parque Euca Bariloche",
+            "place_id": "ChIJezLQ3e56GpYROQYAsw3heSg",
+            "address": "Acceso Cerro Otto, R8400 San Carlos de Bariloche",
+            "latitude": -41.146266999999995,
+            "longitude": -71.350221,
+            "rating": 4.7,
+            "rating_count": 431,
+            "description": "Parque de aventuras con tirolesas y circuitos aéreos. 2 horas de diversión, seguro y bien mantenido."
+          },
+          {
+            "name": "Dinos World Bariloche",
+            "place_id": "ChIJzVQxyNF3GpYRDNl-He6gvCw",
+            "address": "Av. Exequiel Bustillo 14200, R8400 San Carlos de Bariloche",
+            "latitude": -41.091153899999995,
+            "longitude": -71.45092509999999,
+            "rating": 4.4,
+            "rating_count": 107,
+            "description": "Parque de dinosaurios interactivo. Guías amables, experiencia educativa para niños."
+          }
+        ]
+      },
+      "culture": {
+        "type": "culture",
+        "label": "Cultura",
+        "icon": "Drama",
+        "color": "Índigo",
+        "isSystemCategory": false,
+        "displayOrder": 10,
+        "places": [
+          {
+            "name": "Francisco Moreno Museum of Patagonia",
+            "place_id": "ChIJ1wDv5nJ7GpYRF2Fzsan2Gls",
+            "address": "Centro Cívico S/n, R8400 San Carlos de Bariloche",
+            "latitude": -41.1333868,
+            "longitude": -71.3097323,
+            "rating": 4.5,
+            "rating_count": 2830,
+            "description": "Museo con colección naturalista, arqueológica y etnográfica. Información en inglés, entrada económica."
+          },
+          {
+            "name": "Bariloche Paleontological Museum",
+            "place_id": "ChIJ8WSaTGN7GpYRzLGRTX2Xuxo",
+            "address": "Av, Av. 12 de Octubre, R8400 San Carlos de Bariloche",
+            "latitude": -41.132884999999995,
+            "longitude": -71.292366,
+            "rating": 4.1,
+            "rating_count": 1465,
+            "description": "Museo pequeño pero interesante. Fósiles de la región, personal conocedor. Ideal para niños."
+          },
+          {
+            "name": "Espacio Arte Bariloche",
+            "place_id": "ChIJD63UIxd7GpYRVpGN8lVg5Fo",
+            "address": "Campichuelo 1197, R8400 San Carlos de Bariloche",
+            "latitude": -41.142582999999995,
+            "longitude": -71.32021759999999,
+            "rating": 4.6,
+            "rating_count": 193,
+            "description": "Centro cultural multicultural. Clases de teatro, música y danza. Shows en vivo por las tardes."
+          }
+        ]
+      },
+      "shopping": {
+        "type": "shopping",
+        "label": "Compras",
+        "icon": "ShoppingBag",
+        "color": "Rosa",
+        "isSystemCategory": true,
+        "displayOrder": 3,
+        "places": [
+          {
+            "name": "Galería del Sol - Bariloche",
+            "place_id": "ChIJr5x393F7GpYRni1or1T-4NU",
+            "address": "Galeria del sol, Mitre 340, R8400 San Carlos de Bariloche",
+            "latitude": -41.133967899999995,
+            "longitude": -71.30493849999999,
+            "rating": 4.2,
+            "rating_count": 5606,
+            "description": "Centro comercial con diseño único de madera arqueada. Tiendas de souvenirs y ropa."
+          },
+          {
+            "name": "Patagonia Shopping Mall",
+            "place_id": "ChIJYaTx62V7GpYRoax1lITd1bY",
+            "address": "Onelli 447, R8400 San Carlos de Bariloche",
+            "latitude": -41.137416099999996,
+            "longitude": -71.29809800000001,
+            "rating": 3.8,
+            "rating_count": 10392,
+            "description": "Único centro comercial de Bariloche. Cines, casino, bowling, arcade, patio de comidas."
+          },
+          {
+            "name": "Chocolaterie",
+            "place_id": "ChIJbc1n1XZ1GpYRV9J9Qo-rHwE",
+            "address": "Av. Exequiel Bustillo km 15.5 Local 2, R8400 San Carlos de Bariloche",
+            "latitude": -41.0843485,
+            "longitude": -71.4621722,
+            "rating": 4.5,
+            "rating_count": 1785,
+            "description": "Chocolatería artesanal. Degustación de chocolate excepcional, helados, chocolate caliente."
+          },
+          {
+            "name": "Rapanui",
+            "place_id": "ChIJURZuanJ7GpYR7h3lLEdcQ4I",
+            "address": "Mitre 202, R8400 San Carlos de Bariloche",
+            "latitude": -41.133738799999996,
+            "longitude": -71.306591,
+            "rating": 4.7,
+            "rating_count": 57922,
+            "price_level": 2,
+            "description": "Chocolatería premium con pista de patinaje. Mejor chocolate de Bariloche, helados excepcionales."
+          },
+          {
+            "name": "Mamuschka",
+            "place_id": "ChIJ8zJuKmB6GpYRB8wkrm_AmGM",
+            "address": "Mitre 298, R8400 San Carlos de Bariloche",
+            "latitude": -41.133775299999996,
+            "longitude": -71.3056282,
+            "rating": 4.6,
+            "rating_count": 24374,
+            "price_level": 3,
+            "description": "Chocolatería icónica. Bombones artesanales, postres, café. Sin gluten."
+          },
+          {
+            "name": "Benroth Chocolates",
+            "place_id": "ChIJZ4UFwW57GpYRDIYyVAKoU-c",
+            "address": "Beschtedt 569, R8400 San Carlos de Bariloche",
+            "latitude": -41.138194,
+            "longitude": -71.30354,
+            "rating": 4.7,
+            "rating_count": 1018,
+            "description": "Gema escondida. Mejor chocolate artesanal, opciones veganas. Pequeña fábrica familiar."
+          },
+          {
+            "name": "Delicias de la Patagonia",
+            "place_id": "ChIJOS0cUYt7GpYRVwaTZH6ZDXA",
+            "address": "Mitre 281, R8400 San Carlos de Bariloche",
+            "latitude": -41.1340258,
+            "longitude": -71.3057608,
+            "rating": 4.8,
+            "rating_count": 497,
+            "description": "Chocolate orgánico con sabores únicos. Alfajores artesanales, servicio excepcional."
+          }
+        ]
+      },
+      "supermarket": {
+        "type": "supermarket",
+        "label": "Supermercados",
+        "icon": "ShoppingCart",
+        "color": "Rojo",
+        "isSystemCategory": false,
+        "displayOrder": 11,
+        "places": [
+          {
+            "name": "Carrefour",
+            "place_id": "ChIJP4w1pmV7GpYRjZar5jQpEz4",
+            "address": "Francisco Pascasio Moreno 909, R8400 San Carlos de Bariloche",
+            "latitude": -41.1362172,
+            "longitude": -71.2967634,
+            "rating": 3.7,
+            "rating_count": 6564,
+            "description": "Supermercado grande. Más caro que otras ciudades, pero bien surtido."
+          },
+          {
+            "name": "Todo",
+            "place_id": "ChIJtYgAL79wGpYRChVpjTfd8cc",
+            "address": "Av. Exequiel Bustillo 8700, R8400 San Carlos de Bariloche",
+            "latitude": -41.1177844,
+            "longitude": -71.4040974,
+            "rating": 3.9,
+            "rating_count": 3391,
+            "description": "Supermercado conveniente con buena selección de productos. Precios justos."
+          },
+          {
+            "name": "La Anónima",
+            "place_id": "ChIJ3TWUhnJ7GpYR3n3dRgDQj-k",
+            "address": "Gobernador, Quaglia 311 333, R8400 San Carlos de Bariloche",
+            "latitude": -41.1351738,
+            "longitude": -71.3087992,
+            "rating": 3.9,
+            "rating_count": 6135,
+            "description": "Supermercado céntrico con amplia variedad de productos."
+          }
+        ]
+      },
+      "pharmacy": {
+        "type": "pharmacy",
+        "label": "Farmacias",
+        "icon": "Pill",
+        "color": "Rosa",
+        "isSystemCategory": false,
+        "displayOrder": 12,
+        "places": [
+          {
+            "name": "Farmacia de Miguel",
+            "place_id": "ChIJwTfcXnJ7GpYRcnL37LMO_h0",
+            "address": "Mitre 130, R8400 San Carlos de Bariloche",
+            "latitude": -41.1335305,
+            "longitude": -71.3079326,
+            "rating": 3.6,
+            "rating_count": 165,
+            "description": "Farmacia céntrica. Andrés habla inglés y es muy servicial."
+          },
+          {
+            "name": "Farmacia Onelli",
+            "place_id": "ChIJBQ9BFWZ7GpYRI44Vjyuy4bY",
+            "address": "Onelli 631, R8400 San Carlos de Bariloche",
+            "latitude": -41.139485099999995,
+            "longitude": -71.29800689999999,
+            "rating": 4.7,
+            "rating_count": 252,
+            "description": "Excelente servicio. Abierta todos los días con buen horario. WhatsApp disponible, entrega a domicilio."
+          },
+          {
+            "name": "Dr. Pasteur Pharmacy",
+            "place_id": "ChIJPSVVF117GpYR5WbTnDn9pm4",
+            "address": "Eduardo Elordi 1164, R8400 San Carlos de Bariloche",
+            "latitude": -41.1447648,
+            "longitude": -71.29715639999999,
+            "rating": 4.6,
+            "rating_count": 227,
+            "description": "Farmacia bien surtida. Personal amable, perfumes y cosméticos. Varias sucursales."
+          }
+        ]
+      },
+      "kids": {
+        "type": "kids",
+        "label": "Niños",
+        "icon": "Baby",
+        "color": "Cielo",
+        "isSystemCategory": true,
+        "displayOrder": 5,
+        "places": [
+          {
+            "name": "Parque Nahuelito",
+            "place_id": "ChIJry-c0g91GpYRvSIpRm2ZMPQ",
+            "address": "Ruta 77 km 24,5, R8400 San Carlos de Bariloche",
+            "latitude": -41.073704,
+            "longitude": -71.53619499999999,
+            "rating": 4.7,
+            "rating_count": 7529,
+            "description": "Parque temático de dinosaurios. Tour de 1 hora con guías, 30 especies diferentes. Perfecto para familias."
+          },
+          {
+            "name": "KPLAY",
+            "place_id": "ChIJVdmPd7t7GpYRX7tFtmSuVPc",
+            "address": "Palacios 300, R8400 San Carlos de Bariloche",
+            "latitude": -41.135055,
+            "longitude": -71.30439559999999,
+            "rating": 4.1,
+            "rating_count": 461,
+            "description": "Centro de juegos arcade. Juegos para todas las edades, realidad virtual, sistema de tarjeta recargable."
+          },
+          {
+            "name": "Carrousel",
+            "place_id": "ChIJsQiup2V7GpYRmBnQv1fbQLY",
+            "address": "Francisco Pascasio Moreno 906, R8400 San Carlos de Bariloche",
+            "latitude": -41.1358035,
+            "longitude": -71.2969572,
+            "rating": 4.6,
+            "rating_count": 438,
+            "description": "Carrusel histórico (100+ años) y área de juegos. Perfecto para niños hasta 8 años. Precios razonables."
+          },
+          {
+            "name": "Dinos World Bariloche",
+            "place_id": "ChIJzVQxyNF3GpYRDNl-He6gvCw",
+            "address": "Av. Exequiel Bustillo 14200, R8400 San Carlos de Bariloche",
+            "latitude": -41.091153899999995,
+            "longitude": -71.45092509999999,
+            "rating": 4.4,
+            "rating_count": 107,
+            "description": "Parque de dinosaurios interactivo. Guías amables, experiencia educativa."
+          },
+          {
+            "name": "Parque Euca Bariloche",
+            "place_id": "ChIJezLQ3e56GpYROQYAsw3heSg",
+            "address": "Acceso Cerro Otto, R8400 San Carlos de Bariloche",
+            "latitude": -41.146266999999995,
+            "longitude": -71.350221,
+            "rating": 4.7,
+            "rating_count": 431,
+            "description": "Parque de aventuras con tirolesas y circuitos aéreos. Seguro, 2 horas de diversión."
+          }
+        ]
+      },
+      "outdoors": {
+        "type": "outdoors",
+        "label": "Aire Libre",
+        "icon": "Sun",
+        "color": "Amarillo",
+        "isSystemCategory": true,
+        "displayOrder": 7,
+        "places": [
+          {
+            "name": "Catedral Alta Patagonia",
+            "place_id": "ChIJYT7W9Zx8GpYRLl6F_OXCrHk",
+            "address": "Base cerro Catedral, San Carlos de Bariloche",
+            "latitude": -41.165519499999995,
+            "longitude": -71.4441282,
+            "rating": 4.6,
+            "rating_count": 19119,
+            "description": "Centro de esquí más grande de Argentina. Vistas espectaculares, múltiples pistas, restaurantes."
+          },
+          {
+            "name": "Rafting Adventure Bariloche",
+            "place_id": "ChIJW50bpHJ7GpYRzBl6JXyqaRA",
+            "address": "Mitre 131 Galeria A, R8400 Carlos de Bariloche",
+            "latitude": -41.133830100000004,
+            "longitude": -71.307817,
+            "rating": 4.9,
+            "rating_count": 1532,
+            "description": "Rafting nivel 3/4 hasta la frontera con Chile. Trajes de neopreno incluidos, guías experimentados."
+          },
+          {
+            "name": "Andes Outdoors",
+            "place_id": "ChIJteasZ9R7GpYRuYa5BoXOj_A",
+            "address": "Av. de los Pioneros 5912, R8400 San Carlos de Bariloche",
+            "latitude": -41.1284389,
+            "longitude": -71.378061,
+            "rating": 5.0,
+            "rating_count": 87,
+            "description": "Tours guiados de trekking. Refugio Frey, Cerro Llao Llao. Guías conocedores, bien organizados."
+          },
+          {
+            "name": "Circuito Chico Adventure",
+            "place_id": "ChIJSRw7vwt1GpYRLiFC5GDAcTY",
+            "address": "Ruta 77 Circuito Chico - Km 21, 8400 San Carlos de Bariloche",
+            "latitude": -41.0729755,
+            "longitude": -71.5059488,
+            "rating": 4.9,
+            "rating_count": 351,
+            "description": "Alquiler de kayaks y SUP en el lago. $20,000/hora, equipo incluido, vistas increíbles."
+          },
+          {
+            "name": "Canopy Bariloche",
+            "place_id": "ChIJHbWs4m11GpYRHcgtHNoYdlc",
+            "address": "Colonia Suiza, R8400",
+            "latitude": -41.0922542,
+            "longitude": -71.5262441,
+            "rating": 4.6,
+            "rating_count": 434,
+            "description": "12 líneas de canopy cuesta abajo. Transporte en 4x4 Land Rover, vistas del bosque."
+          }
+        ]
+      }
+    },
+    "metadata": {
+      "total_categories": 13,
+      "total_places": 82,
+      "last_updated": "2026-02-09",
+      "search_keywords": {
+        "gastronomy": ["restaurante", "comida", "parrilla", "asado", "trucha"],
+        "coffee": ["café", "cafetería", "desayuno", "medialunas", "pastelería"],
+        "bars": ["bar", "cerveza", "cervecería", "pub", "drinks"],
+        "sights": ["turismo", "atracción", "mirador", "vista", "punto de interés"],
+        "trails": ["sendero", "trekking", "caminata", "hiking", "naturaleza"],
+        "shopping": ["tienda", "compras", "chocolatería", "souvenirs", "shopping"],
+        "supermarket": ["supermercado", "almacén", "provisiones"],
+        "pharmacy": ["farmacia", "medicamentos", "droguería"],
+        "kids": ["niños", "familia", "parque", "juegos", "infantil"],
+        "outdoors": ["aventura", "esquí", "rafting", "kayak", "outdoor"],
+        "nature": ["naturaleza", "parque", "bosque", "fauna", "flora"],
+        "culture": ["museo", "cultura", "arte", "historia", "exposición"]
+      }
+    }
+  }

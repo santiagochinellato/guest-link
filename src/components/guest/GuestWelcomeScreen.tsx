@@ -1,19 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { HostlyLogoVertical } from "@/components/ui/branding/HostlyLogo";
 import { Loader2 } from "lucide-react";
+import { parseGuestInfo } from "@/lib/utils/guest-info";
 
 interface GuestWelcomeScreenProps {
   propertyName: string;
   coverImage?: string | null;
+  guestName?: string;
   onDismiss: () => void;
+}
+
+function getTimeBasedGreeting(): string {
+  const hour = new Date().getHours();
+  
+  if (hour >= 5 && hour < 12) {
+    return "Buenos días";
+  }
+  if (hour >= 12 && hour < 19) {
+    return "Buenas tardes";
+  }
+  // 19:00 - 5:00
+  return "Buenas noches";
 }
 
 export function GuestWelcomeScreen({
   propertyName,
   coverImage,
+  guestName,
   onDismiss,
 }: GuestWelcomeScreenProps) {
   // Pre-filled credentials for convenience as requested
@@ -21,6 +37,16 @@ export function GuestWelcomeScreen({
   const [code, setCode] = useState("12345");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Extract first name from guestName
+  const firstName = useMemo(() => {
+    if (!guestName) return null;
+    const { name } = parseGuestInfo(guestName);
+    // Get first name only
+    return name.split(" ")[0] || name;
+  }, [guestName]);
+  
+  const greeting = useMemo(() => getTimeBasedGreeting(), []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +104,16 @@ export function GuestWelcomeScreen({
           className="w-full space-y-8"
         >
           <div className="space-y-4 text-center">
-            <p className="text-white/80 text-[10px] font-bold tracking-[0.3em] uppercase drop-shadow-md">
+            {firstName ? (
+              <p className="text-white/80 text-[14px] font-bold tracking-[0.3em] uppercase drop-shadow-md">
+                ¡{greeting}, {firstName}!
+              </p>
+            ) : (
+              <p className="text-white/80 text-[14px] font-bold tracking-[0.3em] uppercase drop-shadow-md">
+                ¡{greeting}!
+              </p>
+            )}
+            <p className="text-white/80 text-[14px] font-bold tracking-[0.3em] uppercase drop-shadow-md">
               Te damos la bienvenida a
             </p>
             <h1 className="text-4xl sm:text-4xl font-medium text-white drop-shadow-lg leading-tight">

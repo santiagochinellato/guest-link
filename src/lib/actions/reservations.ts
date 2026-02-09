@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { reservations, properties, GUEST_LANGUAGES } from "@/db/schema";
-import { desc, eq, like, or, and, gte, lte } from "drizzle-orm";
+import { desc, asc, eq, like, or, and, gte, lte, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -70,6 +70,27 @@ export async function getReservations(filters?: GetReservationsFilters | string)
       conditions.push(lte(reservations.checkOut, dateTo));
     }
 
+    // Función SQL para convertir fecha de texto a fecha real para ordenamiento
+    // Maneja formatos: "DD MMM YYYY" (ej: "09 mar 2026") y "YYYY-MM-DD" (ISO)
+    // Convierte meses en español a inglés para TO_DATE
+    const parseCheckInDate = sql`CASE 
+      WHEN ${reservations.checkIn} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' THEN 
+        ${reservations.checkIn}::date
+      WHEN ${reservations.checkIn} ~ '^[0-9]{1,2}\\s+[a-z]{3}\\s+[0-9]{4}' THEN
+        TO_DATE(
+          REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+            REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+              LOWER(${reservations.checkIn}),
+              'ene', 'jan'), 'feb', 'feb'), 'mar', 'mar'), 
+              'abr', 'apr'), 'may', 'may'), 'jun', 'jun'),
+            'jul', 'jul'), 'ago', 'aug'), 'sep', 'sep'), 
+            'oct', 'oct'), 'nov', 'nov'), 'dic', 'dec'),
+          'DD Mon YYYY'
+        )
+      ELSE 
+        NULL
+    END`;
+
     const query = db
       .select({
         id: reservations.id,
@@ -89,7 +110,7 @@ export async function getReservations(filters?: GetReservationsFilters | string)
       })
       .from(reservations)
       .leftJoin(properties, eq(reservations.propertyId, properties.id))
-      .orderBy(desc(reservations.checkIn));
+      .orderBy(sql`${parseCheckInDate} ASC NULLS LAST`);
 
     if (conditions.length > 0) {
       query.where(conditions.length === 1 ? conditions[0] : and(...conditions));

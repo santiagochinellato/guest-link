@@ -8,9 +8,9 @@ import { ContentLoader } from "@/components/ui/content-loader";
 export default async function EditPropertyPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ lang: string; id: string }>;
 }) {
-  const { id } = await params;
+  const { lang, id } = await params;
   const propertyId = parseInt(id);
 
   if (isNaN(propertyId)) {

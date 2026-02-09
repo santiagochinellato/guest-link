@@ -10,6 +10,11 @@ import { mapPropertyToGuestDTO } from "@/lib/mappers";
 
 // Schema definitions moved to @/lib/schemas.ts
 import { PropertyFormData, PropertyFormSchema } from "@/lib/schemas";
+import {
+  defaultRecommendations,
+  convertDefaultRecommendationsToSystemFormat,
+  getDefaultCategoriesFromRecommendations,
+} from "@/lib/default-recommendations";
 
 // Helper for safe JSON parsing
 const safeJsonParse = (str: string | null | undefined, fallback = {}) => {
@@ -87,6 +92,10 @@ export async function createProperty(data: PropertyFormData) {
             alarmCode: p.alarmCode,
             accessSteps: p.accessSteps?.map(s => s.text) || []
           },
+          preCheckIn: {
+            steps: p.preCheckInSteps?.map(s => s.text) || [],
+            notes: p.preCheckInNotes || ""
+          },
           host: {
             name: p.hostName,
             image: p.hostImage,
@@ -98,23 +107,47 @@ export async function createProperty(data: PropertyFormData) {
       const id = newProp.id;
 
       // 2. Bulk Insert Categories & Recommendations
-      if (p.recommendations && p.recommendations.length > 0) {
-        const uniqueCatTypes = Array.from(new Set(p.recommendations.map(r => r.categoryType)));
+      // Si no hay recomendaciones proporcionadas, cargar las recomendaciones base de Bariloche
+      let recommendationsToInsert = p.recommendations || [];
+      let categoriesToInsert: Array<{ type: string; name: string; icon: string; displayOrder: number; isSystemCategory: boolean }> = [];
+
+      if (recommendationsToInsert.length === 0) {
+        // Cargar recomendaciones base
+        const defaultRecs = convertDefaultRecommendationsToSystemFormat(defaultRecommendations);
+        recommendationsToInsert = defaultRecs;
         
-        // Inserción masiva de categorías
-        const insertedCats = await tx.insert(categories).values(
-          uniqueCatTypes.map(type => ({
-            name: type.charAt(0).toUpperCase() + type.slice(1),
-            type: type.toLowerCase(),
-            propertyId: id,
-          }))
-        ).returning();
+        // Cargar categorías base
+        categoriesToInsert = getDefaultCategoriesFromRecommendations(defaultRecommendations);
+      } else {
+        // Si hay recomendaciones proporcionadas, crear categorías basadas en ellas
+        const uniqueCatTypes = Array.from(new Set(recommendationsToInsert.map(r => r.categoryType)));
+        categoriesToInsert = uniqueCatTypes.map(type => ({
+          type: type.toLowerCase(),
+          name: type.charAt(0).toUpperCase() + type.slice(1),
+          icon: "star", // Icono por defecto
+          displayOrder: 0,
+          isSystemCategory: false,
+        }));
+      }
 
-        const catMap = new Map(insertedCats.map(c => [c.type, c.id]));
+      // Inserción masiva de categorías
+      const insertedCats = await tx.insert(categories).values(
+        categoriesToInsert.map(cat => ({
+          name: cat.name,
+          type: cat.type,
+          icon: cat.icon,
+          displayOrder: cat.displayOrder,
+          isSystemCategory: cat.isSystemCategory,
+          propertyId: id,
+        }))
+      ).returning();
 
-        // Inserción masiva de recomendaciones
+      const catMap = new Map(insertedCats.map(c => [c.type, c.id]));
+
+      // Inserción masiva de recomendaciones
+      if (recommendationsToInsert.length > 0) {
         await tx.insert(recommendations).values(
-          p.recommendations.map(rec => ({
+          recommendationsToInsert.map(rec => ({
             propertyId: id,
             categoryId: catMap.get(rec.categoryType.toLowerCase()),
             title: rec.title,
@@ -149,10 +182,11 @@ export async function createProperty(data: PropertyFormData) {
             propertyId: id,
             name: t.name,
             type: t.type ?? "taxi",
-            description: t.description,
-            website: t.website, // Save website link
-            scheduleInfo: t.scheduleInfo,
-            priceInfo: t.priceInfo
+            description: t.description || null,
+            phone: t.phone || null,
+            website: t.website || null,
+            scheduleInfo: t.scheduleInfo || null,
+            priceInfo: t.priceInfo || null
           }))
         );
       }
@@ -180,40 +214,45 @@ export async function updateProperty(id: number, data: PropertyFormData) {
   try {
     await db.transaction(async (tx) => {
       // 1. Update basic property info
+      // Normalize empty strings to null for optional fields
       await tx.update(properties).set({
         name: p.name,
         slug: p.slug,
-        address: p.address,
-        city: p.city,
-        country: p.country,
-        latitude: p.latitude,
-        longitude: p.longitude,
-        wifiSsid: p.wifiSsid,
-        wifiPassword: p.wifiPassword,
-        wifiQrCode: p.wifiQrCode,
-        coverImageUrl: p.coverImageUrl,
-        checkInTime: p.checkInTime,
-        checkOutTime: p.checkOutTime,
+        address: p.address || null,
+        city: p.city || null,
+        country: p.country || null,
+        latitude: p.latitude || null,
+        longitude: p.longitude || null,
+        wifiSsid: p.wifiSsid || null,
+        wifiPassword: p.wifiPassword || null,
+        wifiQrCode: p.wifiQrCode || null,
+        coverImageUrl: p.coverImageUrl || null,
+        checkInTime: p.checkInTime || null,
+        checkOutTime: p.checkOutTime || null,
         houseRules: JSON.stringify({
           text: p.houseRules || "",
           allowed: p.rulesAllowed?.map(r => r.value) || [],
           prohibited: p.rulesProhibited?.map(r => r.value) || [],
           access: {
-            instructions: p.accessInstructions,
-            hasParking: p.hasParking,
-            parkingDetails: p.parkingDetails,
-            accessCode: p.accessCode,
-            alarmCode: p.alarmCode,
+            instructions: p.accessInstructions || "",
+            hasParking: p.hasParking || false,
+            parkingDetails: p.parkingDetails || "",
+            accessCode: p.accessCode || "",
+            alarmCode: p.alarmCode || "",
             accessSteps: p.accessSteps?.map(s => s.text) || []
           },
+          preCheckIn: {
+            steps: p.preCheckInSteps?.map(s => s.text) || [],
+            notes: p.preCheckInNotes || ""
+          },
           host: {
-            name: p.hostName,
-            image: p.hostImage,
-            phone: p.hostPhone
+            name: p.hostName || "",
+            image: p.hostImage || "",
+            phone: p.hostPhone || ""
           }
         }),
         updatedAt: new Date(),
-        status: p.status || "draft",
+        status: (p.status as "active" | "draft" | "archived") || "draft",
         autoSendGuide: p.autoSendGuide ?? true,
         autoCheckoutReminder: p.autoCheckoutReminder ?? true,
         autoReviewRequest: p.autoReviewRequest ?? true,
@@ -282,10 +321,11 @@ export async function updateProperty(id: number, data: PropertyFormData) {
             propertyId: id,
             name: t.name,
             type: t.type ?? "taxi",
-            description: t.description,
-            website: t.website, // Save website link
-            scheduleInfo: t.scheduleInfo,
-            priceInfo: t.priceInfo
+            description: t.description || null,
+            phone: t.phone || null,
+            website: t.website || null,
+            scheduleInfo: t.scheduleInfo || null,
+            priceInfo: t.priceInfo || null
           }))
         );
       }
@@ -301,8 +341,50 @@ export async function updateProperty(id: number, data: PropertyFormData) {
     }
     return { success: true };
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-    console.error("Update Error:", err);
-    return { success: false, error: err.message };
+    // Extract PostgreSQL error details
+    const pgError = err?.code ? {
+      code: err.code,
+      detail: err.detail,
+      hint: err.hint,
+      position: err.position,
+      internalPosition: err.internalPosition,
+      internalQuery: err.internalQuery,
+      where: err.where,
+      schema: err.schema,
+      table: err.table,
+      column: err.column,
+      dataType: err.dataType,
+      constraint: err.constraint,
+      file: err.file,
+      line: err.line,
+      routine: err.routine,
+    } : null;
+
+    console.error("[updateProperty] Error updating property:", err);
+    console.error("[updateProperty] Error message:", err?.message);
+    if (pgError) {
+      console.error("[updateProperty] PostgreSQL error details:", pgError);
+    }
+    console.error("[updateProperty] Full error object:", JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
+
+    // Build a more informative error message
+    let errorMessage = err?.message || "Error desconocido";
+    if (pgError) {
+      if (pgError.detail) {
+        errorMessage = `${errorMessage}: ${pgError.detail}`;
+      }
+      if (pgError.hint) {
+        errorMessage = `${errorMessage} (${pgError.hint})`;
+      }
+      if (pgError.constraint) {
+        errorMessage = `${errorMessage} [Constraint: ${pgError.constraint}]`;
+      }
+    }
+
+    return { 
+      success: false, 
+      error: errorMessage
+    };
   }
 }
 export async function getProperties() {
@@ -387,12 +469,62 @@ export async function getProperties() {
 
 export async function getProperty(id: number) {
   try {
-     // 1. Fetch Property Basic
-     const prop = await db.query.properties.findFirst({
-       where: eq(properties.id, id),
-     });
+     // 1. Fetch Property Basic - Try with raw SQL first to get better error messages
+     let prop;
+     try {
+       // Try using select with where clause instead of query API
+       const [result] = await db
+         .select()
+         .from(properties)
+         .where(eq(properties.id, id))
+         .limit(1);
+       
+       prop = result;
+     } catch (queryError: any) {
+       console.error(`[getProperty] Query error details:`, {
+         message: queryError?.message,
+         code: queryError?.code,
+         detail: queryError?.detail,
+         hint: queryError?.hint,
+         position: queryError?.position,
+         internalPosition: queryError?.internalPosition,
+         internalQuery: queryError?.internalQuery,
+         where: queryError?.where,
+         schema: queryError?.schema,
+         table: queryError?.table,
+         column: queryError?.column,
+         dataType: queryError?.dataType,
+         constraint: queryError?.constraint,
+         file: queryError?.file,
+         line: queryError?.line,
+         routine: queryError?.routine,
+         stack: queryError?.stack,
+         fullError: JSON.stringify(queryError, Object.getOwnPropertyNames(queryError)),
+       });
+       
+       // Try raw SQL as fallback to see if it's a schema issue
+       try {
+         const rawResult = await db.execute(
+           sql`SELECT * FROM properties WHERE id = ${id} LIMIT 1`
+         );
+         if (rawResult && rawResult.length > 0) {
+           prop = rawResult[0] as any;
+           console.log(`[getProperty] Raw SQL query succeeded, using result`);
+         }
+       } catch (rawError: any) {
+         console.error(`[getProperty] Raw SQL also failed:`, rawError?.message);
+         throw queryError; // Throw original error
+       }
+       
+       if (!prop) {
+         throw queryError;
+       }
+     }
 
-     if (!prop) return { success: false, error: "Property not found" };
+     if (!prop) {
+       console.error(`[getProperty] Property with id ${id} not found`);
+       return { success: false, error: "Property not found" };
+     }
 
      // 2. Fetch Relations separately
      const [recs, emergency, transport, allCats] = await Promise.all([
@@ -455,8 +587,40 @@ export async function getProperty(id: number) {
         autoReviewRequest: prop.autoReviewRequest ?? true,
 
         houseRules: (() => {
-          const parsed: any = safeJsonParse(prop.houseRules, { text: "" });
-          return parsed.text || prop.houseRules || "";
+          if (!prop.houseRules) return "";
+          
+          // Si es un string, intentar parsearlo
+          if (typeof prop.houseRules === "string") {
+            const trimmed = prop.houseRules.trim();
+            
+            // Si parece ser JSON (empieza con {)
+            if (trimmed.startsWith("{")) {
+              try {
+                const parsed = JSON.parse(trimmed);
+                // Si es un objeto con propiedad text, devolver solo el text (incluso si está vacío)
+                if (parsed && typeof parsed === "object" && parsed !== null && "text" in parsed) {
+                  // Devolver el texto, incluso si es cadena vacía (para que muestre el placeholder)
+                  return typeof parsed.text === "string" ? parsed.text : "";
+                }
+                // Si no tiene text, no es el formato esperado, devolver vacío
+                return "";
+              } catch (e) {
+                // Si falla el parse, no es JSON válido, devolver vacío
+                console.warn("[getProperty] Error parsing houseRules JSON:", e);
+                return "";
+              }
+            }
+            // Si no es JSON, asumir que es texto plano
+            return trimmed;
+          }
+          
+          // Si ya es un objeto, extraer el texto
+          if (typeof prop.houseRules === "object" && prop.houseRules !== null) {
+            return (prop.houseRules as any).text || "";
+          }
+          
+          // Fallback: devolver cadena vacía
+          return "";
         })(),
         rulesAllowed: (() => {
           const parsed: any = safeJsonParse(prop.houseRules);
@@ -506,8 +670,17 @@ export async function getProperty(id: number) {
      return { success: true, data: { ...formData, id: prop.id } };
 
   } catch (error: any) {
-    console.error("Fetch Property Error:", error);
-    return { success: false, error: error.message };
+    console.error("[getProperty] Error fetching property:", error);
+    console.error("[getProperty] Error details:", {
+      message: error?.message,
+      stack: error?.stack,
+      code: error?.code,
+      name: error?.name,
+    });
+    return { 
+      success: false, 
+      error: error?.message || "Failed query: " + (error?.toString() || "Unknown error")
+    };
   }
 }
 

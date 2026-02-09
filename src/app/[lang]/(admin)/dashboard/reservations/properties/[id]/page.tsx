@@ -9,6 +9,55 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
+// Utilidad local para ordenar por fecha de check-in
+function parseReservationDate(dateStr: string | null | undefined): Date | null {
+  if (!dateStr) return null;
+  const clean = dateStr.trim().toLowerCase();
+  if (!clean) return null;
+
+  // Formato ISO: YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss
+  if (/^\d{4}-\d{2}-\d{2}/.test(clean)) {
+    const iso = clean.includes("t") ? clean : `${clean}T12:00:00`;
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Formato "DD MMM YYYY" (ej: "09 mar 2026" o "2 abr 2026")
+  const ddMmmYyyy = clean.match(/^(\d{1,2})\s+([a-z]{3})\s+(\d{4})$/i);
+  if (ddMmmYyyy) {
+    const [, dayStr, monthStr, yearStr] = ddMmmYyyy;
+    const monthMap: Record<string, number> = {
+      ene: 0,
+      jan: 0,
+      feb: 1,
+      mar: 2,
+      abr: 3,
+      apr: 3,
+      may: 4,
+      jun: 5,
+      jul: 6,
+      ago: 7,
+      aug: 7,
+      sep: 8,
+      oct: 9,
+      nov: 10,
+      dic: 11,
+      dec: 11,
+    };
+    const month = monthMap[monthStr.toLowerCase()];
+    const day = parseInt(dayStr, 10);
+    const year = parseInt(yearStr, 10);
+    if (month !== undefined && !Number.isNaN(day) && !Number.isNaN(year)) {
+      const d = new Date(year, month, day);
+      return isNaN(d.getTime()) ? null : d;
+    }
+  }
+
+  // Fallback: dejar que el navegador intente parsear
+  const d = new Date(clean);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export default async function PropertyReservationsPage({
   params,
   searchParams,
@@ -55,7 +104,20 @@ export default async function PropertyReservationsPage({
     ? propertiesResult.data.map((p) => ({ id: p.id, name: p.name }))
     : [];
 
-  const reservationIds = (reservations || []).map((r) => r.id);
+  // Ordenar por fecha de check-in ASC (más cercanas primero),
+  // independientemente del formato de fecha que venga de la BD.
+  const sortedReservations = [...(reservations || [])].sort((a, b) => {
+    const da = parseReservationDate(a.checkIn);
+    const db = parseReservationDate(b.checkIn);
+
+    if (!da && !db) return 0;
+    if (!da) return 1; // fechas inválidas al final
+    if (!db) return -1;
+
+    return da.getTime() - db.getTime();
+  });
+
+  const reservationIds = sortedReservations.map((r) => r.id);
   const tokenStatusResult = reservationIds.length > 0 ? await getReservationsTokenStatus(reservationIds) : { success: true, status: {} as Record<number, boolean> };
   const tokenStatus = tokenStatusResult.success ? tokenStatusResult.status : {};
 
@@ -117,7 +179,7 @@ export default async function PropertyReservationsPage({
         </div>
       </div>
 
-      <ReservationsView reservations={reservations || []} tokenStatus={tokenStatus} />
+      <ReservationsView reservations={sortedReservations} tokenStatus={tokenStatus} />
     </div>
   );
 }

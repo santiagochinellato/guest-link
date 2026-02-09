@@ -66,6 +66,10 @@ export function useGuestData(property: GuestProperty) {
     effectiveAllowed: property.houseRules.allowed,
     effectiveProhibited: property.houseRules.prohibited,
 
+    // Pre Check-in
+    effectivePreCheckInSteps: property.preCheckIn?.steps || [],
+    effectivePreCheckInNotes: property.preCheckIn?.notes || "",
+
     safeAccess: property.access, // Legacy ref
 
     // Computed

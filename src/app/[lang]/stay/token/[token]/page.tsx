@@ -21,15 +21,31 @@ export default async function GuestTokenPage({ params }: PageProps) {
     return notFound();
   }
 
+  // Debug: verificar qué fechas están llegando
+  console.log("GuestTokenPage - Reservation data:", {
+    hasReservation: !!result.reservation,
+    checkIn: result.reservation?.checkIn,
+    checkOut: result.reservation?.checkOut,
+    checkInType: typeof result.reservation?.checkIn,
+    checkOutType: typeof result.reservation?.checkOut,
+  });
+
+  const reservation = result.reservation?.checkIn && result.reservation?.checkOut
+    ? { 
+        checkIn: result.reservation.checkIn, 
+        checkOut: result.reservation.checkOut,
+        guestName: result.reservation.guestName || undefined
+      }
+    : undefined;
+
+  console.log("GuestTokenPage - Reservation object to pass:", reservation);
+
   return (
     <GuestView
       property={result.property}
       dict={dict}
-      reservation={
-        result.reservation?.checkIn && result.reservation?.checkOut
-          ? { checkIn: result.reservation.checkIn, checkOut: result.reservation.checkOut }
-          : undefined
-      }
+      reservation={reservation}
+      guestName={result.reservation?.guestName || undefined}
     />
   );
 }

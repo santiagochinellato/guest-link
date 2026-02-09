@@ -22,6 +22,7 @@ import {
   Key,
   Menu,
   Zap,
+  Calendar,
 } from "lucide-react";
 
 import {
@@ -47,6 +48,7 @@ import { RulesSection } from "../properties/form-sections/RulesSection";
 import { EmergencySection } from "../properties/form-sections/EmergencySection";
 import { FlyerSection } from "../properties/form-sections/FlyerSection";
 import { AutomationSection } from "../properties/form-sections/AutomationSection";
+import { PreCheckInSection } from "../properties/form-sections/PreCheckInSection";
 
 interface PropertySettingsProps {
   initialData: Partial<PropertyFormData> & { id: number };
@@ -114,6 +116,12 @@ const SETTINGS_TABS = [
         label: "Llegada & Acceso",
         icon: Key,
         component: AccessSection,
+      },
+      {
+        id: "pre-checkin",
+        label: "Pre Check-in",
+        icon: Calendar,
+        component: PreCheckInSection,
       },
       {
         id: "rules",

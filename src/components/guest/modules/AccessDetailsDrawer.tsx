@@ -23,6 +23,7 @@ interface AccessDetailsDrawerProps {
   hasParking?: boolean;
   parkingDetails?: string;
   accessSteps?: { text: string }[];
+  showCodes?: boolean;
 }
 
 export function AccessDetailsDrawer({
@@ -32,6 +33,7 @@ export function AccessDetailsDrawer({
   hasParking,
   parkingDetails,
   accessSteps,
+  showCodes = true,
 }: AccessDetailsDrawerProps) {
   return (
     <Drawer>
@@ -49,18 +51,28 @@ export function AccessDetailsDrawer({
 
           <div className="p-4 space-y-6 overflow-y-auto pb-8">
             {/* Access Codes Grid */}
-            <div
-              className={cn(
-                "grid gap-4",
-                alarmCode ? "grid-cols-2" : "grid-cols-1",
-              )}
-            >
-              {/* Door Code */}
-              {accessCode && <CodeCard type="access" code={accessCode} />}
+            {showCodes && (
+              <div
+                className={cn(
+                  "grid gap-4",
+                  alarmCode ? "grid-cols-2" : "grid-cols-1",
+                )}
+              >
+                {/* Door Code */}
+                {accessCode && <CodeCard type="access" code={accessCode} />}
 
-              {/* Alarm Code */}
-              {alarmCode && <CodeCard type="alarm" code={alarmCode} />}
-            </div>
+                {/* Alarm Code */}
+                {alarmCode && <CodeCard type="alarm" code={alarmCode} />}
+              </div>
+            )}
+            
+            {!showCodes && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-4 border border-amber-200 dark:border-amber-800/30">
+                <p className="text-sm text-amber-800 dark:text-amber-200 text-center">
+                  Los códigos de acceso estarán disponibles <strong>12 horas antes</strong> de tu check-in.
+                </p>
+              </div>
+            )}
 
             {/* Parking Details */}
             {hasParking && (

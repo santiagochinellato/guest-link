@@ -4,16 +4,76 @@ import { LogIn, LogOut } from "lucide-react";
 import { AccessDetailsDrawer } from "./AccessDetailsDrawer";
 import { cn } from "@/lib/utils";
 
-function formatReservationDate(iso: string): string {
+// Función para convertir diferentes formatos de fecha a Date
+function parseDate(dateStr: string): Date | null {
+  if (!dateStr || typeof dateStr !== "string" || dateStr.trim() === "") {
+    return null;
+  }
+  
+  const cleanDate = dateStr.trim();
+  
+  // Intentar diferentes formatos
+  let date: Date | null = null;
+  
+  // Formato ISO: YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss
+  if (/^\d{4}-\d{2}-\d{2}/.test(cleanDate)) {
+    const dateString = cleanDate.includes("T") ? cleanDate : cleanDate + "T12:00:00";
+    date = new Date(dateString);
+    if (!isNaN(date.getTime())) return date;
+  }
+  
+  // Formato: DD MMM YYYY (ej: "09 mar 2026")
+  const ddmmyyyyMatch = cleanDate.match(/^(\d{1,2})\s+([a-z]{3})\s+(\d{4})$/i);
+  if (ddmmyyyyMatch) {
+    const [, day, monthStr, year] = ddmmyyyyMatch;
+    const monthMap: Record<string, number> = {
+      'ene': 0, 'jan': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'apr': 3,
+      'may': 4, 'jun': 5, 'jul': 6, 'ago': 7, 'aug': 7,
+      'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11, 'dec': 11
+    };
+    const month = monthMap[monthStr.toLowerCase()];
+    if (month !== undefined) {
+      date = new Date(parseInt(year), month, parseInt(day));
+      if (!isNaN(date.getTime())) return date;
+    }
+  }
+  
+  // Intentar parseo directo
+  date = new Date(cleanDate);
+  if (!isNaN(date.getTime())) return date;
+  
+  return null;
+}
+
+function formatReservationDate(iso: string | null | undefined): string {
+  if (!iso || typeof iso !== "string" || iso.trim() === "") {
+    return "Fecha inválida";
+  }
+  
   try {
-    const d = new Date(iso + "T12:00:00");
-    return d.toLocaleDateString("es-ES", {
+    const d = parseDate(iso);
+    
+    if (!d || isNaN(d.getTime())) {
+      console.warn("Fecha inválida recibida:", iso);
+      return "Fecha inválida";
+    }
+    
+    const formatted = d.toLocaleDateString("es-ES", {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
-  } catch {
-    return iso;
+    
+    // Verificar que el formato no sea "Invalid Date" (por si acaso)
+    if (formatted === "Invalid Date" || formatted.includes("Invalid")) {
+      console.warn("toLocaleDateString devolvió Invalid Date para:", iso);
+      return "Fecha inválida";
+    }
+    
+    return formatted;
+  } catch (error) {
+    console.error("Error formateando fecha:", iso, error);
+    return "Fecha inválida";
   }
 }
 
@@ -30,6 +90,17 @@ interface CheckInAccessProps {
   hasParking?: boolean;
   parkingDetails?: string;
   accessSteps?: { text: string }[];
+  /** Si es false, no muestra los códigos de acceso */
+  showCodes?: boolean;
+}
+
+// Función auxiliar para validar si una fecha es válida
+function isValidDateString(dateStr: string | null | undefined): boolean {
+  if (!dateStr || typeof dateStr !== "string" || dateStr.trim() === "") {
+    return false;
+  }
+  const d = parseDate(dateStr);
+  return d !== null && !isNaN(d.getTime());
 }
 
 export function CheckInAccess({
@@ -42,8 +113,27 @@ export function CheckInAccess({
   hasParking,
   parkingDetails,
   accessSteps,
+  showCodes = true,
 }: CheckInAccessProps) {
-  const hasDates = !!(checkInDate && checkOutDate);
+  // Debug: verificar qué valores están llegando
+  if (typeof window !== "undefined" && (checkInDate || checkOutDate)) {
+    console.log("CheckInAccess - Fechas recibidas:", {
+      checkInDate,
+      checkOutDate,
+      checkInDateType: typeof checkInDate,
+      checkOutDateType: typeof checkOutDate,
+    });
+  }
+  
+  const hasDates = isValidDateString(checkInDate) && isValidDateString(checkOutDate);
+  
+  // Debug: verificar si hasDates es true
+  if (typeof window !== "undefined" && (checkInDate || checkOutDate)) {
+    console.log("CheckInAccess - hasDates:", hasDates, {
+      checkInValid: isValidDateString(checkInDate),
+      checkOutValid: isValidDateString(checkOutDate),
+    });
+  }
 
   return (
     <AccessDetailsDrawer
@@ -52,6 +142,7 @@ export function CheckInAccess({
       hasParking={hasParking}
       parkingDetails={parkingDetails}
       accessSteps={accessSteps}
+      showCodes={showCodes}
     >
       <button className="w-full group outline-none">
         <div className="grid grid-cols-2 gap-px bg-zinc-100 dark:bg-zinc-800 rounded-3xl overflow-hidden border border-zinc-200/50 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md active:scale-[0.99]">
@@ -68,7 +159,7 @@ export function CheckInAccess({
                 <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white font-sans tracking-tight">
                   {formatReservationDate(checkInDate!)}
                 </p>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-xl font-bold text-zinc-700 dark:text-zinc-300">
                   {checkInTime || "15:00"}
                 </p>
               </div>
@@ -92,7 +183,7 @@ export function CheckInAccess({
                 <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white font-sans tracking-tight">
                   {formatReservationDate(checkOutDate!)}
                 </p>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-xl font-bold text-zinc-700 dark:text-zinc-300">
                   {checkOutTime || "11:00"}
                 </p>
               </div>
@@ -105,11 +196,11 @@ export function CheckInAccess({
         </div>
 
         {/* Helper Badge */}
-        <div className="mt-2 mb-2 flex justify-center">
+        {/* <div className="mt-2 mb-2 flex justify-center">
           <span className="text-[14px] font-medium text-brand-copper bg-brand-copper/30 px-4 py-2 rounded-lg">
             Toca para más información
           </span>
-        </div>
+        </div> */}
       </button>
     </AccessDetailsDrawer>
   );

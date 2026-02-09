@@ -14,6 +14,7 @@ const safeJsonParse = (str: string | null | undefined, fallback = {}) => {
 export function mapPropertyToGuestDTO(prop: any, recs: any[], emergency: any[], transport: any[]): GuestProperty {
   const parsedRules = safeJsonParse(prop.houseRules, { text: "" });
   const parsedAccess = parsedRules.access || {};
+  const parsedPreCheckIn = parsedRules.preCheckIn || {};
   const parsedHost = parsedRules.host || {};
 
   // Map Recommendations
@@ -93,6 +94,14 @@ export function mapPropertyToGuestDTO(prop: any, recs: any[], emergency: any[], 
       ),
       hasParking: parsedAccess.hasParking || false,
       parkingDetails: parsedAccess.parkingDetails || ""
+    },
+
+    preCheckIn: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      steps: (parsedPreCheckIn.steps || []).map((s: any) => 
+        typeof s === 'string' ? { text: s } : s
+      ),
+      notes: parsedPreCheckIn.notes || ""
     },
 
     recommendations,

@@ -70,7 +70,7 @@ export function RulesDrawer({
           </DrawerHeader>
 
           <div className="p-4 overflow-y-auto pb-8 space-y-6">
-            {/* 1. Arrival & Departure */}
+            {/* 1. Arrival & Departure
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-4 text-center">
                 <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider mb-1">
@@ -92,9 +92,9 @@ export function RulesDrawer({
                     : checkOutTime || "--:--"}
                 </p>
               </div>
-            </div>
+            </div> */}
 
-            {/* 2. Access Section (If exists) */}
+            {/* 2. Access Section (If exists)
             {access && (access.instructions || access.accessCode) && (
               <div className="bg-brand-void/5 dark:bg-brand-copper/10 border border-brand-void/10 dark:border-brand-copper/20 rounded-2xl p-4 space-y-3">
                 <h4 className="flex items-center gap-2 text-sm font-bold text-brand-void dark:text-brand-copper uppercase tracking-wider">
@@ -129,7 +129,7 @@ export function RulesDrawer({
                   </div>
                 )}
               </div>
-            )}
+            )} */}
 
             <div className="w-full h-px bg-zinc-100 dark:bg-zinc-800" />
 
