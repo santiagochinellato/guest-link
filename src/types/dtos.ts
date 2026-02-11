@@ -11,6 +11,7 @@ export interface GuestRecommendation {
   phone?: string;
   rating?: number;
   priceRange?: number;
+  userRatingsTotal?: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   openingHours?: any;
   category: string;
@@ -24,6 +25,7 @@ export interface GuestEmergencyContact {
 }
 
 export interface GuestTransport {
+  id?: number;
   name: string;
   type: string;
   description?: string;

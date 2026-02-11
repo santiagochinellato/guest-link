@@ -24,7 +24,7 @@ const mockProperty: GuestProperty = {
     parkingDetails: "Parking available",
     accessCode: "1234",
     alarmCode: "5678",
-    accessSteps: ["Step 1", "Step 2"],
+    accessSteps: [{ text: "Step 1" }, { text: "Step 2" }],
   },
   houseRules: {
     text: "Test rules",
@@ -32,7 +32,7 @@ const mockProperty: GuestProperty = {
     prohibited: ["Prohibited 1"],
   },
   preCheckIn: {
-    steps: ["Pre-check-in step 1"],
+    steps: [{ text: "Pre-check-in step 1" }],
     notes: "Pre-check-in notes",
   },
   recommendations: [
@@ -96,7 +96,10 @@ describe("useGuestData", () => {
 
     expect(result.current.effectiveAccessCode).toBe("1234");
     expect(result.current.effectiveAlarmCode).toBe("5678");
-    expect(result.current.effectiveAccessSteps).toEqual(["Step 1", "Step 2"]);
+    expect(result.current.effectiveAccessSteps).toEqual([
+      { text: "Step 1" },
+      { text: "Step 2" },
+    ]);
   });
 
   it("should provide effective house rules", () => {
@@ -110,7 +113,9 @@ describe("useGuestData", () => {
   it("should provide effective pre-check-in data", () => {
     const { result } = renderHook(() => useGuestData(mockProperty));
 
-    expect(result.current.effectivePreCheckInSteps).toEqual(["Pre-check-in step 1"]);
+    expect(result.current.effectivePreCheckInSteps).toEqual([
+      { text: "Pre-check-in step 1" },
+    ]);
     expect(result.current.effectivePreCheckInNotes).toBe("Pre-check-in notes");
   });
 
@@ -167,10 +172,10 @@ describe("useGuestData", () => {
   });
 
   it("should handle openLocation with address when no coordinates", () => {
-    const propertyWithoutCoords = {
+    const propertyWithoutCoords: GuestProperty = {
       ...mockProperty,
-      latitude: null,
-      longitude: null,
+      latitude: undefined,
+      longitude: undefined,
     };
 
     const { result } = renderHook(() => useGuestData(propertyWithoutCoords));

@@ -78,7 +78,7 @@ export const RecommendationsDetail = memo(function RecommendationsDetail({
           if (isTransport) {
             return (
               <TransportCard
-                key={place.id || place.googlePlaceId || i}
+                key={place.id ?? i}
                 place={place}
                 categoryType={activeCategory}
               />
@@ -88,7 +88,7 @@ export const RecommendationsDetail = memo(function RecommendationsDetail({
           // STANDARD CARD
           return (
             <RecommendationCard
-              key={place.id || place.googlePlaceId || i}
+              key={place.id ?? i}
               place={place}
               index={i}
               distance={getDistanceString(place)}
