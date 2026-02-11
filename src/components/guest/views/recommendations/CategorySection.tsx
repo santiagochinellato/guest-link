@@ -6,15 +6,15 @@ import { getCategoryConfig } from "@/config/recommendations";
 import { RecommendationCard } from "./RecommendationCard";
 import { TransportCard } from "./TransportCard";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import type { GuestRecommendation } from "@/types/dtos";
 
 const TRANSPORT_CATEGORIES = ["bus", "transit", "transfer", "taxi", "rental"] as const;
+type TransportCategory = (typeof TRANSPORT_CATEGORIES)[number];
 
 interface CategorySectionProps {
   catKey: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  items: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getDistanceString?: (place: any) => string | null;
+  items: GuestRecommendation[];
+  getDistanceString?: (place: GuestRecommendation) => string | null;
   propertyId?: number;
 }
 
@@ -27,15 +27,16 @@ export const CategorySection = memo(function CategorySection({
   const [isExpanded, setIsExpanded] = useState(false);
   const catConfig = getCategoryConfig(catKey);
 
-  if (!items || items.length === 0) return null;
-
   // Memoize visible recommendations to avoid re-slicing on every render
   const visibleRecs = useMemo(
     () => (isExpanded ? items : items.slice(0, 3)),
     [items, isExpanded]
   );
+
+  if (!items || items.length === 0) return null;
+
   const hasMore = items.length > 3;
-  const isTransport = TRANSPORT_CATEGORIES.includes(catKey as any);
+  const isTransport = TRANSPORT_CATEGORIES.includes(catKey as TransportCategory);
 
   return (
     <div id={catKey} className="space-y-4 scroll-mt-24">

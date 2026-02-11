@@ -38,7 +38,7 @@ export function SyncStatusCard({
   };
 
   return (
-    <div className="bg-white dark:bg-brand-void border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm">
+    <div className="bg-white dark:bg-brand-void border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm min-h-[180px] flex flex-col justify-between">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-serif">

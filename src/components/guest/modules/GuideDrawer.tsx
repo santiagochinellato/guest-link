@@ -37,6 +37,8 @@ export function GuideDrawer({
   // Reset category when drawer closes
   useEffect(() => {
     if (!isOpen) {
+      // Sincronizamos el estado con la prop de apertura
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveCategory("");
     }
   }, [isOpen]);

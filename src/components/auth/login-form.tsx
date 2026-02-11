@@ -24,7 +24,9 @@ export function LoginForm() {
 
   useEffect(() => {
     if (registerState === "success") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowSuccess(true);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLogin(true);
       const timer = setTimeout(() => setShowSuccess(false), 5000);
       return () => clearTimeout(timer);

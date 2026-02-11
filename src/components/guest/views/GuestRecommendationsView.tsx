@@ -3,9 +3,10 @@
 import { calculateDistance } from "@/lib/geo";
 import { RecommendationsOverview } from "./recommendations/RecommendationsOverview";
 import { RecommendationsDetail } from "./recommendations/RecommendationsDetail";
+import type { GuestRecommendation } from "@/types/dtos";
 
 interface GuestRecommendationsViewProps {
-  recommendations: any[];
+  recommendations: GuestRecommendation[];
   categories: string[];
   activeCategory: string;
   setActiveCategory: (category: string) => void;
@@ -24,8 +25,7 @@ export function GuestRecommendationsView({
   propertyId,
   propertyLocation,
 }: GuestRecommendationsViewProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getDistanceString = (place: any) => {
+  const getDistanceString = (place: GuestRecommendation) => {
     if (
       !propertyLocation ||
       !place.latitude ||

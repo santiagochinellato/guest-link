@@ -19,7 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 // Presets por país
@@ -87,10 +87,8 @@ export function EmergencySection() {
   const hostPhone = watch("hostPhone");
 
   const rawContacts = watch("emergencyContacts") || [];
-  const currentContacts = useMemo(
-    () => rawContacts,
-    [JSON.stringify(rawContacts)],
-  );
+  // Mantener referencia directa; react-hook-form ya maneja actualizaciones
+  const currentContacts = rawContacts;
 
   // Derivamos includeHost directamente del estado de los contactos
   const includeHost = useMemo(

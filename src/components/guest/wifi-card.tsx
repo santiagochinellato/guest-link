@@ -3,13 +3,22 @@
 import React, { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Wifi, Lock, Network, Check, Copy } from "lucide-react";
-import { toast } from "sonner"; // Asumo que usas sonner o similar para notificaciones
+import { toast } from "sonner";
 
-// ... props interface
+interface WifiCardLabels {
+  title: string;
+  subtitle: string;
+  ssidLabel: string;
+  passwordLabel: string;
+  copyNetwork: string;
+  copyPassword: string;
+  scanLabel: string;
+}
+
 interface WifiCardProps {
   ssid: string;
   password?: string;
-  labels: any; // Ideally typed
+  labels: WifiCardLabels;
 }
 
 export const WifiCard = ({ ssid, password, labels }: WifiCardProps) => {

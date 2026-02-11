@@ -10,11 +10,12 @@ vi.mock("sonner", () => ({
   },
 }));
 
-// Mock clipboard API
-Object.assign(navigator, {
-  clipboard: {
+// Mock clipboard API (compatible con happy-dom)
+Object.defineProperty(navigator, "clipboard", {
+  value: {
     writeText: vi.fn(() => Promise.resolve()),
   },
+  writable: true,
 });
 
 describe("WifiCard", () => {

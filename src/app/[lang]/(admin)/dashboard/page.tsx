@@ -118,7 +118,7 @@ export default async function DashboardPage({
       {/* Stats Section */}
       <section className="flex overflow-x-auto pb-4 gap-4 snap-x -mx-6 px-6 no-scrollbar md:grid md:grid-cols-3 md:gap-6 md:mx-0 md:px-0 md:overflow-visible">
         {/* Stat Card 1 */}
-        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-brand-copper/30 transition-colors group">
+        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-brand-copper/30 transition-colors group min-h-[180px]">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
               <Eye className="w-5 h-5" />
@@ -139,7 +139,7 @@ export default async function DashboardPage({
         </div>
 
         {/* Stat Card 2 */}
-        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-brand-copper/30 transition-colors group">
+        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-brand-copper/30 transition-colors group min-h-[180px]">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-brand-copper/10 rounded-lg text-brand-copper group-hover:bg-brand-copper/20 transition-colors">
               <Home className="w-5 h-5" />
@@ -160,11 +160,11 @@ export default async function DashboardPage({
         </div>
 
         {/* Sync Status Card (Replacements QR Scans) */}
-        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center">
+        <div className="min-w-[280px] md:min-w-0 md:w-auto snap-center ">
           {syncedProperty ? (
             <SyncStatusCardWrapper propertyId={syncedProperty.id} />
           ) : (
-            <div className="bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 h-full flex flex-col justify-center items-center text-center opacity-70">
+            <div className="bg-white dark:bg-brand-void p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 h-full flex flex-col justify-center items-center text-center opacity-70 h-full min-h-[180px]">
               <p className="text-sm font-medium text-gray-500">
                 Sincronización no configurada
               </p>

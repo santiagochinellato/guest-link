@@ -1,4 +1,5 @@
 
+import React from "react";
 import {
   Utensils,
   Landmark,
@@ -20,6 +21,7 @@ import {
   Bus,
   Plane,
   BookOpen,
+  Map as MapIcon,
 } from "lucide-react";
 
 // Category Groups
@@ -53,10 +55,14 @@ export const SERVICES_CATEGORIES = [
   "essentials",
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const CATEGORY_CONFIG: Record<
   string,
-  { label: string; icon: any; color: string; bg: string }
+  {
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    bg: string;
+  }
 > = {
   food: {
     label: "Gastronomía",
@@ -72,7 +78,7 @@ export const CATEGORY_CONFIG: Record<
   },
   sights: {
     label: "Sitios de Interés",
-    icon: MapIcon, // Placeholder, MapIcon import needed if specific
+    icon: MapIcon,
     color: "text-blue-500",
     bg: "bg-blue-50 dark:bg-blue-500/10",
   },
@@ -215,8 +221,6 @@ export const CATEGORY_CONFIG: Record<
     bg: "bg-indigo-50 dark:bg-indigo-500/10",
   },
 };
-
-import { Map as MapIcon } from "lucide-react";
 
 export const getCategoryConfig = (cat: string) => {
   return (

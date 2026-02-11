@@ -6,7 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 interface EmergencyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  labels: any;
+  labels: {
+    title: string;
+  };
 }
 
 export function EmergencyModal({

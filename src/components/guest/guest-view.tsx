@@ -45,27 +45,16 @@ interface GuestViewProps {
   stateOverride?: "BEFORE_CHECKIN" | "CHECKIN_DAY" | "DURING_STAY" | "AFTER_CHECKOUT" | "NO_RESERVATION";
 }
 
-export function GuestView({ property, dict: _dict, reservation, guestName, isPublicView = false, timeOfDayOverride, stateOverride }: GuestViewProps) {
-  // En vista pública, no validar acceso
-  // En vista privada, validar que haya reserva o token generado
-  if (!isPublicView) {
-    const hasValidAccess = reservation || guestName;
-    
-    if (!hasValidAccess) {
-      return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center p-6">
-          <div className="text-center space-y-4 max-w-md">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-              Acceso no disponible
-            </h1>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Esta guía solo está disponible para huéspedes con reserva confirmada o con un enlace de acceso generado.
-            </p>
-          </div>
-        </div>
-      );
-    }
-  }
+export function GuestView({
+  property,
+  dict: _dict,
+  reservation,
+  guestName,
+  isPublicView = false,
+  timeOfDayOverride,
+  stateOverride,
+}: GuestViewProps) {
+  const hasValidAccess = !!(reservation || guestName);
 
   // Data Hook
   const {
@@ -112,6 +101,22 @@ export function GuestView({ property, dict: _dict, reservation, guestName, isPub
     timeOfDayOverride,
     stateOverride,
   });
+
+  // En vista privada, validar que haya reserva o token generado
+  if (!isPublicView && !hasValidAccess) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center p-6">
+        <div className="text-center space-y-4 max-w-md">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            Acceso no disponible
+          </h1>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            Esta guía solo está disponible para huéspedes con reserva confirmada o con un enlace de acceso generado.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Drawer States
   const [isRulesOpen, setIsRulesOpen] = useState(false);
