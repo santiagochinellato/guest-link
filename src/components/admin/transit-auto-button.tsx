@@ -10,7 +10,7 @@ interface TransitAutoButtonProps {
   propertyId: number;
   city?: string;
   className?: string;
-  onComplete?: (data?: any[]) => void;
+  onComplete?: (data?: unknown[]) => void;
 }
 
 export function TransitAutoButton({

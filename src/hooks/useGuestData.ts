@@ -5,7 +5,6 @@ import { GuestProperty, GuestRecommendation } from "@/types/dtos";
 // Transport types constant
 const TRANSPORT_TYPES = ["transit", "bus", "taxi", "transfer"];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useGuestData(property: GuestProperty) {
   // Pass-through data (already normalized by server mapper)
   const recommendations = property.recommendations || [];

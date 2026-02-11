@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 import { Star, Map as MapIcon } from "lucide-react";
 import { getCategoryConfig } from "@/config/recommendations";
 import { posthog } from "@/lib/posthog";
+import type { GuestRecommendation } from "@/types/dtos";
 
 interface RecommendationCardProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  place: any;
+  place: GuestRecommendation;
   index: number;
   highlight?: boolean;
   distance?: string | null;

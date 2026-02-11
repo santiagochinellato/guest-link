@@ -5,17 +5,18 @@ import { cn } from "@/lib/utils";
 import { getCategoryConfig } from "@/config/recommendations";
 import { RecommendationCard } from "./RecommendationCard";
 import { TransportCard } from "./TransportCard";
+import type { GuestRecommendation } from "@/types/dtos";
 
 const TRANSPORT_CATEGORIES = ["bus", "transit", "transfer", "taxi", "rental"] as const;
+
+type TransportCategory = (typeof TRANSPORT_CATEGORIES)[number];
 
 interface RecommendationsDetailProps {
   categories: string[];
   activeCategory: string;
   setActiveCategory: (category: string) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  recommendations: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getDistanceString: (place: any) => string | null;
+  recommendations: GuestRecommendation[];
+  getDistanceString: (place: GuestRecommendation) => string | null;
   propertyId?: number;
 }
 
@@ -29,13 +30,16 @@ export const RecommendationsDetail = memo(function RecommendationsDetail({
 }: RecommendationsDetailProps) {
   // Memoize filtered recommendations to avoid re-filtering on every render
   const filteredRecommendations = useMemo(() => {
-    return recommendations?.filter(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (r: any) => r.categoryType === activeCategory
-    ) || [];
+    return (
+      recommendations?.filter(
+        (r) => r.categoryType === activeCategory,
+      ) || []
+    );
   }, [recommendations, activeCategory]);
 
-  const isTransport = TRANSPORT_CATEGORIES.includes(activeCategory as any);
+  const isTransport = TRANSPORT_CATEGORIES.includes(
+    activeCategory as TransportCategory,
+  );
 
   return (
     <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">

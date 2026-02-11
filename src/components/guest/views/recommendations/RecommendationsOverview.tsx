@@ -10,15 +10,14 @@ import {
   ACTIVITY_CATEGORIES,
   SERVICES_CATEGORIES,
 } from "@/config/recommendations";
+import type { GuestRecommendation } from "@/types/dtos";
 
 interface RecommendationsOverviewProps {
   categories: string[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  recommendations: any[];
+  recommendations: GuestRecommendation[];
   setActiveCategory: (category: string) => void;
   useScrollNavigation?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getDistanceString: (place: any) => string | null;
+  getDistanceString: (place: GuestRecommendation) => string | null;
   propertyId?: number;
 }
 
@@ -34,8 +33,7 @@ export function RecommendationsOverview({
   const validCategories = useMemo(
     () =>
       categories.filter((catKey) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return recommendations.some((r: any) => r.categoryType === catKey);
+        return recommendations.some((r) => r.categoryType === catKey);
       }),
     [categories, recommendations],
   );
@@ -44,8 +42,7 @@ export function RecommendationsOverview({
   const topDining = useMemo(
     () =>
       recommendations
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((r: any) => DINING_CATEGORIES.includes(r.categoryType))
+        .filter((r) => DINING_CATEGORIES.includes(r.categoryType))
         .slice(0, 5),
     [recommendations],
   );
@@ -53,8 +50,7 @@ export function RecommendationsOverview({
   const topActivities = useMemo(
     () =>
       recommendations
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((r: any) => ACTIVITY_CATEGORIES.includes(r.categoryType))
+        .filter((r) => ACTIVITY_CATEGORIES.includes(r.categoryType))
         .slice(0, 5),
     [recommendations],
   );
@@ -62,8 +58,7 @@ export function RecommendationsOverview({
   const topServices = useMemo(
     () =>
       recommendations
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((r: any) => SERVICES_CATEGORIES.includes(r.categoryType))
+        .filter((r) => SERVICES_CATEGORIES.includes(r.categoryType))
         .slice(0, 5),
     [recommendations],
   );
@@ -120,8 +115,7 @@ export function RecommendationsOverview({
           return null;
 
         const catRecs = recommendations.filter(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (r: any) => r.categoryType === catKey,
+          (r) => r.categoryType === catKey,
         );
 
         return (

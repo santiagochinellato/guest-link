@@ -1,14 +1,14 @@
 "use client";
 
 import { AlertCircle, MessageCircle, Phone, User } from "lucide-react";
+import type { GuestEmergencyContact } from "@/types/dtos";
 
 interface GuestEmergencyViewProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   property: {
     hostName?: string;
     hostPhone?: string;
     hostImage?: string;
-    emergencyContacts?: any[];
+    emergencyContacts?: GuestEmergencyContact[];
   };
 }
 
@@ -89,7 +89,7 @@ export function GuestEmergencyView({ property }: GuestEmergencyViewProps) {
               Policía & Ambulancia
             </p>
           </div>
-          {property.emergencyContacts?.map((contact: any, i: number) => (
+          {property.emergencyContacts?.map((contact: GuestEmergencyContact, i: number) => (
             <div
               key={i}
               className="flex items-center justify-between p-5 bg-white  rounded-2xl shadow-sm border border-gray-100 dark:border-neutral-700 dark:bg-brand-void group hover:border-[#0f756d]/30 transition-all"

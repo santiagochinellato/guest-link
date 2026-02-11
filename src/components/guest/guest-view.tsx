@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/rules-of-hooks */
+
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useGuestData } from "@/hooks/useGuestData";

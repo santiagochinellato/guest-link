@@ -2,11 +2,11 @@
 
 import { cn } from "@/lib/utils";
 import { getCategoryConfig } from "@/config/recommendations";
+import type { GuestRecommendation } from "@/types/dtos";
 
 interface CategoryGridProps {
   categories: string[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  recommendations: any[];
+  recommendations: GuestRecommendation[];
   useScrollNavigation: boolean;
   setActiveCategory: (cat: string) => void;
 }

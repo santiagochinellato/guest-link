@@ -117,7 +117,8 @@ export const ElegantTemplate: React.FC<TemplateProps> = ({
               </SerifHeading>
               <div className="w-16 h-[2px] bg-neutral-900 mx-auto opacity-20" />
               <p className="text-xl text-neutral-600 font-light italic leading-relaxed font-serif">
-                "{content.welcomeMessage}"
+                {/* Usamos comillas tipográficas para evitar no-unescaped-entities */}
+                “{content.welcomeMessage}”
               </p>
             </div>
 
@@ -197,7 +198,7 @@ export const ElegantTemplate: React.FC<TemplateProps> = ({
           <div className="w-12 h-1 bg-neutral-900 mx-auto mb-6 opacity-10" />
 
           <p className="text-2xl text-neutral-600 font-light font-serif italic max-w-xl leading-relaxed">
-            "{content.welcomeMessage}"
+            “{content.welcomeMessage}”
           </p>
           {content.welcomeMessageEn && (
             <p className="text-base text-neutral-400 font-light mt-3">

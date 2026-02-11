@@ -11,7 +11,7 @@ interface RuleItem {
 interface RulesModuleProps {
   allowed?: RuleItem[];
   prohibited?: RuleItem[];
-  additionalRules?: string | any;
+  additionalRules?: string | unknown;
 }
 
 export function RulesModule({
@@ -27,7 +27,7 @@ export function RulesModule({
     let parsedText = typeof additionalRules === "string" ? additionalRules : "";
 
     try {
-      let parsed: any = null;
+      let parsed: unknown = null;
 
       if (typeof additionalRules === "object" && additionalRules !== null) {
         parsed = additionalRules;
@@ -39,22 +39,27 @@ export function RulesModule({
       }
 
       if (parsed && typeof parsed === "object") {
+        const obj = parsed as {
+          text?: unknown;
+          allowed?: unknown[];
+          prohibited?: unknown[];
+        };
         // Extract text
-        if (typeof parsed.text === "string") {
-          parsedText = parsed.text;
+        if (typeof obj.text === "string") {
+          parsedText = obj.text;
         }
 
         // Extract allowed
-        if (Array.isArray(parsed.allowed)) {
-          const newAllowed = parsed.allowed.map((val: any) => ({
+        if (Array.isArray(obj.allowed)) {
+          const newAllowed = obj.allowed.map((val: unknown) => ({
             value: typeof val === "string" ? val : String(val),
           }));
           parsedAllowed = [...parsedAllowed, ...newAllowed];
         }
 
         // Extract prohibited
-        if (Array.isArray(parsed.prohibited)) {
-          const newProhibited = parsed.prohibited.map((val: any) => ({
+        if (Array.isArray(obj.prohibited)) {
+          const newProhibited = obj.prohibited.map((val: unknown) => ({
             value: typeof val === "string" ? val : String(val),
           }));
           parsedProhibited = [...parsedProhibited, ...newProhibited];

@@ -1,10 +1,10 @@
 "use client";
 
 import { TramFront, MapPinned } from "lucide-react";
+import type { GuestTransport } from "@/types/dtos";
 
 interface GuestTransportViewProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transport: any[];
+  transport: GuestTransport[];
 }
 
 export function GuestTransportView({ transport }: GuestTransportViewProps) {
@@ -20,8 +20,7 @@ export function GuestTransportView({ transport }: GuestTransportViewProps) {
       </div>
 
       <div className="grid gap-4">
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {transport?.map((item: any, i: number) => (
+        {transport?.map((item, i) => (
           <div
             key={i}
             className="group flex flex-col sm:flex-row gap-4 bg-white dark:bg-brand-void p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-neutral-700 hover:border-blue-200 transition-colors"

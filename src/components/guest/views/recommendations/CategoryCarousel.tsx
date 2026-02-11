@@ -2,14 +2,13 @@
 
 import { LucideIcon } from "lucide-react";
 import { RecommendationCard } from "./RecommendationCard";
+import type { GuestRecommendation } from "@/types/dtos";
 
 interface CategoryCarouselProps {
   title: string;
   icon: LucideIcon;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  items: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getDistanceString?: (place: any) => string | null;
+  items: GuestRecommendation[];
+  getDistanceString?: (place: GuestRecommendation) => string | null;
   propertyId?: number;
 }
 

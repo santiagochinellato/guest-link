@@ -126,13 +126,18 @@ export function RulesSection() {
 
 // --- SUBCOMPONENTE REUTILIZABLE PARA GESTIÓN DE LISTAS ---
 
+interface RuleField {
+  id: string;
+  value: string;
+}
+
 interface RuleManagerProps {
   title: string;
   description: string;
   icon: React.ElementType;
   colorTheme: "green" | "red";
   presets: string[];
-  fields: any[]; // FieldArray fields
+  fields: RuleField[]; // FieldArray fields
   onAdd: (value: string) => void;
   onRemove: (index: number) => void;
   fieldName: string;

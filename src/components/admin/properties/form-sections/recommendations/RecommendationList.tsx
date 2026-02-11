@@ -12,11 +12,24 @@ import {
   Map as MapIcon,
 } from "lucide-react";
 
+interface RecommendationField {
+  id: string;
+  categoryType?: string;
+  title?: string;
+  formattedAddress?: string;
+  rating?: number;
+  userRatingsTotal?: number;
+}
+
+interface RecommendationCategoryMeta {
+  name?: string;
+  type?: string;
+  searchKeywords?: string;
+}
+
 interface RecommendationListProps {
-  recFields: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  activeCategory: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  recFields: RecommendationField[];
+  activeCategory: RecommendationCategoryMeta | null;
   activeCategoryIndex: number;
   viewMode: "list" | "map";
   onRemoveCategory: (index: number) => void;
