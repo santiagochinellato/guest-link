@@ -51,13 +51,13 @@ export const CategorySection = memo(function CategorySection({
         {visibleRecs.map((place, i) =>
           isTransport ? (
             <TransportCard
-              key={place.id || place.googlePlaceId || i}
+              key={place.id ?? i}
               place={place}
               categoryType={catKey}
             />
           ) : (
             <RecommendationCard
-              key={place.id || place.googlePlaceId || i}
+              key={place.id ?? i}
               place={place}
               index={i}
               distance={getDistanceString ? getDistanceString(place) : null}

@@ -56,7 +56,7 @@ export function CategoryGrid({
                   config.color,
                 )}
               >
-                <config.icon className="w-5 h-5" strokeWidth={2} />
+                <config.icon className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <span className="block font-semibold text-neutral-800 dark:text-neutral-200 text-xs truncate">
