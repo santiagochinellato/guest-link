@@ -6,7 +6,6 @@ import type { GuestProperty } from "@/types/dtos";
 const mockProperty: GuestProperty = {
   id: 1,
   name: "Test Property",
-  slug: "test-property",
   address: "123 Test St",
   city: "Test City",
   country: "Test Country",
@@ -39,6 +38,7 @@ const mockProperty: GuestProperty = {
     {
       id: 1,
       title: "Restaurant 1",
+      category: "food",
       categoryType: "gastronomy",
       formattedAddress: "123 Food St",
       googleMapsLink: "https://maps.google.com",
@@ -49,6 +49,7 @@ const mockProperty: GuestProperty = {
     {
       id: 2,
       title: "Taxi Service",
+      category: "transport",
       categoryType: "taxi",
       formattedAddress: "456 Taxi St",
       googleMapsLink: "https://maps.google.com",
@@ -59,6 +60,7 @@ const mockProperty: GuestProperty = {
     {
       id: 3,
       title: "Trail 1",
+      category: "outdoors",
       categoryType: "trails",
       formattedAddress: "789 Trail St",
       googleMapsLink: "https://maps.google.com",
