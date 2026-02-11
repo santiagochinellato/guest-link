@@ -18,6 +18,10 @@ export function getNightsCount(checkIn: string, checkOut: string): number {
   try {
     const start = new Date(checkIn);
     const end = new Date(checkOut);
+    // Check if dates are valid
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return 0;
+    }
     const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     return Math.max(0, diff);
   } catch {

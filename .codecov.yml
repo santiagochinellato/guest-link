@@ -1,0 +1,28 @@
+codecov:
+  token: # Add your Codecov token here if needed
+  notify:
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+  
+  status:
+    project:
+      default:
+        target: 60%
+        threshold: 1%
+    patch:
+      default:
+        target: 50%
+        threshold: 1%
+
+ignore:
+  - "src/test/"
+  - "**/*.test.*"
+  - "**/*.spec.*"
+  - "**/types/**"
+  - "**/db/schema.ts"
+  - "**/*.config.*"
+
