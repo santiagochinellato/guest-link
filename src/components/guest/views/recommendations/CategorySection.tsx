@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { cn } from "@/lib/utils";
 import { getCategoryConfig } from "@/config/recommendations";
 import { RecommendationCard } from "./RecommendationCard";
 import { TransportCard } from "./TransportCard";
-import { Map as MapIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+
+const TRANSPORT_CATEGORIES = ["bus", "transit", "transfer", "taxi", "rental"] as const;
 
 interface CategorySectionProps {
   catKey: string;
@@ -16,7 +18,7 @@ interface CategorySectionProps {
   propertyId?: number;
 }
 
-export function CategorySection({
+export const CategorySection = memo(function CategorySection({
   catKey,
   items,
   getDistanceString,
@@ -27,11 +29,13 @@ export function CategorySection({
 
   if (!items || items.length === 0) return null;
 
-  const visibleRecs = isExpanded ? items : items.slice(0, 3);
+  // Memoize visible recommendations to avoid re-slicing on every render
+  const visibleRecs = useMemo(
+    () => (isExpanded ? items : items.slice(0, 3)),
+    [items, isExpanded]
+  );
   const hasMore = items.length > 3;
-
-  const TRANSPORT_CATEGORIES = ["bus", "transit", "transfer", "taxi", "rental"];
-  const isTransport = TRANSPORT_CATEGORIES.includes(catKey);
+  const isTransport = TRANSPORT_CATEGORIES.includes(catKey as any);
 
   return (
     <div id={catKey} className="space-y-4 scroll-mt-24">
@@ -45,10 +49,14 @@ export function CategorySection({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {visibleRecs.map((place, i) =>
           isTransport ? (
-            <TransportCard key={i} place={place} categoryType={catKey} />
+            <TransportCard
+              key={place.id || place.googlePlaceId || i}
+              place={place}
+              categoryType={catKey}
+            />
           ) : (
             <RecommendationCard
-              key={i}
+              key={place.id || place.googlePlaceId || i}
               place={place}
               index={i}
               distance={getDistanceString ? getDistanceString(place) : null}
@@ -80,4 +88,4 @@ export function CategorySection({
       )}
     </div>
   );
-}
+});

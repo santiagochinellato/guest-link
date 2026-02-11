@@ -5,25 +5,13 @@ import { motion } from "framer-motion";
 import { HostlyLogoVertical } from "@/components/ui/branding/HostlyLogo";
 import { Loader2 } from "lucide-react";
 import { parseGuestInfo } from "@/lib/utils/guest-info";
+import { getTimeBasedGreeting } from "@/lib/utils/dates";
 
 interface GuestWelcomeScreenProps {
   propertyName: string;
   coverImage?: string | null;
   guestName?: string;
   onDismiss: () => void;
-}
-
-function getTimeBasedGreeting(): string {
-  const hour = new Date().getHours();
-  
-  if (hour >= 5 && hour < 12) {
-    return "Buenos días";
-  }
-  if (hour >= 12 && hour < 19) {
-    return "Buenas tardes";
-  }
-  // 19:00 - 5:00
-  return "Buenas noches";
 }
 
 export function GuestWelcomeScreen({

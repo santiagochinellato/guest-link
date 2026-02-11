@@ -21,5 +21,5 @@ export default async function GuestPropertyPage({ params }: PageProps) {
     return notFound();
   }
 
-  return <GuestView property={result.data} dict={dict} />;
+  return <GuestView property={result.data} dict={dict} isPublicView={true} />;
 }

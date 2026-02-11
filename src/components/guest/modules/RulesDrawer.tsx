@@ -13,18 +13,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Ban, ScrollText, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-function formatReservationDate(iso: string): string {
-  try {
-    const d = new Date(iso + "T12:00:00");
-    return d.toLocaleDateString("es-ES", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
-}
+import { formatReservationDate } from "@/lib/utils/dates";
 
 interface RulesDrawerProps {
   isOpen: boolean;

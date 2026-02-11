@@ -1,7 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { HostlyLogoVertical } from "@/components/ui/branding/HostlyLogo";
+import { parseGuestInfo } from "@/lib/utils/guest-info";
+import { getTimeBasedGreeting } from "@/lib/utils/dates";
 
 interface PostCheckoutScreenProps {
   propertyName: string;
@@ -9,26 +12,20 @@ interface PostCheckoutScreenProps {
   guestName?: string;
 }
 
-function getTimeBasedGreeting(): string {
-  const hour = new Date().getHours();
-  
-  if (hour >= 5 && hour < 12) {
-    return "Buenos días";
-  }
-  if (hour >= 12 && hour < 19) {
-    return "Buenas tardes";
-  }
-  // 19:00 - 5:00
-  return "Buenas noches";
-}
-
 export function PostCheckoutScreen({
   propertyName,
   coverImage,
   guestName,
 }: PostCheckoutScreenProps) {
-  const greeting = getTimeBasedGreeting();
-  const firstName = guestName ? guestName.split(" ")[0] : null;
+  const greeting = useMemo(() => getTimeBasedGreeting(), []);
+  
+  // Extract first name from guestName
+  const firstName = useMemo(() => {
+    if (!guestName) return null;
+    const { name } = parseGuestInfo(guestName);
+    // Get first name only
+    return name.split(" ")[0] || name;
+  }, [guestName]);
 
   return (
     <motion.div

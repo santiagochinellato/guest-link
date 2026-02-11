@@ -1,42 +1,5 @@
 import { useMemo } from "react";
-
-// Función para convertir diferentes formatos de fecha a Date
-function parseDate(dateStr: string | null | undefined): Date | null {
-  if (!dateStr || typeof dateStr !== "string" || dateStr.trim() === "") {
-    return null;
-  }
-  
-  const cleanDate = dateStr.trim();
-  
-  // Formato ISO: YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss
-  if (/^\d{4}-\d{2}-\d{2}/.test(cleanDate)) {
-    const dateString = cleanDate.includes("T") ? cleanDate : cleanDate + "T12:00:00";
-    const date = new Date(dateString);
-    if (!isNaN(date.getTime())) return date;
-  }
-  
-  // Formato: DD MMM YYYY (ej: "09 mar 2026")
-  const ddmmyyyyMatch = cleanDate.match(/^(\d{1,2})\s+([a-z]{3})\s+(\d{4})$/i);
-  if (ddmmyyyyMatch) {
-    const [, day, monthStr, year] = ddmmyyyyMatch;
-    const monthMap: Record<string, number> = {
-      'ene': 0, 'jan': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'apr': 3,
-      'may': 4, 'jun': 5, 'jul': 6, 'ago': 7, 'aug': 7,
-      'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11, 'dec': 11
-    };
-    const month = monthMap[monthStr.toLowerCase()];
-    if (month !== undefined) {
-      const date = new Date(parseInt(year), month, parseInt(day));
-      if (!isNaN(date.getTime())) return date;
-    }
-  }
-  
-  // Intentar parseo directo
-  const date = new Date(cleanDate);
-  if (!isNaN(date.getTime())) return date;
-  
-  return null;
-}
+import { parseDate } from "@/lib/utils/dates";
 
 export type ReservationState = 
   | "BEFORE_CHECKIN" 

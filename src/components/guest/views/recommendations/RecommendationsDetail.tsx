@@ -1,9 +1,12 @@
 "use client";
 
+import { useMemo, memo } from "react";
 import { cn } from "@/lib/utils";
 import { getCategoryConfig } from "@/config/recommendations";
 import { RecommendationCard } from "./RecommendationCard";
 import { TransportCard } from "./TransportCard";
+
+const TRANSPORT_CATEGORIES = ["bus", "transit", "transfer", "taxi", "rental"] as const;
 
 interface RecommendationsDetailProps {
   categories: string[];
@@ -16,7 +19,7 @@ interface RecommendationsDetailProps {
   propertyId?: number;
 }
 
-export function RecommendationsDetail({
+export const RecommendationsDetail = memo(function RecommendationsDetail({
   categories,
   activeCategory,
   setActiveCategory,
@@ -24,7 +27,15 @@ export function RecommendationsDetail({
   getDistanceString,
   propertyId,
 }: RecommendationsDetailProps) {
-  const TRANSPORT_CATEGORIES = ["bus", "transit", "transfer", "taxi", "rental"];
+  // Memoize filtered recommendations to avoid re-filtering on every render
+  const filteredRecommendations = useMemo(() => {
+    return recommendations?.filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (r: any) => r.categoryType === activeCategory
+    ) || [];
+  }, [recommendations, activeCategory]);
+
+  const isTransport = TRANSPORT_CATEGORIES.includes(activeCategory as any);
 
   return (
     <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
@@ -59,33 +70,29 @@ export function RecommendationsDetail({
       )}
 
       <div className="grid gap-4">
-        {recommendations
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?.filter((r: any) => r.categoryType === activeCategory)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((place: any, i: number) => {
-            if (TRANSPORT_CATEGORIES.includes(activeCategory)) {
-              return (
-                <TransportCard
-                  key={i}
-                  place={place}
-                  categoryType={activeCategory}
-                />
-              );
-            }
-
-            // STANDARD CARD
+        {filteredRecommendations.map((place, i) => {
+          if (isTransport) {
             return (
-              <RecommendationCard
-                key={i}
+              <TransportCard
+                key={place.id || place.googlePlaceId || i}
                 place={place}
-                index={i}
-                distance={getDistanceString(place)}
-                propertyId={propertyId}
+                categoryType={activeCategory}
               />
             );
-          })}
+          }
+
+          // STANDARD CARD
+          return (
+            <RecommendationCard
+              key={place.id || place.googlePlaceId || i}
+              place={place}
+              index={i}
+              distance={getDistanceString(place)}
+              propertyId={propertyId}
+            />
+          );
+        })}
       </div>
     </div>
   );
-}
+});

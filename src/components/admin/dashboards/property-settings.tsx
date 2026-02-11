@@ -384,7 +384,7 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
       <main className="flex-1 flex flex-col relative">
         {/* Form Area - Allow it to grow naturally */}
         <div className="flex-1 p-4 md:p-8 lg:p-12 pb-48">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <FormProvider {...form}>
               <form
                 onSubmit={handleSubmit(onSubmit)}
