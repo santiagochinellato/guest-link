@@ -35,11 +35,6 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
 
-      - name: Coverage comment
-        uses: py-cov-action/cov-comment@v3
-        if: github.event_name == 'pull_request'
-        with:
-          path: coverage/lcov.info
-          base-path: ./
-          minimum-coverage: 60
-
+      # Optional: comentar en el PR con el resumen de cobertura.
+      # Se ha eliminado la acción py-cov-action/cov-comment porque el repositorio ya no existe.
+      # Codecov ya recibe los reportes en el paso anterior.
