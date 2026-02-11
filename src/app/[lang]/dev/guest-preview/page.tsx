@@ -19,23 +19,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { GuestProperty } from "@/types/dtos";
 
 interface PageProps {
   params: Promise<{ lang: string }>;
 }
 
-// Función para simular fechas
-function getDateString(daysFromNow: number, hour: number = 15): string {
-  const date = new Date();
-  date.setDate(date.getDate() + daysFromNow);
-  date.setHours(hour, 0, 0, 0);
-  return date.toISOString().split('T')[0];
-}
-
 export default function GuestPreviewPage({ params }: PageProps) {
-  const { lang } = use(params);
+  // Consumir params (requerido en Next.js 15+)
+  void use(params);
   const [propertySlug, setPropertySlug] = useState("san-martin-460");
-  const [property, setProperty] = useState<any>(null);
+  const [property, setProperty] = useState<GuestProperty | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isControlsOpen, setIsControlsOpen] = useState(false);

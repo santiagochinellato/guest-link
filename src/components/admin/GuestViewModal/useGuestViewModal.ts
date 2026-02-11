@@ -72,8 +72,12 @@ export function useGuestViewModal({
         ? (reservation.guestLanguage as (typeof GUEST_LANGUAGES)[number])
         : "es";
     
+    // Sincronizar estado con props cuando cambian
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEmail(reservation.guestEmail || "");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPhone(reservation.guestPhone || "");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGuestLanguage(lang);
 
     if (existingToken) {

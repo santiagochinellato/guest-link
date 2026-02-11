@@ -5,11 +5,9 @@ import { getProperties } from "@/lib/actions/properties";
 import { getReservations } from "@/lib/actions/reservations";
 import { getPropertyAnalytics } from "@/lib/actions/analytics";
 import { getLastSyncTime } from "@/lib/actions/sync";
-import { PropertiesGrid } from "@/components/admin/properties-grid";
 import { SyncStatusCard } from "@/components/admin/SyncStatusCard";
 import { PropertyCardWithMetrics } from "@/components/admin/PropertyCardWithMetrics";
 import { UpcomingReservations } from "@/components/admin/UpcomingReservations";
-import { Skeleton } from "@/components/ui/skeleton";
 
 async function PropertyMetricsGrid({
   properties,

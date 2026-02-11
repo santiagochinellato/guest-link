@@ -240,10 +240,11 @@ export function PropertySettings({ initialData }: PropertySettingsProps) {
   };
 
   // Find active component
-  const ActiveComponent =
+  type SectionComponent = React.ComponentType;
+  const ActiveComponent: SectionComponent =
     SETTINGS_TABS.flatMap((cat) => cat.items).find(
       (item) => item.id === activeTab,
-    )?.component || (BasicInfoSection as any);
+    )?.component || BasicInfoSection;
 
   // This sidebar is REMOVED because it's now handled by the layout.
   // We make the internal property navigation responsive:
