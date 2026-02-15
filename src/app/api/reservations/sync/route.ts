@@ -3,22 +3,25 @@ import { db } from "@/db";
 import { properties, reservations, syncLogs } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, X-Hostly-Sync-Key",
+  "Access-Control-Max-Age": "86400",
+} as const;
+
 export async function OPTIONS() {
-  return NextResponse.json({}, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, X-Hostly-Sync-Key",
-    },
+  return new NextResponse(null, {
+    status: 204,
+    headers: CORS_HEADERS,
   });
 }
 
 export async function POST(req: NextRequest) {
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Hostly-Sync-Key",
-  };
+  const corsHeaders = { ...CORS_HEADERS };
+  console.log("[sync] POST /api/reservations/sync received");
 
   try {
     const apiKey = req.headers.get("X-Hostly-Sync-Key");
@@ -43,20 +46,75 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Parse Body
-    const body = await req.json();
-    const { reservations: incomingReservations } = body;
-
-    if (!Array.isArray(incomingReservations)) {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
       return NextResponse.json(
-        { success: false, error: "Invalid data format" },
+        { success: false, error: "Invalid JSON body" },
         { status: 400, headers: corsHeaders }
       );
     }
 
+    const raw = body && typeof body === "object" && "reservations" in body
+      ? (body as { reservations: unknown }).reservations
+      : null;
+
+    if (!Array.isArray(raw)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid data format: expected { reservations: [] }" },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    const platformMap: Record<string, "booking" | "airbnb"> = {
+      booking: "booking",
+      airbnb: "airbnb",
+      vrbo: "airbnb",
+    };
+
+    const incomingReservations = raw
+      .map((r: unknown) => {
+        if (!r || typeof r !== "object") return null;
+        const x = r as Record<string, unknown>;
+        const code = typeof x.reservationCode === "string" ? x.reservationCode.trim() : String(x.reservationCode ?? "").trim();
+        const guestName = typeof x.guestName === "string" ? x.guestName.trim() : String(x.guestName ?? "").trim();
+        const checkIn = typeof x.checkIn === "string" ? x.checkIn.trim() : String(x.checkIn ?? "").trim();
+        const checkOut = typeof x.checkOut === "string" ? x.checkOut.trim() : String(x.checkOut ?? "").trim();
+        const status = typeof x.status === "string" && ["confirmed", "cancelled", "pending"].includes(x.status) ? x.status : "confirmed";
+        const platform = platformMap[String(x.platform ?? "booking").toLowerCase()] ?? "booking";
+        if (!code || !guestName || !checkIn || !checkOut) return null;
+        return {
+          reservationCode: code,
+          guestName: guestName || "Unknown Guest",
+          checkIn,
+          checkOut,
+          status,
+          platform,
+          totalPrice: typeof x.totalPrice === "number" && Number.isFinite(x.totalPrice) ? x.totalPrice : null,
+          currency: typeof x.currency === "string" && x.currency.trim() ? x.currency.trim() : "USD",
+          listingName: typeof x.listingName === "string" ? x.listingName.trim() || null : null,
+          guestEmail: typeof x.guestEmail === "string" && x.guestEmail.trim() ? x.guestEmail.trim() : undefined,
+          guestPhone: typeof x.guestPhone === "string" && x.guestPhone.trim() ? x.guestPhone.trim() : undefined,
+        };
+      })
+      .filter(Boolean) as Array<{
+        reservationCode: string;
+        guestName: string;
+        checkIn: string;
+        checkOut: string;
+        status: string;
+        platform: "booking" | "airbnb";
+        totalPrice: number | null;
+        currency: string;
+        listingName: string | null;
+        guestEmail?: string;
+        guestPhone?: string;
+      }>;
+
     // 3. Upsert Reservations
-    const results = [];
+    const results: { action: string; id: number }[] = [];
     for (const res of incomingReservations) {
-      // Check if reservation exists for this platform and code
       const existing = await db.query.reservations.findFirst({
         where: and(
           eq(reservations.reservationCode, res.reservationCode),
@@ -65,23 +123,14 @@ export async function POST(req: NextRequest) {
         ),
       });
 
-      const guestEmail = "guestEmail" in res
-        ? (typeof res.guestEmail === "string" && res.guestEmail.trim() ? res.guestEmail.trim() : null)
-        : existing?.guestEmail ?? null;
-      const guestPhone = "guestPhone" in res
-        ? (typeof res.guestPhone === "string" && res.guestPhone.trim() ? res.guestPhone.trim() : null)
-        : existing?.guestPhone ?? null;
-      const validLang = (l: unknown): l is "es" | "en" | "pt" =>
-        typeof l === "string" && ["es", "en", "pt"].includes(l);
+      const guestEmail = (res.guestEmail?.trim() || existing?.guestEmail) ?? null;
+      const guestPhone = (res.guestPhone?.trim() || existing?.guestPhone) ?? null;
       const guestLanguage =
-        "guestLanguage" in res && validLang(res.guestLanguage)
-          ? res.guestLanguage
-          : (existing?.guestLanguage && validLang(existing.guestLanguage)
-              ? existing.guestLanguage
-              : "es");
+        (existing?.guestLanguage && ["es", "en", "pt"].includes(existing.guestLanguage))
+          ? existing.guestLanguage
+          : "es";
 
       if (existing) {
-        // Update
         const updated = await db
           .update(reservations)
           .set({
@@ -99,39 +148,45 @@ export async function POST(req: NextRequest) {
           })
           .where(eq(reservations.id, existing.id))
           .returning();
-        results.push({ action: "updated", id: updated[0].id });
+        const row = updated[0];
+        if (row) results.push({ action: "updated", id: row.id });
       } else {
-        // Insert
         const inserted = await db
           .insert(reservations)
           .values({
             propertyId: property.id,
             guestName: res.guestName,
-            guestEmail: guestEmail,
-            guestPhone: guestPhone,
+            guestEmail,
+            guestPhone,
             guestLanguage,
             reservationCode: res.reservationCode,
             checkIn: res.checkIn,
             checkOut: res.checkOut,
             status: res.status,
             totalPrice: res.totalPrice,
-            currency: res.currency || "USD",
+            currency: res.currency,
             platform: res.platform,
             listingName: res.listingName,
           })
           .returning();
-        results.push({ action: "created", id: inserted[0].id });
+        const row = inserted[0];
+        if (row) results.push({ action: "created", id: row.id });
       }
     }
 
     // 4. Register success in sync_logs so dashboard SyncStatusCard shows lastSync
-    await db.insert(syncLogs).values({
-      propertyId: property.id,
-      status: "success",
-      triggeredBy: "extension",
-      log: `Processed ${results.length} reservations.`,
-      completedAt: new Date(),
-    });
+    try {
+      await db.insert(syncLogs).values({
+        propertyId: property.id,
+        status: "success",
+        triggeredBy: "extension",
+        log: `Processed ${results.length} reservations.`,
+        completedAt: new Date(),
+      });
+    } catch (logErr) {
+      console.error("Sync log insert failed:", logErr);
+      // Don't fail the request; sync succeeded
+    }
 
     return NextResponse.json({
       success: true,
@@ -141,10 +196,16 @@ export async function POST(req: NextRequest) {
         details: results,
       },
     }, { headers: corsHeaders });
-  } catch (error) {
-    console.error("Sync Error:", error);
+  } catch (error: unknown) {
+    let message = "Internal Server Error";
+    try {
+      message = error instanceof Error ? error.message : String(error ?? "Internal Server Error");
+    } catch (_) {
+      // fallback if reading error message throws
+    }
+    console.error("[sync] Error:", error);
     return NextResponse.json(
-      { success: false, error: "Internal Server Error" },
+      { success: false, error: message },
       { status: 500, headers: corsHeaders }
     );
   }

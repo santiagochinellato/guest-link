@@ -8,6 +8,26 @@ const withNextIntl = createNextIntlPlugin(
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  async headers() {
+    return [
+      {
+        source: "/api/reservations/sync",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "POST, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type, X-Hostly-Sync-Key" },
+          { key: "Access-Control-Max-Age", value: "86400" },
+        ],
+      },
+      {
+        source: "/api/reservations/verify",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { RefreshCw, CheckCircle, AlertCircle, CloudOff, Loader2 } from "lucide-react";
+import { useState, useCallback } from "react";
+import { RefreshCw, CheckCircle, AlertCircle, CloudOff, Loader2, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { triggerSync } from "@/lib/actions/sync";
 import type { SyncStatusItem } from "@/lib/actions/sync";
 
 const STALE_HOURS = 24;
+const REQUESTED_LABEL_SECONDS = 45;
 
 function isStale(lastSync: Date | null): boolean {
   if (!lastSync) return true;
@@ -22,11 +23,23 @@ export function SyncStatusCard({
 }) {
   const router = useRouter();
   const [syncingId, setSyncingId] = useState<number | null>(null);
+  const [requestedAt, setRequestedAt] = useState<Set<number>>(new Set());
 
   const withSyncKey = syncStatuses.filter((s) => s.hasSyncKey);
   const notUpdated = withSyncKey.filter((s) => isStale(s.lastSync));
   const updated = withSyncKey.filter((s) => !isStale(s.lastSync));
   const noConfig = syncStatuses.filter((s) => !s.hasSyncKey);
+
+  const addRequested = useCallback((propertyId: number) => {
+    setRequestedAt((prev) => new Set(prev).add(propertyId));
+    setTimeout(() => {
+      setRequestedAt((prev) => {
+        const next = new Set(prev);
+        next.delete(propertyId);
+        return next;
+      });
+    }, REQUESTED_LABEL_SECONDS * 1000);
+  }, []);
 
   const handleSync = async (propertyId: number) => {
     setSyncingId(propertyId);
@@ -34,7 +47,10 @@ export function SyncStatusCard({
     try {
       const result = await triggerSync(propertyId);
       if (result.success) {
-        toast.success("Sincronización enviada. La extensión actualizará los datos.");
+        addRequested(propertyId);
+        toast.success(
+          "Solicitud enviada. Abre la extensión de Hostly y pulsa «Iniciar Sincronización» para que se actualice el estado aquí."
+        );
         router.refresh();
       } else {
         toast.error(result.error ?? "Error al sincronizar");
@@ -95,6 +111,7 @@ export function SyncStatusCard({
             {withSyncKey.map((item) => {
               const stale = isStale(item.lastSync);
               const loading = syncingId === item.propertyId;
+              const justRequested = requestedAt.has(item.propertyId);
               return (
                 <li
                   key={item.propertyId}
@@ -106,6 +123,11 @@ export function SyncStatusCard({
                   <div className="flex items-center gap-2 shrink-0">
                     {loading ? (
                       <Loader2 className="w-4 h-4 animate-spin text-brand-copper" />
+                    ) : justRequested ? (
+                      <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs">
+                        <Clock className="w-3.5 h-3.5" />
+                        Solicitado
+                      </span>
                     ) : stale ? (
                       <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs">
                         <AlertCircle className="w-3.5 h-3.5" />

@@ -25,21 +25,32 @@ const syncPayloadSchema = z.object({
 
 /**
  * Called by the Dashboard UI to trigger a manual sync.
- * This creates a log entry which Supabase Realtime should broadcast to the extension.
+ * This creates a log entry which Supabase Realtime can broadcast to the extension,
+ * or the extension can poll. The extension must have the panel open or be listening.
  */
 export async function triggerSync(propertyId: number) {
   try {
-    const [log] = await db.insert(syncLogs).values({
-      propertyId,
-      status: 'pending',
-      triggeredBy: 'manual',
-    }).returning();
+    const [log] = await db
+      .insert(syncLogs)
+      .values({
+        propertyId,
+        status: "pending",
+        triggeredBy: "manual",
+      })
+      .returning();
 
-    revalidatePath('/dashboard/reservations');
+    if (!log) {
+      return { success: false, error: "No se creó el registro de sincronización." };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/reservations");
     return { success: true, logId: log.id };
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Error de base de datos";
     console.error("Error triggering sync:", error);
-    return { success: false, error: "Failed to trigger sync" };
+    // Mostrar error real para diagnosticar (ej. "relation sync_logs does not exist")
+    return { success: false, error: message };
   }
 }
 
