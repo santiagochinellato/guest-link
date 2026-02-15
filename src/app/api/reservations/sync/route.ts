@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { properties, reservations } from "@/db/schema";
+import { properties, reservations, syncLogs } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export async function OPTIONS() {
@@ -123,6 +123,15 @@ export async function POST(req: NextRequest) {
         results.push({ action: "created", id: inserted[0].id });
       }
     }
+
+    // 4. Register success in sync_logs so dashboard SyncStatusCard shows lastSync
+    await db.insert(syncLogs).values({
+      propertyId: property.id,
+      status: "success",
+      triggeredBy: "extension",
+      log: `Processed ${results.length} reservations.`,
+      completedAt: new Date(),
+    });
 
     return NextResponse.json({
       success: true,
