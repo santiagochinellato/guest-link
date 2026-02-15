@@ -54,6 +54,7 @@ export async function updateProperty(id: number, data: PropertyFormData) {
           hostName: p.hostName,
           hostImage: p.hostImage,
           hostPhone: p.hostPhone,
+          showHostInEmergency: p.showHostInEmergency,
         }),
         updatedAt: new Date(),
         status: (p.status as "active" | "draft" | "archived") || "draft",

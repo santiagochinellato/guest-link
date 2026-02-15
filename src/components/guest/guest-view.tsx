@@ -70,6 +70,7 @@ export function GuestView({
     hostName,
     hostImage,
     hostPhone,
+    showHostInEmergency,
     latitude,
     longitude,
     safeAccess,
@@ -288,6 +289,7 @@ export function GuestView({
           address={address}
           hostName={hostName}
           hostPhone={hostPhone}
+          showHostInEmergency={showHostInEmergency}
         />
 
         <GuideDrawer
@@ -438,6 +440,7 @@ export function GuestView({
                     emergencyContacts={property.emergencyContacts}
                     hostPhone={hostPhone}
                     hostName={hostName}
+                    showHostInEmergency={showHostInEmergency}
                   />
                 )}
               </motion.div>
@@ -534,6 +537,7 @@ export function GuestView({
         address={address}
         hostName={hostName}
         hostPhone={hostPhone}
+        showHostInEmergency={showHostInEmergency}
       />
 
       <GuideDrawer

@@ -2,6 +2,23 @@
 
 import type { PropertyAnalytics } from "@/types/analytics";
 
+/**
+ * Cómo tomar los datos de PostHog:
+ *
+ * 1. Variables de entorno (servidor, para LEER datos):
+ *    - POSTHOG_API_KEY: API key del proyecto (PostHog → Project Settings → Project API Key)
+ *    - POSTHOG_PROJECT_ID: ID del proyecto (en la URL de PostHog: app.posthog.com/project/XXXXX)
+ *    - NEXT_PUBLIC_POSTHOG_HOST: host del SDK (ej. https://us.i.posthog.com o https://eu.i.posthog.com)
+ *
+ * 2. En el cliente (vista huésped) los eventos se ENVÍAN con posthog.capture():
+ *    - NEXT_PUBLIC_POSTHOG_KEY: misma key pública del proyecto
+ *    - NEXT_PUBLIC_POSTHOG_HOST: mismo host
+ *
+ * 3. Lectura: esta acción usa la PostHog Query API (HogQL) contra
+ *    ${apiBase}/api/projects/${projectId}/query/ con Bearer POSTHOG_API_KEY.
+ *    Si falta API_KEY o PROJECT_ID, se devuelve EMPTY_ANALYTICS (métricas en 0).
+ */
+
 const EMPTY_ANALYTICS: PropertyAnalytics = {
   totalViews: 0,
   avgTimeOnPage: 0,
@@ -41,6 +58,7 @@ async function runHogQLQuery<T = unknown[]>(
         query,
       },
     }),
+    cache: "no-store",
   });
 
   if (!res.ok) {
@@ -76,7 +94,10 @@ export async function getPropertyAnalytics(
     return EMPTY_ANALYTICS;
   }
 
-  const baseFilter = `properties.property_id = ${propertyId} AND timestamp > now() - interval 30 day`;
+  // PostHog suele guardar propiedades personalizadas como string; comparar como string
+  // para que coincida tanto si viene "1" como 1
+  const propertyIdStr = String(propertyId);
+  const baseFilter = `toString(properties.property_id) = '${propertyIdStr}' AND timestamp > now() - interval 30 day`;
 
   try {
     const [totalViewsRes, mobileRes, actionsRes, recsRes, timelineRes] =
@@ -173,9 +194,12 @@ export async function getPropertyAnalytics(
         }))
       : [];
 
+    // avgTimeOnPage: no hay tracking de duración aún (habría que enviar evento al salir o usar $session_duration de PostHog)
+    const avgTimeOnPage = 0;
+
     return {
       totalViews,
-      avgTimeOnPage: 0,
+      avgTimeOnPage,
       mobilePercent,
       topActions,
       topRecommendations,

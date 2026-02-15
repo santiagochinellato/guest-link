@@ -36,6 +36,7 @@ export function buildHouseRules(data: {
   hostName?: string;
   hostImage?: string;
   hostPhone?: string;
+  showHostInEmergency?: boolean;
 }) {
   return JSON.stringify({
     text: data.houseRules || "",
@@ -56,7 +57,8 @@ export function buildHouseRules(data: {
     host: {
       name: data.hostName || "",
       image: data.hostImage || "",
-      phone: data.hostPhone || ""
+      phone: data.hostPhone || "",
+      showInEmergency: data.showHostInEmergency ?? true
     }
   });
 }

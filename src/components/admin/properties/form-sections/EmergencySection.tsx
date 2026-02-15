@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormContext, useFieldArray } from "react-hook-form";
+import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 import {
   Plus,
   Trash2,
@@ -19,7 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 // Presets por país
@@ -72,7 +72,7 @@ const getIconForContact = (name: string, type?: string) => {
 };
 
 export function EmergencySection() {
-  const { control, register, watch } = useFormContext<PropertyFormData>();
+  const { control, register, watch, setValue } = useFormContext<PropertyFormData>();
   const {
     fields: contactFields,
     append: appendContact,
@@ -90,31 +90,19 @@ export function EmergencySection() {
   // Mantener referencia directa; react-hook-form ya maneja actualizaciones
   const currentContacts = rawContacts;
 
-  // Derivamos includeHost directamente del estado de los contactos
-  const includeHost = useMemo(
-    () =>
-      currentContacts.some(
-        (c) => c.name === `Anfitrión: ${hostName}` || c.name === "Host Contact",
-      ),
-    [currentContacts, hostName],
-  );
-
-  const handleToggleHost = (checked: boolean) => {
-    if (checked) {
-      if (hostName && hostPhone) {
-        appendContact({
-          name: `Anfitrión: ${hostName}`,
-          phone: hostPhone,
-          type: "host",
-        });
-      }
-    } else {
-      const index = currentContacts.findIndex(
-        (c) => c.name === `Anfitrión: ${hostName}` || c.name === "Host Contact",
-      );
-      if (index !== -1) removeContact(index);
+  // Limpiar cualquier contacto del host que esté en el array (ya no se usa)
+  useEffect(() => {
+    const hostContactIndex = currentContacts.findIndex(
+      (c) =>
+        c.type === "host" ||
+        c.name === `Anfitrión: ${hostName}` ||
+        c.name === "Host Contact" ||
+        (hostPhone && c.phone === hostPhone && (c.name?.toLowerCase().includes("anfitrión") || c.name?.toLowerCase().includes("host")))
+    );
+    if (hostContactIndex !== -1) {
+      removeContact(hostContactIndex);
     }
-  };
+  }, []); // Solo ejecutar una vez al montar
 
   const applyCountryPresets = () => {
     const presets = COUNTRY_PRESETS[country] || [];
@@ -183,11 +171,18 @@ export function EmergencySection() {
                 </p>
               </div>
             </div>
-            <Switch
-              id="host-toggle"
-              checked={includeHost}
-              onCheckedChange={handleToggleHost}
-              disabled={!hostPhone}
+            <Controller
+              name="showHostInEmergency"
+              control={control}
+              defaultValue={true}
+              render={({ field }) => (
+                <Switch
+                  id="host-toggle"
+                  checked={field.value ?? true}
+                  onCheckedChange={field.onChange}
+                  disabled={!hostPhone}
+                />
+              )}
             />
           </div>
 
@@ -312,7 +307,7 @@ export function EmergencySection() {
       <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/30 flex gap-3">
         <Info className="w-5 h-5 text-blue-500 shrink-0" />
         <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-          <strong>Tip Antigravity:</strong> Asegúrate de incluir el código de
+          <strong>Tip:</strong> Asegúrate de incluir el código de
           país si el número será marcado desde un teléfono extranjero. Ej: +54
           9...
         </p>

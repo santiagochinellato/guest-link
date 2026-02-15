@@ -109,21 +109,21 @@ export function PropertyCardWithMetrics({
               <Eye className="w-4 h-4 mx-auto mb-1 text-blue-600 dark:text-blue-400" />
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Vistas</p>
               <p className="text-lg font-bold text-brand-void dark:text-white">
-                {analytics.totalViews}
+                {analytics.totalViews ?? 0}
               </p>
             </div>
             <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
               <Clock className="w-4 h-4 mx-auto mb-1 text-purple-600 dark:text-purple-400" />
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Tiempo</p>
               <p className="text-lg font-bold text-brand-void dark:text-white">
-                {formatTime(analytics.avgTimeOnPage)}
+                {(analytics.avgTimeOnPage ?? 0) > 0 ? formatTime(analytics.avgTimeOnPage ?? 0) : "—"}
               </p>
             </div>
             <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <Smartphone className="w-4 h-4 mx-auto mb-1 text-green-600 dark:text-green-400" />
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Mobile</p>
               <p className="text-lg font-bold text-brand-void dark:text-white">
-                {analytics.mobilePercent}%
+                {analytics.mobilePercent ?? 0}%
               </p>
             </div>
           </div>
@@ -181,9 +181,7 @@ export function PropertyCardWithMetrics({
             size="sm"
             className="w-full"
           >
-            <Link
-              href={`/${lang}/dashboard/qr-builder?propertyId=${property.id}&slug=${encodeURIComponent(property.slug)}&name=${encodeURIComponent(property.name)}&lang=${lang}${property.wifiSsid ? `&wifi=${encodeURIComponent(property.wifiSsid)}` : ""}`}
-            >
+            <Link href={`/${lang}/dashboard/properties/${property.id}/edit?tab=flyer`}>
               <QrCode className="w-4 h-4 mr-2" />
               QR
             </Link>

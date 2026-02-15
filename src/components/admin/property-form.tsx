@@ -76,6 +76,10 @@ export function PropertyForm({
       houseRules: initialData.houseRules || "",
       rulesAllowed: initialData.rulesAllowed || [],
       rulesProhibited: initialData.rulesProhibited || [],
+      hostName: initialData.hostName || "",
+      hostImage: initialData.hostImage || "",
+      hostPhone: initialData.hostPhone || "",
+      showHostInEmergency: initialData.showHostInEmergency ?? true,
       status: (initialData.status as PropertyFormData["status"]) || "draft",
     },
   });

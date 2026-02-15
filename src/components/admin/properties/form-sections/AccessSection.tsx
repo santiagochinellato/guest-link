@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormContext, useFieldArray, Controller } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { PropertyFormData } from "@/lib/schemas";
 import {
   Car,
@@ -22,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function AccessSection() {
-  const { register, control, watch } = useFormContext<PropertyFormData>();
+  const { register, control, watch, setValue } = useFormContext<PropertyFormData>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -30,10 +31,21 @@ export function AccessSection() {
   });
 
   // Watch for UI conditional rendering ONLY
-  const alarmCode = watch("alarmCode");
   const hasParking = watch("hasParking");
-
-  const isAlarmEnabled = alarmCode !== undefined && alarmCode !== null;
+  const alarmCode = watch("alarmCode");
+  
+  // Estado local para controlar el switch (independiente del código)
+  // El switch está activo si hay código O si el usuario lo activó manualmente
+  const [isAlarmEnabled, setIsAlarmEnabled] = useState(() => {
+    return alarmCode !== undefined && alarmCode !== null && alarmCode !== "";
+  });
+  
+  // Sincronizar el estado local cuando el código cambia externamente
+  useEffect(() => {
+    if (alarmCode !== undefined && alarmCode !== null && alarmCode !== "") {
+      setIsAlarmEnabled(true);
+    }
+  }, [alarmCode]);
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -76,72 +88,81 @@ export function AccessSection() {
         </Card>
 
         {/* Card 2: Alarma */}
-        <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-brand-copper/30 transition-all bg-zinc-50/30 dark:bg-zinc-900/20">
-          <CardContent className="p-5 flex flex-col gap-4 h-full">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <Label className="text-sm font-bold block text-zinc-900 dark:text-zinc-100">
-                    Alarma
-                  </Label>
-                  <p className="text-[11px] text-muted-foreground">
-                    Sistema de seguridad
-                  </p>
-                </div>
-              </div>
-              <Controller
-                name="alarmCode"
-                control={control}
-                render={({ field }) => (
-                  <Switch
-                    checked={field.value !== undefined && field.value !== null}
-                    onCheckedChange={(checked) => {
-                      // Use null to forcefully clear it, or empty string to set it
-                      // checking if schema allows null, if not use undefined
-                      field.onChange(checked ? "" : undefined);
-                    }}
-                    ref={field.ref}
-                  />
-                )}
-              />
-            </div>
-
-            <div className="flex-1 flex flex-col justify-end">
-              <AnimatePresence mode="wait">
-                {isAlarmEnabled ? (
-                  <motion.div
-                    key="alarm-input-field"
-                    initial={{ opacity: 0, y: 10, height: 0 }}
-                    animate={{ opacity: 1, y: 0, height: "auto" }}
-                    exit={{ opacity: 0, y: -10, height: 0 }}
-                    className="w-full pt-2"
-                  >
-                    <Input
-                      {...register("alarmCode")}
-                      placeholder="Clave de desactivación"
-                      className="font-mono text-sm tracking-widest bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-brand-copper/30 h-12"
+        <Controller
+          name="alarmCode"
+          control={control}
+          render={({ field }) => {
+            return (
+              <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm hover:border-brand-copper/30 transition-all bg-zinc-50/30 dark:bg-zinc-900/20">
+                <CardContent className="p-5 flex flex-col gap-4 h-full">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm">
+                        <ShieldCheck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-bold block text-zinc-900 dark:text-zinc-100">
+                          Alarma
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground">
+                          Sistema de seguridad
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={isAlarmEnabled}
+                      onCheckedChange={(checked) => {
+                        setIsAlarmEnabled(checked);
+                        // Si se activa y no hay código, inicializar con cadena vacía
+                        if (checked && (!field.value || field.value === "")) {
+                          field.onChange("");
+                        }
+                        // Si se desactiva, NO borramos el código, solo ocultamos el input
+                      }}
                     />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="alarm-placeholder"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="h-12 flex items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50/50 dark:bg-zinc-900/50"
-                  >
-                    <span className="text-xs text-zinc-400">
-                      Sin alarma configurada
-                    </span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </CardContent>
-        </Card>
+                  </div>
+
+                  <div className="flex-1 flex flex-col justify-end">
+                    <AnimatePresence mode="wait">
+                      {isAlarmEnabled ? (
+                        <motion.div
+                          key="alarm-input-field"
+                          initial={{ opacity: 0, y: 10, height: 0 }}
+                          animate={{ opacity: 1, y: 0, height: "auto" }}
+                          exit={{ opacity: 0, y: -10, height: 0 }}
+                          className="w-full pt-2"
+                        >
+                          <Input
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            placeholder="Clave de desactivación"
+                            className="font-mono text-sm tracking-widest bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-brand-copper/30 h-12"
+                          />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="alarm-placeholder"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="h-12 flex items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50/50 dark:bg-zinc-900/50"
+                        >
+                          <span className="text-xs text-zinc-400">
+                            {field.value && field.value !== "" 
+                              ? "Alarma deshabilitada (código guardado)" 
+                              : "Sin alarma configurada"}
+                          </span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }}
+        />
       </div>
 
       {/* GUÍA PASO A PASO (TIMELINE) */}

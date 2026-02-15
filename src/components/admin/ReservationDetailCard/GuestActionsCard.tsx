@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { KeyRound, Link2, QrCode, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,13 +9,19 @@ interface GuestActionsCardProps {
   activeToken: { token: string; expiresAt: Date } | null;
   guestUrl: string | null;
   onOpenModal: () => void;
+  /** Para enlazar al diseñador de flyers (FlyerSection) de la propiedad */
+  propertyId?: number | null;
+  lang?: string;
 }
 
 export function GuestActionsCard({
   activeToken,
   guestUrl,
   onOpenModal,
+  propertyId,
+  lang = "es",
 }: GuestActionsCardProps) {
+  const flyerUrl = propertyId ? `/${lang}/dashboard/properties/${propertyId}/edit?tab=flyer` : null;
   return (
     <div
       className={cn(
@@ -67,14 +74,21 @@ export function GuestActionsCard({
                 className="bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm text-white"
                 asChild
               >
-                <a
-                  href={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(guestUrl)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <QrCode className="w-4 h-4" />
-                  QR
-                </a>
+                {flyerUrl ? (
+                  <Link href={flyerUrl}>
+                    <QrCode className="w-4 h-4" />
+                    QR
+                  </Link>
+                ) : (
+                  <a
+                    href={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(guestUrl)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <QrCode className="w-4 h-4" />
+                    QR
+                  </a>
+                )}
               </Button>
             </>
           ) : (

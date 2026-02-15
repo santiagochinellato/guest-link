@@ -110,6 +110,7 @@ export function mapPropertyToGuestDTO(prop: any, recs: any[], emergency: any[], 
 
     hostName: parsedHost.name || "",
     hostImage: parsedHost.image || "",
-    hostPhone: parsedHost.phone || ""
+    hostPhone: parsedHost.phone || "",
+    showHostInEmergency: parsedHost.showInEmergency ?? true
   };
 }

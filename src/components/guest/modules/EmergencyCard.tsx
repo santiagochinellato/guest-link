@@ -14,6 +14,7 @@ interface EmergencyCardProps {
   emergencyContacts?: EmergencyContact[];
   hostPhone?: string;
   hostName?: string;
+  showHostInEmergency?: boolean;
 }
 
 const getIconForContact = (name: string, type?: string) => {
@@ -50,11 +51,12 @@ export function EmergencyCard({
   emergencyContacts = [],
   hostPhone,
   hostName,
+  showHostInEmergency = true,
 }: EmergencyCardProps) {
-  // Combinar contactos de emergencia con host si está disponible
+  // Combinar contactos de emergencia con host si está disponible y está habilitado
   const allContacts: EmergencyContact[] = [
     ...emergencyContacts,
-    ...(hostPhone && hostName
+    ...(hostPhone && hostName && showHostInEmergency
       ? [{ name: `Anfitrión: ${hostName}`, phone: hostPhone, type: "host" }]
       : []),
   ];

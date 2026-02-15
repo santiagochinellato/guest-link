@@ -182,6 +182,8 @@ export function ReservationDetailCard({
           activeToken={activeToken}
           guestUrl={guestUrl}
           onOpenModal={() => setGuestModalOpen(true)}
+          propertyId={propertyId}
+          lang={lang}
         />
 
         <GuestViewModal

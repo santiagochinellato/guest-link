@@ -170,3 +170,57 @@ export async function getLastSyncTime(propertyId: number): Promise<Date | null> 
     return null;
   }
 }
+
+export type SyncStatusItem = {
+  propertyId: number;
+  propertyName: string;
+  hasSyncKey: boolean;
+  lastSync: Date | null;
+};
+
+/**
+ * Get sync status for all properties (last success sync per property).
+ * Used by dashboard to show which properties are not updated.
+ */
+export async function getSyncStatusForAllProperties(
+  properties: { id: number; name: string; syncApiKey?: string | null }[]
+): Promise<SyncStatusItem[]> {
+  if (properties.length === 0) return [];
+
+  try {
+    const successLogs = await db
+      .select({
+        propertyId: syncLogs.propertyId,
+        completedAt: syncLogs.completedAt,
+        createdAt: syncLogs.createdAt,
+      })
+      .from(syncLogs)
+      .where(eq(syncLogs.status, 'success'))
+      .orderBy(desc(syncLogs.completedAt));
+
+    const lastSyncByProperty = new Map<number, Date | null>();
+    for (const row of successLogs) {
+      if (row.propertyId != null && !lastSyncByProperty.has(row.propertyId)) {
+        lastSyncByProperty.set(
+          row.propertyId,
+          row.completedAt ?? row.createdAt
+        );
+      }
+    }
+
+    return properties.map((p) => ({
+      propertyId: p.id,
+      propertyName: p.name,
+      hasSyncKey: !!p.syncApiKey,
+      lastSync: lastSyncByProperty.get(p.id) ?? null,
+    }));
+  } catch (error) {
+    console.error("Error fetching sync status:", error);
+    return properties.map((p) => ({
+      propertyId: p.id,
+      propertyName: p.name,
+      hasSyncKey: !!p.syncApiKey,
+      lastSync: null,
+    }));
+  }
+}

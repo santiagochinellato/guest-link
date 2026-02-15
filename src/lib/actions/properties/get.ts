@@ -208,6 +208,7 @@ export async function getProperty(id: number) {
       hostName: safeJsonParse(prop.houseRules).host?.name || "",
       hostImage: safeJsonParse(prop.houseRules).host?.image || "",
       hostPhone: safeJsonParse(prop.houseRules).host?.phone || "",
+      showHostInEmergency: safeJsonParse(prop.houseRules).host?.showInEmergency ?? true,
       // Status from DB prop
       status: (prop.status as "active" | "draft" | "archived") || "draft",
       autoSendGuide: prop.autoSendGuide ?? true,
@@ -264,6 +265,10 @@ export async function getProperty(id: number) {
       accessSteps: (safeJsonParse(prop.houseRules).access?.accessSteps || []).map((s: string) => ({ text: s })),
       hasParking: safeJsonParse(prop.houseRules).access?.hasParking || false,
       parkingDetails: safeJsonParse(prop.houseRules).access?.parkingDetails || "",
+      preCheckInSteps: (safeJsonParse(prop.houseRules).preCheckIn?.steps || []).map((s: any) => ({
+        text: typeof s === "string" ? s : (s?.text ?? ""),
+      })),
+      preCheckInNotes: safeJsonParse(prop.houseRules).preCheckIn?.notes ?? "",
       recommendations: recs.map(r => ({
         title: r.title,
         description: r.description || "",

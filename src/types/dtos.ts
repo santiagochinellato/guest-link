@@ -87,4 +87,5 @@ export interface GuestProperty {
   hostName?: string;
   hostImage?: string;
   hostPhone?: string;
+  showHostInEmergency?: boolean;
 }

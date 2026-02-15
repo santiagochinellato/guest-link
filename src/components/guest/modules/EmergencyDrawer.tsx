@@ -33,6 +33,7 @@ interface EmergencyDrawerProps {
   address?: string;
   hostName?: string;
   hostPhone?: string;
+  showHostInEmergency?: boolean;
 }
 
 export function EmergencyDrawer({
@@ -42,6 +43,7 @@ export function EmergencyDrawer({
   address,
   hostName,
   hostPhone,
+  showHostInEmergency = true,
 }: EmergencyDrawerProps) {
   const getIcon = (type?: string) => {
     const t = type?.toLowerCase() || "";
@@ -83,7 +85,7 @@ export function EmergencyDrawer({
 
             <div className="grid gap-3">
               {/* SPECIAL HOST CARD */}
-              {hostPhone && (
+              {hostPhone && showHostInEmergency && (
                 <a
                   href={`https://wa.me/${hostPhone.replace(/[^0-9]/g, "")}`}
                   target="_blank"

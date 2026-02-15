@@ -87,6 +87,7 @@ export const PropertyFormSchema = z.object({
   hostName: z.string().optional(),
   hostImage: z.string().optional(),
   hostPhone: z.string().optional(),
+  showHostInEmergency: z.boolean().optional(),
   
   // Status
   status: z.enum(["active", "draft", "archived"]).optional(),

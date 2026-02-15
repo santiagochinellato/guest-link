@@ -58,6 +58,7 @@ export async function createProperty(data: PropertyFormData) {
           hostName: p.hostName,
           hostImage: p.hostImage,
           hostPhone: p.hostPhone,
+          showHostInEmergency: p.showHostInEmergency,
         }),
       }).returning({ id: properties.id });
 
