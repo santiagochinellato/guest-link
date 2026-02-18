@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { format, parseISO, isToday, isTomorrow, addDays } from "date-fns";
+import { format, parseISO, isToday, isTomorrow, addDays, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { parseGuestInfo } from "@/lib/utils/guest-info";
@@ -25,21 +25,33 @@ interface UpcomingReservationsProps {
   lang: string;
 }
 
-function formatDate(dateStr: string): string {
+/** Parsea string a fecha a medianoche local. Acepta ISO (YYYY-MM-DD o con hora) para evitar desfases por timezone. */
+function parseDateToLocalMidnight(dateStr: string): Date | null {
+  if (!dateStr || typeof dateStr !== "string") return null;
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
   try {
-    const date = parseISO(dateStr);
-    if (isToday(date)) return "Hoy";
-    if (isTomorrow(date)) return "Mañana";
-    return format(date, "d MMM", { locale: es });
+    const parsed = parseISO(trimmed);
+    if (!isValid(parsed)) return null;
+    const d = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+    return isNaN(d.getTime()) ? null : d;
   } catch {
-    return dateStr;
+    return null;
   }
+}
+
+function formatDate(dateStr: string): string {
+  const date = parseDateToLocalMidnight(dateStr);
+  if (!date) return dateStr;
+  if (isToday(date)) return "Hoy";
+  if (isTomorrow(date)) return "Mañana";
+  return format(date, "d MMM", { locale: es });
 }
 
 function formatTime(dateStr: string): string {
   try {
     const date = parseISO(dateStr);
-    return format(date, "HH:mm");
+    return isValid(date) ? format(date, "HH:mm") : "";
   } catch {
     return "";
   }
@@ -48,18 +60,15 @@ function formatTime(dateStr: string): string {
 function getReservationType(checkIn: string, checkOut: string): "checkin" | "checkout" {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const checkInDate = parseISO(checkIn);
-  checkInDate.setHours(0, 0, 0, 0);
-  const checkOutDate = parseISO(checkOut);
-  checkOutDate.setHours(0, 0, 0, 0);
+  const checkInDate = parseDateToLocalMidnight(checkIn);
+  const checkOutDate = parseDateToLocalMidnight(checkOut);
+  if (!checkInDate || !checkOutDate) return "checkin";
 
   if (checkInDate.getTime() === today.getTime()) return "checkin";
   if (checkOutDate.getTime() === today.getTime()) return "checkout";
-  
-  // Si check-in es más cercano, es check-in
+
   const daysToCheckIn = Math.floor((checkInDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   const daysToCheckOut = Math.floor((checkOutDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  
   return daysToCheckIn < daysToCheckOut ? "checkin" : "checkout";
 }
 
@@ -74,31 +83,25 @@ export function UpcomingReservations({
   const upcoming = reservations
     .filter((r) => {
       if (r.status !== "confirmed") return false;
-      try {
-        const checkIn = parseISO(r.checkIn);
-        const checkOut = parseISO(r.checkOut);
-        checkIn.setHours(0, 0, 0, 0);
-        checkOut.setHours(0, 0, 0, 0);
-        return (
-          (checkIn >= today && checkIn <= nextWeek) ||
-          (checkOut >= today && checkOut <= nextWeek)
-        );
-      } catch {
-        return false;
-      }
+      const checkIn = parseDateToLocalMidnight(r.checkIn);
+      const checkOut = parseDateToLocalMidnight(r.checkOut);
+      if (!checkIn || !checkOut) return false;
+      const todayTime = today.getTime();
+      const nextWeekTime = nextWeek.getTime();
+      const checkInTime = checkIn.getTime();
+      const checkOutTime = checkOut.getTime();
+      const isCurrentStay = todayTime >= checkInTime && todayTime <= checkOutTime;
+      const checkInInWindow = checkInTime >= todayTime && checkInTime <= nextWeekTime;
+      const checkOutInWindow = checkOutTime >= todayTime && checkOutTime <= nextWeekTime;
+      return isCurrentStay || checkInInWindow || checkOutInWindow;
     })
     .sort((a, b) => {
-      try {
-        const dateA = getReservationType(a.checkIn, a.checkOut) === "checkin"
-          ? parseISO(a.checkIn)
-          : parseISO(a.checkOut);
-        const dateB = getReservationType(b.checkIn, b.checkOut) === "checkin"
-          ? parseISO(b.checkIn)
-          : parseISO(b.checkOut);
-        return dateA.getTime() - dateB.getTime();
-      } catch {
-        return 0;
-      }
+      const typeA = getReservationType(a.checkIn, a.checkOut);
+      const typeB = getReservationType(b.checkIn, b.checkOut);
+      const dateA = parseDateToLocalMidnight(typeA === "checkin" ? a.checkIn : a.checkOut);
+      const dateB = parseDateToLocalMidnight(typeB === "checkin" ? b.checkIn : b.checkOut);
+      if (!dateA || !dateB) return 0;
+      return dateA.getTime() - dateB.getTime();
     })
     .slice(0, 5);
 
@@ -108,9 +111,9 @@ export function UpcomingReservations({
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold">Próximas Reservas</CardTitle>
           {upcoming.length > 0 && (
-            <Link href={`/${lang}/dashboard/reservations`}>
+            <Link href={`/${lang}/dashboard/reservations#properties-heading`}>
               <Button variant="ghost" size="sm" className="text-xs">
-                Ver todas
+                Ver reservas
               </Button>
             </Link>
           )}

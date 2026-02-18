@@ -1,114 +1,103 @@
-import { pgTable, text, serial, integer, timestamp, boolean, real, json } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm"; // Added import
+import {
+  pgTable,
+  serial,
+  text,
+  integer,
+  boolean,
+  timestamp,
+  real,
+  json,
+  varchar,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
+// Idiomas soportados para la guía del huésped
+export const GUEST_LANGUAGES = ["es", "en", "pt", "fr", "de", "it"] as const;
+
+// ---- Auth (tabla "user" en DB, exportada como users)
 export const users = pgTable("user", {
   id: serial("id").primaryKey(),
   name: text("name"),
   email: text("email").notNull().unique(),
-  emailVerified: timestamp("emailVerified", { mode: "date" }),
+  emailVerified: timestamp("emailVerified", { withTimezone: true }),
   image: text("image"),
   password: text("password"),
   role: text("role").default("user"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-export const accounts = pgTable(
-  "account",
-  {
-    userId: integer("userId")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    type: text("type").notNull(),
-    provider: text("provider").notNull(),
-    providerAccountId: text("providerAccountId").notNull(),
-    refresh_token: text("refresh_token"),
-    access_token: text("access_token"),
-    expires_at: integer("expires_at"),
-    token_type: text("token_type"),
-    scope: text("scope"),
-    id_token: text("id_token"),
-    session_state: text("session_state"),
-  },
-  (account) => [
-    {
-      compoundKey: [account.provider, account.providerAccountId],
-    },
-  ]
-);
+export const account = pgTable("account", {
+  userId: integer("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  provider: text("provider").notNull(),
+  providerAccountId: text("providerAccountId").notNull(),
+  refresh_token: text("refresh_token"),
+  access_token: text("access_token"),
+  expires_at: integer("expires_at"),
+  token_type: text("token_type"),
+  scope: text("scope"),
+  id_token: text("id_token"),
+  session_state: text("session_state"),
+});
 
-export const sessions = pgTable("session", {
+export const session = pgTable("session", {
   sessionToken: text("sessionToken").primaryKey(),
-  userId: integer("userId")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
+  userId: integer("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp("expires").notNull(),
 });
 
-export const verificationTokens = pgTable(
-  "verificationToken",
+export const verificationToken = pgTable("verificationToken", {
+  identifier: text("identifier").notNull(),
+  token: text("token").notNull(),
+  expires: timestamp("expires").notNull(),
+});
+
+// ---- Properties
+export const properties = pgTable(
+  "properties",
   {
-    identifier: text("identifier").notNull(),
-    token: text("token").notNull(),
-    expires: timestamp("expires", { mode: "date" }).notNull(),
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    address: text("address"),
+    city: text("city"),
+    country: text("country"),
+    latitude: text("latitude"),
+    longitude: text("longitude"),
+    wifiSsid: text("wifi_ssid"),
+    wifiPassword: text("wifi_password"),
+    wifiQrCode: text("wifi_qr_code"),
+    houseRules: text("house_rules_text"),
+    coverImageUrl: text("cover_image_url"),
+    checkInTime: text("check_in_time"),
+    checkOutTime: text("check_out_time"),
+    ownerId: integer("owner_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    views: integer("views").default(0).notNull(),
+    status: text("status").default("draft"),
+    autoSendGuide: boolean("auto_send_guide").default(true),
+    autoCheckoutReminder: boolean("auto_checkout_reminder").default(true),
+    autoReviewRequest: boolean("auto_review_request").default(true),
+    syncApiKey: text("sync_api_key").unique(),
   },
-  (vt) => [
-    {
-      compoundKey: [vt.identifier, vt.token],
-    },
-  ]
+  (t) => [uniqueIndex("properties_slug_unique").on(t.slug)]
 );
 
-export const properties = pgTable("properties", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  address: text("address"),
-  city: text("city"),
-  country: text("country"),
-  latitude: text("latitude"),
-  longitude: text("longitude"),
-  wifiSsid: text("wifi_ssid"),
-  wifiPassword: text("wifi_password"),
-  wifiQrCode: text("wifi_qr_code"),
-  houseRules: text("house_rules_text"),
-  coverImageUrl: text("cover_image_url"),
-  checkInTime: text("check_in_time"),
-  checkOutTime: text("check_out_time"),
-  views: integer("views").default(0).notNull(),
-  // Host Info removed to avoid migration requirement
-  ownerId: integer("owner_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  status: text("status").default("draft"), // active, draft, archived
-  syncApiKey: text("sync_api_key").unique(), // Key for extension synchronization
-  autoSendGuide: boolean("auto_send_guide").default(true),
-  autoCheckoutReminder: boolean("auto_checkout_reminder").default(true),
-  autoReviewRequest: boolean("auto_review_request").default(true),
-});
-
-// Relations for properties
-
-
+// ---- Categories
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   icon: text("icon"),
-  type: text("type"), // restaurant, outdoor, kids, pharmacy, bank, supermarket, transport
+  type: text("type"),
   displayOrder: integer("display_order").default(0),
   isSystemCategory: boolean("is_system_category").default(false),
-  searchKeywords: text("search_keywords"), // Comma-separated keywords for Google Places API
   propertyId: integer("property_id").references(() => properties.id),
+  searchKeywords: text("search_keywords"),
 });
 
-// Relations for categories
-export const categoriesRelations = relations(categories, ({ one, many }) => ({
-  property: one(properties, {
-    fields: [categories.propertyId],
-    references: [properties.id],
-  }),
-  recommendations: many(recommendations),
-}));
-
+// ---- Recommendations
 export const recommendations = pgTable("recommendations", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -123,128 +112,21 @@ export const recommendations = pgTable("recommendations", {
   priceRange: integer("price_range"),
   isAutoSuggested: boolean("is_auto_suggested").default(false),
   isFavorite: boolean("is_favorite").default(false),
-  
-  // New Auto-Discovery Fields
+  categoryId: integer("category_id").references(() => categories.id),
+  propertyId: integer("property_id").references(() => properties.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   googlePlaceId: text("google_place_id").unique(),
   rating: real("rating"),
   userRatingsTotal: integer("user_ratings_total"),
-  externalSource: text("external_source").default("manual"), // manual, google, osm
+  externalSource: text("external_source").default("manual"),
   geometry: json("geometry"),
-  openingHours: json("opening_hours"), // Stores Google Maps opening_hours structure
-  
-  categoryId: integer("category_id").references(() => categories.id),
-  propertyId: integer("property_id").references(() => properties.id),
-  createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Relations for recommendations
-export const recommendationsRelations = relations(recommendations, ({ one }) => ({
-  property: one(properties, {
-    fields: [recommendations.propertyId],
-    references: [properties.id],
-  }),
-  category: one(categories, {
-    fields: [recommendations.categoryId],
-    references: [categories.id],
-  }),
-}));
-
-/** Idiomas soportados para el huésped: define mensajes WhatsApp/email y pantalla de la guía */
-export const GUEST_LANGUAGES = ["es", "en", "pt"] as const;
-export type GuestLanguage = (typeof GUEST_LANGUAGES)[number];
-
-export const reservations = pgTable("reservations", {
-  id: serial("id").primaryKey(),
-  propertyId: integer("property_id").references(() => properties.id),
-  guestName: text("guest_name").notNull(),
-  guestEmail: text("guest_email"),
-  guestPhone: text("guest_phone"),
-  /** Idioma/nacionalidad del huésped: es, en, pt. Define idioma de mensajes y pantalla guía */
-  guestLanguage: text("guest_language").default("es"),
-  reservationCode: text("reservation_code").notNull(),
-  checkIn: text("check_in").notNull(), // ISO Date String
-  checkOut: text("check_out").notNull(), // ISO Date String
-  status: text("status").notNull(), // confirmed, cancelled, pending
-  totalPrice: real("total_price"),
-  currency: text("currency"),
-  platform: text("platform").notNull(), // booking, airbnb
-  listingName: text("listing_name"),
-  preArrivalSent: boolean("pre_arrival_sent").default(false),
-  checkoutReminderSent: boolean("checkout_reminder_sent").default(false),
-  reviewRequestSent: boolean("review_request_sent").default(false),
-  notes: text("notes"),
-  amountPaid: real("amount_paid"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const automationLogs = pgTable("automation_logs", {
-  id: serial("id").primaryKey(),
-  reservationId: integer("reservation_id").references(() => reservations.id),
-  type: text("type").notNull(),
-  channel: text("channel").notNull(),
-  status: text("status").notNull(),
-  sentAt: timestamp("sent_at").defaultNow(),
-  error: text("error"),
-});
-
-// Relations for reservations
-export const reservationsRelations = relations(reservations, ({ one, many }) => ({
-  property: one(properties, {
-    fields: [reservations.propertyId],
-    references: [properties.id],
-  }),
-  automationLogs: many(automationLogs),
-  guestTokens: many(guestTokens),
-}));
-
-export const automationLogsRelations = relations(automationLogs, ({ one }) => ({
-  reservation: one(reservations, {
-    fields: [automationLogs.reservationId],
-    references: [reservations.id],
-  }),
-}));
-
-export const guestTokens = pgTable("guest_tokens", {
-  id: serial("id").primaryKey(),
-  token: text("token").notNull().unique(),
-  reservationId: integer("reservation_id").references(() => reservations.id, { onDelete: "cascade" }),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  usedAt: timestamp("used_at"),
-});
-
-export const guestTokensRelations = relations(guestTokens, ({ one }) => ({
-  reservation: one(reservations, {
-    fields: [guestTokens.reservationId],
-    references: [reservations.id],
-  }),
-}));
-
-// ... existing relations ...
-
-export const syncLogs = pgTable("sync_logs", {
-  id: serial("id").primaryKey(),
-  propertyId: integer("property_id").references(() => properties.id),
-  status: text("status").notNull(), // pending, success, error
-  triggeredBy: text("triggered_by").notNull(), // auto, manual
-  log: text("log"),
-  createdAt: timestamp("created_at").defaultNow(),
-  completedAt: timestamp("completed_at"),
-});
-
-export const syncLogsRelations = relations(syncLogs, ({ one }) => ({
-  property: one(properties, {
-    fields: [syncLogs.propertyId],
-    references: [properties.id],
-  }),
-}));
-
-// Table for Emergency Contacts
+// ---- Emergency contacts
 export const emergencyContacts = pgTable("emergency_contacts", {
   id: serial("id").primaryKey(),
   propertyId: integer("property_id").references(() => properties.id),
-  type: text("type").notNull(), // police, hospital, fire, ambulance
+  type: text("type").notNull(),
   name: text("name"),
   phone: text("phone").notNull(),
   address: text("address"),
@@ -253,18 +135,11 @@ export const emergencyContacts = pgTable("emergency_contacts", {
   isDefault: boolean("is_default").default(false),
 });
 
-// Relations for emergencyContacts
-export const emergencyContactsRelations = relations(emergencyContacts, ({ one }) => ({
-  property: one(properties, {
-    fields: [emergencyContacts.propertyId],
-    references: [properties.id],
-  }),
-}));
-
+// ---- Transport info
 export const transportInfo = pgTable("transport_info", {
   id: serial("id").primaryKey(),
   propertyId: integer("property_id").references(() => properties.id),
-  type: text("type").notNull(), // bus, taxi, rental, train, airport
+  type: text("type").notNull(),
   name: text("name").notNull(),
   description: text("description"),
   phone: text("phone"),
@@ -273,69 +148,111 @@ export const transportInfo = pgTable("transport_info", {
   priceInfo: text("price_info"),
 });
 
-// Relations for transportInfo
-export const transportInfoRelations = relations(transportInfo, ({ one }) => ({
-  property: one(properties, {
-    fields: [transportInfo.propertyId],
-    references: [properties.id],
-  }),
-}));
-
-// Transport / Transit System Tables
-
-// 1. Maestro de Líneas (Ej: Línea 20, 55, 72)
-export const busLines = pgTable("bus_lines", {
+// ---- Reservations
+export const reservations = pgTable("reservations", {
   id: serial("id").primaryKey(),
-  lineNumber: text("line_number").notNull(), // "20", "55"
-  name: text("name"), // "Terminal - Llao Llao"
-  color: text("color").default("#000000"), // Para la UI
-  mainAttractions: text("main_attractions"), // "Llao Llao, Pto Pañuelo"
+  propertyId: integer("property_id").references(() => properties.id),
+  guestName: text("guest_name").notNull(),
+  reservationCode: text("reservation_code").notNull(),
+  checkIn: text("check_in").notNull(),
+  checkOut: text("check_out").notNull(),
+  status: text("status").notNull(),
+  totalPrice: real("total_price"),
+  currency: text("currency"),
+  platform: text("platform").notNull(),
+  listingName: text("listing_name"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  guestEmail: text("guest_email"),
+  guestPhone: text("guest_phone"),
+  guestLanguage: text("guest_language"),
+  preArrivalSent: boolean("pre_arrival_sent").default(false),
+  checkoutReminderSent: boolean("checkout_reminder_sent").default(false),
+  reviewRequestSent: boolean("review_request_sent").default(false),
+  notes: text("notes"),
+  amountPaid: real("amount_paid"),
 });
 
-// 2. Paradas de Colectivo (Geolocalizadas)
+// ---- Guest tokens
+export const guestTokens = pgTable(
+  "guest_tokens",
+  {
+    id: serial("id").primaryKey(),
+    token: text("token").notNull().unique(),
+    reservationId: integer("reservation_id").references(() => reservations.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("guest_tokens_token_unique").on(t.token)]
+);
+
+// ---- Automation logs
+export const automationLogs = pgTable("automation_logs", {
+  id: serial("id").primaryKey(),
+  reservationId: integer("reservation_id").references(() => reservations.id),
+  type: text("type").notNull(),
+  channel: text("channel").notNull(),
+  status: text("status").notNull(),
+  sentAt: timestamp("sent_at", { withTimezone: true }).defaultNow(),
+  error: text("error"),
+});
+
+// ---- Bus (transit)
 export const busStops = pgTable("bus_stops", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(), // "Moreno y Beschedt"
+  name: text("name").notNull(),
   latitude: real("latitude").notNull(),
   longitude: real("longitude").notNull(),
-  isHub: boolean("is_hub").default(false), // Si es parada clave (Centro)
+  isHub: boolean("is_hub").default(false),
 });
 
-// 3. Relación Línea <-> Parada (Muchos a muchos)
+export const busLines = pgTable("bus_lines", {
+  id: serial("id").primaryKey(),
+  lineNumber: text("line_number").notNull(),
+  name: text("name"),
+  color: text("color").default("#000000"),
+  mainAttractions: text("main_attractions"),
+});
+
 export const busRouteStops = pgTable("bus_route_stops", {
   id: serial("id").primaryKey(),
   lineId: integer("line_id").references(() => busLines.id),
   stopId: integer("stop_id").references(() => busStops.id),
-  order: integer("order"), // Orden en el recorrido (1, 2, 3...)
-  direction: text("direction"), // "ida" o "vuelta"
+  order: integer("order"),
+  direction: text("direction"),
 });
 
-// Relations for Transit System
-export const busLinesRelations = relations(busLines, ({ many }) => ({
-  routeStops: many(busRouteStops),
-}));
-
-export const busStopsRelations = relations(busStops, ({ many }) => ({
-  routeLines: many(busRouteStops),
-}));
-
-export const busRouteStopsRelations = relations(busRouteStops, ({ one }) => ({
-  line: one(busLines, {
-    fields: [busRouteStops.lineId],
-    references: [busLines.id],
-  }),
-  stop: one(busStops, {
-    fields: [busRouteStops.stopId],
-    references: [busStops.id],
-  }),
-}));
-
-// Final Relations (Moved to end to avoid reference errors)
-export const propertiesRelations = relations(properties, ({ many }) => ({
+// ---- Relations (for db.query)
+export const propertiesRelations = relations(properties, ({ one, many }) => ({
+  owner: one(users),
   categories: many(categories),
   recommendations: many(recommendations),
   emergencyContacts: many(emergencyContacts),
   transportInfo: many(transportInfo),
   reservations: many(reservations),
-  syncLogs: many(syncLogs),
+}));
+
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  property: one(properties),
+  recommendations: many(recommendations),
+}));
+
+export const recommendationsRelations = relations(recommendations, ({ one }) => ({
+  category: one(categories),
+  property: one(properties),
+}));
+
+export const reservationsRelations = relations(reservations, ({ one, many }) => ({
+  property: one(properties),
+  guestTokens: many(guestTokens),
+  automationLogs: many(automationLogs),
+}));
+
+export const guestTokensRelations = relations(guestTokens, ({ one }) => ({
+  reservation: one(reservations),
+}));
+
+export const automationLogsRelations = relations(automationLogs, ({ one }) => ({
+  reservation: one(reservations),
 }));

@@ -7,4 +7,3 @@ export * from "./EmergencySection";
 export * from "./RulesSection";
 export * from "./FlyerSection";
 export * from "./AccessSection";
-export * from "./AutomationSection";

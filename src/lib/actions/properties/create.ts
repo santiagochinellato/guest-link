@@ -1,116 +1,98 @@
 "use server";
 
 import { db } from "@/db";
-import { properties, recommendations, emergencyContacts, transportInfo, categories } from "@/db/schema";
+import {
+  properties,
+  categories,
+  recommendations,
+  emergencyContacts,
+  transportInfo,
+} from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { PropertyFormData, PropertyFormSchema } from "@/lib/schemas";
-import {
-  defaultRecommendations,
-  convertDefaultRecommendationsToSystemFormat,
-  getDefaultCategoriesFromRecommendations,
-} from "@/lib/default-recommendations";
 import { buildHouseRules } from "./helpers";
 
-/**
- * Crea una nueva propiedad con todas sus relaciones
- * 
- * @param data - Datos del formulario de propiedad
- * @returns Resultado con el ID de la propiedad creada
- */
 export async function createProperty(data: PropertyFormData) {
   const result = PropertyFormSchema.safeParse(data);
   if (!result.success) {
     return { success: false, error: result.error.message };
   }
-
   const p = result.data;
 
   try {
-    const propId = await db.transaction(async (tx) => {
-      // 1. Insert Property
-      const [newProp] = await tx.insert(properties).values({
-        name: p.name,
-        slug: p.slug,
-        address: p.address,
-        city: p.city,
-        country: p.country,
-        latitude: p.latitude,
-        longitude: p.longitude,
-        wifiSsid: p.wifiSsid,
-        wifiPassword: p.wifiPassword,
-        wifiQrCode: p.wifiQrCode,
-        coverImageUrl: p.coverImageUrl,
-        checkInTime: p.checkInTime,
-        checkOutTime: p.checkOutTime,
-        status: p.status || "draft",
-        houseRules: buildHouseRules({
-          houseRules: p.houseRules,
-          rulesAllowed: p.rulesAllowed,
-          rulesProhibited: p.rulesProhibited,
-          accessInstructions: p.accessInstructions,
-          hasParking: p.hasParking,
-          parkingDetails: p.parkingDetails,
-          accessCode: p.accessCode,
-          alarmCode: p.alarmCode,
-          accessSteps: p.accessSteps,
-          preCheckInSteps: p.preCheckInSteps,
-          preCheckInNotes: p.preCheckInNotes,
-          hostName: p.hostName,
-          hostImage: p.hostImage,
-          hostPhone: p.hostPhone,
-          showHostInEmergency: p.showHostInEmergency,
-        }),
-      }).returning({ id: properties.id });
+    const [inserted] = await db.transaction(async (tx) => {
+      const [prop] = await tx
+        .insert(properties)
+        .values({
+          name: p.name,
+          slug: p.slug,
+          address: p.address || null,
+          city: p.city || null,
+          country: p.country || null,
+          latitude: p.latitude || null,
+          longitude: p.longitude || null,
+          wifiSsid: p.wifiSsid || null,
+          wifiPassword: p.wifiPassword || null,
+          wifiQrCode: p.wifiQrCode || null,
+          coverImageUrl: p.coverImageUrl || null,
+          checkInTime: p.checkInTime || null,
+          checkOutTime: p.checkOutTime || null,
+          houseRules: buildHouseRules({
+            houseRules: p.houseRules,
+            rulesAllowed: p.rulesAllowed,
+            rulesProhibited: p.rulesProhibited,
+            accessInstructions: p.accessInstructions,
+            hasParking: p.hasParking,
+            parkingDetails: p.parkingDetails,
+            accessCode: p.accessCode,
+            alarmCode: p.alarmCode,
+            accessSteps: p.accessSteps,
+            preCheckInSteps: p.preCheckInSteps,
+            preCheckInNotes: p.preCheckInNotes,
+            hostName: p.hostName,
+            hostImage: p.hostImage,
+            hostPhone: p.hostPhone,
+            showHostInEmergency: p.showHostInEmergency,
+          }),
+          updatedAt: new Date(),
+          status: (p.status as "active" | "draft" | "archived") || "draft",
+          autoSendGuide: p.autoSendGuide ?? true,
+          autoCheckoutReminder: p.autoCheckoutReminder ?? true,
+          autoReviewRequest: p.autoReviewRequest ?? true,
+        })
+        .returning();
 
-      const id = newProp.id;
+      if (!prop) throw new Error("Insert property failed");
 
-      // 2. Bulk Insert Categories & Recommendations
-      let recommendationsToInsert = p.recommendations || [];
-      let categoriesToInsert: Array<{ type: string; name: string; icon: string; displayOrder: number; isSystemCategory: boolean }> = [];
+      const uniqueCategoryTypes = Array.from(new Set(p.recommendations?.map((r) => r.categoryType) || []));
+      const existingCatMap = new Map<string, number>();
 
-      if (recommendationsToInsert.length === 0) {
-        // Cargar recomendaciones base
-        const defaultRecs = convertDefaultRecommendationsToSystemFormat(defaultRecommendations);
-        recommendationsToInsert = defaultRecs;
-
-        // Cargar categorías base
-        categoriesToInsert = getDefaultCategoriesFromRecommendations(defaultRecommendations);
-      } else {
-        // Si hay recomendaciones proporcionadas, crear categorías basadas en ellas
-        const uniqueCatTypes = Array.from(new Set(recommendationsToInsert.map(r => r.categoryType)));
-        categoriesToInsert = uniqueCatTypes.map(type => ({
-          type: type.toLowerCase(),
-          name: type.charAt(0).toUpperCase() + type.slice(1),
-          icon: "star", // Icono por defecto
-          displayOrder: 0,
-          isSystemCategory: false,
-        }));
+      if (uniqueCategoryTypes.length > 0) {
+        const newCats = await tx
+          .insert(categories)
+          .values(
+            uniqueCategoryTypes.map((type) => ({
+              name: type.charAt(0).toUpperCase() + type.slice(1),
+              type,
+              propertyId: prop.id,
+            }))
+          )
+          .returning();
+        newCats.forEach((c) => {
+          if (c.type) existingCatMap.set(c.type, c.id);
+        });
       }
 
-      // Inserción masiva de categorías
-      const insertedCats = await tx.insert(categories).values(
-        categoriesToInsert.map(cat => ({
-          name: cat.name,
-          type: cat.type,
-          icon: cat.icon,
-          displayOrder: cat.displayOrder,
-          isSystemCategory: cat.isSystemCategory,
-          propertyId: id,
-        }))
-      ).returning();
-
-      const catMap = new Map(insertedCats.map(c => [c.type, c.id]));
-
-      // Inserción masiva de recomendaciones
-      if (recommendationsToInsert.length > 0) {
+      if (p.recommendations && p.recommendations.length > 0) {
         await tx.insert(recommendations).values(
-          recommendationsToInsert.map(rec => ({
-            propertyId: id,
-            categoryId: catMap.get(rec.categoryType.toLowerCase()),
+          p.recommendations.map((rec) => ({
+            propertyId: prop.id,
+            categoryId: existingCatMap.get(rec.categoryType),
             title: rec.title,
+            description: rec.description,
             formattedAddress: rec.formattedAddress,
             googleMapsLink: rec.googleMapsLink,
-            description: rec.description,
             rating: rec.rating ? Number(rec.rating) : null,
             userRatingsTotal: rec.userRatingsTotal ? Number(rec.userRatingsTotal) : null,
             googlePlaceId: rec.googlePlaceId,
@@ -120,45 +102,47 @@ export async function createProperty(data: PropertyFormData) {
         );
       }
 
-      // 3. Bulk Insert Emergency Contacts
       if (p.emergencyContacts && p.emergencyContacts.length > 0) {
         await tx.insert(emergencyContacts).values(
-          p.emergencyContacts.map(c => ({
-            propertyId: id,
+          p.emergencyContacts.map((c) => ({
+            propertyId: prop.id,
             name: c.name,
             phone: c.phone,
-            type: c.type ?? "other"
+            type: c.type ?? "other",
           }))
         );
       }
 
-      // 4. Bulk Insert Transport Info
       if (p.transport && p.transport.length > 0) {
         await tx.insert(transportInfo).values(
-          p.transport.map(t => ({
-            propertyId: id,
+          p.transport.map((t) => ({
+            propertyId: prop.id,
             name: t.name,
             type: t.type ?? "taxi",
             description: t.description || null,
             phone: t.phone || null,
             website: t.website || null,
             scheduleInfo: t.scheduleInfo || null,
-            priceInfo: t.priceInfo || null
+            priceInfo: t.priceInfo || null,
           }))
         );
       }
 
-      return id;
+      return [prop];
     });
 
     revalidatePath("/dashboard/properties");
-    return { success: true, id: propId };
-  } catch (error: unknown) {
-    const err = error as Error;
-    console.error("Create Property Error:", err);
-    return { success: false, error: err.message };
+    if (inserted?.slug) {
+      revalidatePath(`/es/stay/${inserted.slug}`);
+      revalidatePath(`/en/stay/${inserted.slug}`);
+      revalidatePath(`/[lang]/stay/${inserted.slug}`, "page");
+    }
+    return { success: true, data: { id: inserted!.id } };
+  } catch (err) {
+    console.error("[createProperty]", err);
+    return {
+      success: false,
+      error: (err as Error).message,
+    };
   }
 }
-
-
-

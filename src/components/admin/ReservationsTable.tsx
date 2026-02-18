@@ -322,7 +322,7 @@ export function ReservationsTable({ reservations, tokenStatus = {} }: Reservatio
           onOpenChange={(open) => !open && setGuestViewReservation(null)}
           reservation={{
             ...guestViewReservation,
-            propertySlug: (guestViewReservation as ReservationRow & { propertySlug?: string }).propertySlug,
+            propertySlug: guestViewReservation.propertySlug ?? undefined,
           }}
           lang={(guestViewReservation.guestLanguage as "es" | "en" | "pt") || "es"}
           hasToken={tokenStatus[guestViewReservation.id]}
