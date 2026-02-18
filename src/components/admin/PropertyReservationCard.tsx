@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { format, parseISO, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, List, KeyRound } from "lucide-react";
+import { RefreshCw, List, KeyRound, Check } from "lucide-react";
 import { toast } from "sonner";
 import { parseGuestInfo } from "@/lib/utils/guest-info";
 import type {
@@ -35,18 +36,32 @@ function formatPrice(price: number | null, currency: string | null): string {
   }
 }
 
-function ReservationLine({ r }: { r: ReservationOverviewItem }) {
+function ReservationLine({
+  r,
+  className = "",
+}: {
+  r: ReservationOverviewItem;
+  className?: string;
+}) {
   const { name, guestCountText } = parseGuestInfo(r.guestName);
   return (
-    <div className="text-sm text-gray-600 dark:text-gray-400">
-      <div className="font-medium text-brand-void dark:text-white">{name}</div>
+    <div className={`text-gray-600 dark:text-gray-400 flex gap-2 items-center ${className}`}>
+      <span className="inline-flex shrink-0" aria-label={r.platform}>
+        {r.platform.toLowerCase() === "booking" ? (
+          <Image src="/Booking.svg" alt="Booking" width={16} height={16} />
+        ) : r.platform.toLowerCase() === "airbnb" ? (
+          <Image src="/airbnb.svg" alt="Airbnb" width={16} height={16} />
+        ) : (
+          <span className="capitalize">{r.platform}</span>
+        )}
+      </span>
+      <div className="font-bold text-brand-void dark:text-white text-gray-500">{name}</div>
       {guestCountText && (
-        <div className="text-xs text-gray-500 dark:text-gray-400">{guestCountText}</div>
+        <div className="text-gray-500 dark:text-gray-400 opacity-90">{guestCountText}</div>
       )}
-      <div className="mt-0.5">
-        <span className="capitalize">{r.platform}</span>
+      <div className=" opacity-90">
         <span className="mx-1">·</span>
-        <span>{formatDateSafe(r.checkIn)} – {formatDateSafe(r.checkOut)}</span>
+        <span className="font-bold opacity-90">{formatDateSafe(r.checkIn)} – {formatDateSafe(r.checkOut)}</span>
         {r.totalPrice != null && (
           <>
             <span className="mx-1">·</span>
@@ -66,6 +81,8 @@ interface PropertyReservationCardProps {
 export function PropertyReservationCard({ lang, item }: PropertyReservationCardProps) {
   const { property, currentReservation, nextReservation, nextReservations, platforms } = item;
   const hasAnyReservation = currentReservation ?? nextReservations.length > 0;
+  const isSynced = hasAnyReservation;
+  const [syncHovered, setSyncHovered] = useState(false);
 
   const handleSync = () => {
     toast.info("Sincronización no disponible en esta versión.");
@@ -141,51 +158,68 @@ export function PropertyReservationCard({ lang, item }: PropertyReservationCardP
                 Generar check-in
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={handleSync} aria-label="Sincronizar">
-              <RefreshCw className="w-4 h-4 mr-1.5" aria-hidden />
-              Sincronizar
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSync}
+              onMouseEnter={() => setSyncHovered(true)}
+              onMouseLeave={() => setSyncHovered(false)}
+              aria-label={isSynced && syncHovered ? "Volver a sincronizar" : isSynced ? "Sincronizado" : "Sincronizar"}
+              className={isSynced && !syncHovered ? "border-green-200 dark:border-green-800 text-green-700 dark:text-green-300" : ""}
+            >
+              {isSynced && !syncHovered ? (
+                <>
+                  <Check className="w-4 h-4 mr-1.5" aria-hidden />
+                  Sincronizado
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-1.5" aria-hidden />
+                  {isSynced && syncHovered ? "Volver a sincronizar" : "Sincronizar"}
+                </>
+              )}
             </Button>
           </div>
 
-          {/* Reserva actual */}
-          <div>
-            <h4 className="text-base font-semibold text-brand-void dark:text-white mb-1">
+          {/* Reserva actual: bg verde muy claro, texto 14px */}
+          <div className="rounded-lg bg-green-50 dark:bg-green-950/30 p-3 text-[14px]">
+            <h4 className="font-semibold text-brand-void dark:text-white mb-1.5 text-[12px]">
               Reserva actual
             </h4>
             {currentReservation ? (
-              <ReservationLine r={currentReservation} />
+              <ReservationLine r={currentReservation} className="text-[12px]" />
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No hay reserva en curso.</p>
+              <p className="text-gray-500 dark:text-gray-400 text-[12px]">No hay reserva en curso.</p>
             )}
           </div>
 
-          {/* Próxima reserva */}
-          <div>
-            <h4 className="text-sm font-semibold text-brand-void dark:text-white mb-1">
+          {/* Próxima reserva: bg amarillo suave, texto 12px */}
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 p-3 text-[12px]">
+            <h4 className="font-semibold text-brand-void dark:text-white mb-1.5 text-[12px]">
               Próxima reserva
             </h4>
             {nextReservation ? (
-              <ReservationLine r={nextReservation} />
+              <ReservationLine r={nextReservation} className="text-[12px]" />
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No hay próxima reserva.</p>
+              <p className="text-gray-500 dark:text-gray-400 text-[12px]">No hay próxima reserva.</p>
             )}
           </div>
 
-          {/* Siguientes reservas */}
-          <div>
-            <h4 className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+          {/* Siguientes reservas: bg gris claro, texto 12px, todas juntas */}
+          <div className="rounded-lg bg-slate-100 dark:bg-slate-800/50 p-3 text-[12px]">
+            <h4 className="font-medium text-gray-600 dark:text-gray-300 mb-1.5 text-[12px]">
               Siguientes reservas
             </h4>
             {nextReservations.length > 0 ? (
-              <ul className="space-y-1">
+              <ul className="space-y-2">
                 {nextReservations.map((r) => (
                   <li key={r.id}>
-                    <ReservationLine r={r} />
+                    <ReservationLine r={r} className="text-[12px]" />
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-xs text-gray-500 dark:text-gray-400">No hay más reservas.</p>
+              <p className="text-gray-500 dark:text-gray-400 text-[12px]">No hay más reservas.</p>
             )}
           </div>
         </div>

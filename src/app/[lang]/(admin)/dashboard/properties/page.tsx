@@ -1,7 +1,8 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { getProperties } from "@/lib/actions/properties";
-import { PropertiesGrid } from "@/components/admin/properties-grid";
+import { getPropertyAnalytics } from "@/lib/actions/analytics";
+import { PropertyCardWithMetrics } from "@/components/admin/PropertyCardWithMetrics";
 
 interface Property {
   id: number;
@@ -11,17 +12,6 @@ interface Property {
   status: string | null;
   coverImageUrl?: string | null;
   wifiSsid?: string | null;
-  houseRules?: string | null;
-  sections?: {
-    basic: boolean;
-    location: boolean;
-    wifi: boolean;
-    recommendations: boolean;
-    transport: boolean;
-    rules: boolean;
-    emergency: boolean;
-    qr: boolean;
-  };
 }
 
 // Server Component
@@ -33,6 +23,9 @@ export default async function PropertiesPage({
   const { lang } = await params;
   const result = await getProperties();
   const properties = (result.success ? result.data : []) as Property[];
+  const analyticsList = await Promise.all(
+    properties.map((p) => getPropertyAnalytics(p.id))
+  );
 
   return (
     <div className="space-y-6 px-8 pb-16">
@@ -52,7 +45,16 @@ export default async function PropertiesPage({
         </Link>
       </div>
 
-      <PropertiesGrid initialProperties={properties} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {properties.map((property, i) => (
+          <PropertyCardWithMetrics
+            key={property.id}
+            property={property}
+            analytics={analyticsList[i] ?? null}
+            lang={lang}
+          />
+        ))}
+      </div>
     </div>
   );
 }

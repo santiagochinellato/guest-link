@@ -77,7 +77,7 @@ export default async function ReservationsPage({
       </section>
 
             {/* Próximas reservas: visible como se planeó */}
-            <section aria-labelledby="upcoming-heading">
+            <section aria-labelledby="upcoming-heading w-full">
         <h2 id="upcoming-heading" className="sr-only">
           Próximas reservas
         </h2>
