@@ -50,30 +50,13 @@ async function populateMissingData() {
       needsUpdate = true;
     }
 
-    // 4. Fill Opening Hours
-    if (!rec.openingHours) {
-      updateData.openingHours = {
-        open_now: true,
-        weekday_text: [
-          "Lunes: 09:00 – 20:00",
-          "Martes: 09:00 – 20:00",
-          "Miércoles: 09:00 – 20:00",
-          "Jueves: 09:00 – 20:00",
-          "Viernes: 09:00 – 20:00",
-          "Sábado: 10:00 – 18:00",
-          "Domingo: Cerrado"
-        ]
-      };
-      needsUpdate = true;
-    }
-
-    // 5. Fill Description if empty
+    // 4. Fill Description if empty
     if (!rec.description) {
       updateData.description = "Esta es una descripción generada automáticamente para completar el diseño. Este lugar es altamente recomendado por su calidad y servicio.";
       needsUpdate = true;
     }
 
-    // 6. Fill Coordinates if missing (Centric Bariloche)
+    // 5. Fill Coordinates if missing (Centric Bariloche)
     if (!rec.latitude || !rec.longitude) {
        // Random wiggle to not stack them all
        const lat = -41.1335 + (Math.random() * 0.01 - 0.005);

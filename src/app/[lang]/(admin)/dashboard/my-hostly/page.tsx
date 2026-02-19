@@ -141,10 +141,10 @@ export default async function MyHostlyPage({
             propertyId={card.base.id}
             name={card.base.name}
             address={card.base.address}
-            city={card.full.city}
-            country={card.full.country}
+            city={card.full?.city ?? ""}
+            country={card.full?.country ?? ""}
             coverImageUrl={card.base.coverImageUrl}
-            status={card.full.status}
+            status={card.full?.status ?? "draft"}
             lang={lang}
             sections={card.sections}
             totalViews={card.analytics.totalViews}
