@@ -192,4 +192,30 @@ export async function updateProperty(id: number, data: PropertyFormData) {
   }
 }
 
-
+export async function updatePropertyQuick(
+  id: number,
+  data: {
+    wifiSsid?: string;
+    wifiPassword?: string;
+    checkInTime?: string;
+    checkOutTime?: string;
+  }
+) {
+  try {
+    await db
+      .update(properties)
+      .set({
+        ...(data.wifiSsid !== undefined && { wifiSsid: data.wifiSsid || null }),
+        ...(data.wifiPassword !== undefined && { wifiPassword: data.wifiPassword || null }),
+        ...(data.checkInTime !== undefined && { checkInTime: data.checkInTime || null }),
+        ...(data.checkOutTime !== undefined && { checkOutTime: data.checkOutTime || null }),
+        updatedAt: new Date(),
+      })
+      .where(eq(properties.id, id));
+    revalidatePath("/[lang]/(admin)/dashboard/properties", "page");
+    return { success: true as const };
+  } catch (err) {
+    console.error("[updatePropertyQuick]", err);
+    return { success: false as const, error: (err as Error).message };
+  }
+}

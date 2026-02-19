@@ -12,9 +12,9 @@ export default async function AdminLayout({
 }) {
   const { lang } = await params;
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f6f8f8] dark:bg-brand-void/60">
+    <div className="flex h-screen  bg-[#f6f8f8] dark:bg-brand-void/60">
       {/* Sidebar - Desktop Only */}
-      <div className="hidden lg:flex w-64 flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-black h-full">
+      <div className="hidden lg:flex flex-shrink-0 h-full">
         <Sidebar locale={lang} />
       </div>
 

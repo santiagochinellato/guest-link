@@ -15,10 +15,13 @@ import {
   Building2,
   DollarSign,
   Check,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { GuestViewModal } from "./GuestViewModal";
 import { parseGuestInfo } from "@/lib/utils/guest-info";
+import { deleteReservation } from "@/lib/actions/reservations";
 import { cn } from "@/lib/utils";
 
 interface ReservationRow {
@@ -68,9 +71,23 @@ function getBookingUrl(platform: string, reservationCode: string): string | null
 
 export function ReservationsTable({ reservations, tokenStatus = {} }: ReservationsTableProps) {
   const [guestViewReservation, setGuestViewReservation] = useState<ReservationRow | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const lang = pathname?.split("/")[1] || "es";
+
+  async function handleDelete(res: ReservationRow) {
+    if (!confirm(`¿Eliminar la reserva de ${parseGuestInfo(res.guestName).name} (#${res.reservationCode})? Esta acción no se puede deshacer.`)) return;
+    setDeletingId(res.id);
+    const result = await deleteReservation(res.id);
+    setDeletingId(null);
+    if (result.success) {
+      toast.success("Reserva eliminada");
+      router.refresh();
+    } else {
+      toast.error(result.error ?? "Error al eliminar");
+    }
+  }
 
   return (
     <>
@@ -193,6 +210,16 @@ export function ReservationsTable({ reservations, tokenStatus = {} }: Reservatio
                             Ver detalles
                           </Link>
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                          onClick={() => handleDelete(res)}
+                          disabled={deletingId === res.id}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Borrar
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -279,30 +306,42 @@ export function ReservationsTable({ reservations, tokenStatus = {} }: Reservatio
                   </div>
                 </div>
 
-                <div className="flex gap-2 pt-2">
+                <div className="flex flex-col gap-2 pt-2">
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-2"
+                      onClick={() => setGuestViewReservation(res)}
+                    >
+                      {hasToken ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Link generado
+                        </>
+                      ) : (
+                        <>
+                          <LogIn className="w-4 h-4" />
+                          Generar check-in
+                        </>
+                      )}
+                    </Button>
+                    <Button asChild variant="default" size="sm" className="flex-1 gap-2">
+                      <Link href={`/${lang}/dashboard/reservations/${res.id}`}>
+                        Ver detalles
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                  </div>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    className="flex-1 gap-2"
-                    onClick={() => setGuestViewReservation(res)}
+                    className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 w-full"
+                    onClick={() => handleDelete(res)}
+                    disabled={deletingId === res.id}
                   >
-                    {hasToken ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        Link generado
-                      </>
-                    ) : (
-                      <>
-                        <LogIn className="w-4 h-4" />
-                        Generar check-in
-                      </>
-                    )}
-                  </Button>
-                  <Button asChild variant="default" size="sm" className="flex-1 gap-2">
-                    <Link href={`/${lang}/dashboard/reservations/${res.id}`}>
-                      Ver detalles
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
+                    <Trash2 className="w-4 h-4" />
+                    Borrar reserva
                   </Button>
                 </div>
               </div>

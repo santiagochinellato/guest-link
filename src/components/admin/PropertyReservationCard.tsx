@@ -56,19 +56,19 @@ function ReservationLine({
         )}
       </span>
       <div className="font-bold text-brand-void dark:text-white text-gray-500">{name}</div>
+      <div className=" opacity-90">
+
+        <span className="font-bold opacity-90">{formatDateSafe(r.checkIn)} – {formatDateSafe(r.checkOut)}</span>
+ 
+      </div>
       {guestCountText && (
         <div className="text-gray-500 dark:text-gray-400 opacity-90">{guestCountText}</div>
       )}
-      <div className=" opacity-90">
-        <span className="mx-1">·</span>
-        <span className="font-bold opacity-90">{formatDateSafe(r.checkIn)} – {formatDateSafe(r.checkOut)}</span>
-        {r.totalPrice != null && (
+      {r.totalPrice != null && (
           <>
-            <span className="mx-1">·</span>
-            <span>{formatPrice(r.totalPrice, r.currency)}</span>
+            <span className="text-green-700 font-bold dark:text-gray-400 opacity-90">{formatPrice(r.totalPrice, r.currency)}</span>
           </>
         )}
-      </div>
     </div>
   );
 }

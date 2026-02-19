@@ -81,7 +81,7 @@ export default async function ReservationsPage({
         <h2 id="upcoming-heading" className="sr-only">
           Próximas reservas
         </h2>
-        <UpcomingReservations reservations={reservations} lang={lang} />
+        {/* <UpcomingReservations reservations={reservations} lang={lang} /> */}
       </section>
 
       {/* Calendario */}

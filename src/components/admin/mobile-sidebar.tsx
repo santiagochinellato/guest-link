@@ -3,14 +3,22 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, LogOut, MoreVertical } from "lucide-react";
+import {
+  LayoutDashboard,
+  CalendarCheck,
+  Home,
+  LogOut,
+  MoreVertical,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { signOut } from "next-auth/react";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  // Add other mobile nav items here if needed
+  { label: "Panel de control", href: "/dashboard", icon: LayoutDashboard, exact: true },
+  { label: "My Hostly", href: "/dashboard/my-hostly", icon: Home, exact: false },
+  { label: "Reservas", href: "/dashboard/reservations", icon: CalendarCheck, exact: false },
 ];
 
 export function MobileSidebar({
@@ -33,126 +41,155 @@ export function MobileSidebar({
   useEffect(() => {
     fetch("/api/auth/session")
       .then((res) => res.json())
-      .then((data) => setSession(data));
+      .then(setSession);
   }, []);
+
+  const initials = session?.user?.name?.charAt(0).toUpperCase() ?? "U";
 
   return (
     <aside className="w-full flex flex-col h-full bg-white dark:bg-brand-void font-sans">
       {/* Header */}
-      <div className="p-6 border-b border-gray-100 dark:border-gray-800/50 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10">
-            {/* Light mode: Original Logo */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/hostlylogo.svg"
-              alt="Hostly"
-              className="dark:hidden w-full h-full object-contain"
-            />
-            {/* Dark mode: Copper Colored Logo Mask */}
-            <div
-              className="hidden dark:block w-full h-full bg-brand-copper"
-              style={{
-                maskImage: "url(/hostlylogo.svg)",
-                WebkitMaskImage: "url(/hostlylogo.svg)",
-                maskSize: "contain",
-                WebkitMaskSize: "contain",
-                maskRepeat: "no-repeat",
-                WebkitMaskRepeat: "no-repeat",
-                maskPosition: "center",
-                WebkitMaskPosition: "center",
-              }}
-            />
-          </div>
-          <div>
-            <span className="text-xl font-bold tracking-tight text-brand-void dark:text-white font-sans block">
-              HOSTLY
-            </span>
-            <p
-              className="text-[12px] text-brand-void dark:text-white font-medium tracking-wide"
-              style={{ fontFamily: "var(--font-inter)" }}
-            >
-              The city, simplified
-            </p>
-          </div>
+      <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800/60 flex items-center gap-3">
+        <div className="relative w-9 h-9 flex-shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hostlylogo.svg"
+            alt="Hostly"
+            className="dark:hidden w-full h-full object-contain"
+          />
+          <div
+            className="hidden dark:block w-full h-full bg-brand-copper"
+            style={{
+              maskImage: "url(/hostlylogo.svg)",
+              WebkitMaskImage: "url(/hostlylogo.svg)",
+              maskSize: "contain",
+              WebkitMaskSize: "contain",
+              maskRepeat: "no-repeat",
+              WebkitMaskRepeat: "no-repeat",
+              maskPosition: "center",
+              WebkitMaskPosition: "center",
+            }}
+          />
+        </div>
+        <div>
+          <span className="text-lg font-bold tracking-tight text-brand-void dark:text-white block leading-tight">
+            HOSTLY
+          </span>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium tracking-wide">
+            The city, simplified
+          </p>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-6 py-6 space-y-2">
-        {NAV_ITEMS.map((item) => {
-          const hrefWithLocale = `/${locale}${item.href}`;
-          const isActive = pathname === hrefWithLocale;
+      <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-0.5">
+        <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+          Menú
+        </p>
+        {NAV_ITEMS.map((item, idx) => {
+          const href = `/${locale}${item.href}`;
+          const isActive = item.exact ? pathname === href : pathname.startsWith(href);
           return (
-            <Link
+            <motion.div
               key={item.href}
-              href={hrefWithLocale}
-              onClick={onLinkClick}
-              className={cn(
-                "flex items-center gap-4 py-4 px-4 rounded-xl text-base font-semibold transition-all duration-200 active:scale-95",
-                isActive
-                  ? "bg-brand-copper/10 text-brand-copper shadow-sm"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-brand-void-light/50",
-              )}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.06, duration: 0.22 }}
             >
-              <item.icon
+              <Link
+                href={href}
+                onClick={onLinkClick}
                 className={cn(
-                  "w-6 h-6",
-                  isActive ? "text-brand-copper" : "text-gray-400",
+                  "relative flex items-center gap-4 py-3.5 px-4 rounded-xl text-sm font-medium transition-colors active:scale-[0.98]",
+                  isActive
+                    ? "bg-brand-copper/10 text-brand-copper"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
                 )}
-              />
-              <span>{item.label}</span>
-            </Link>
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="mobile-active-pill"
+                    className="absolute inset-0 bg-brand-copper/10 dark:bg-brand-copper/15 rounded-xl"
+                    transition={{ type: "spring", stiffness: 360, damping: 36 }}
+                  />
+                )}
+                {isActive && (
+                  <motion.div
+                    layoutId="mobile-accent-bar"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-brand-copper rounded-r-full"
+                    transition={{ type: "spring", stiffness: 360, damping: 36 }}
+                  />
+                )}
+                <item.icon
+                  className={cn(
+                    "relative z-10 w-5 h-5 flex-shrink-0",
+                    isActive ? "text-brand-copper" : "text-gray-400"
+                  )}
+                />
+                <span className="relative z-10">{item.label}</span>
+              </Link>
+            </motion.div>
           );
         })}
       </nav>
 
-      {/* Footer / User Profile */}
-      <div className="p-6 border-t border-gray-100 dark:border-gray-800 space-y-6">
-        {/* Theme Toggle */}
+      {/* Footer */}
+      <div className="px-3 pb-5 pt-3 border-t border-gray-100 dark:border-gray-800 space-y-4">
         <ThemeToggle variant="segmented" className="w-full" />
 
-        {/* User Menu Trigger */}
         <div className="relative">
-          {showUserMenu && (
-            <div className="absolute bottom-[calc(100%+0.5rem)] left-0 right-0 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl shadow-xl overflow-hidden animate-in slide-in-from-bottom-2 fade-in duration-200 z-50">
-              <button
-                onClick={() => signOut({ callbackUrl: "/login" })}
-                className="w-full text-left px-4 py-3 text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3"
+          <AnimatePresence>
+            {showUserMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                className="absolute bottom-[calc(100%+0.5rem)] left-0 right-0 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl shadow-xl overflow-hidden py-1 z-50"
               >
-                <LogOut className="w-5 h-5" />
-                Cerrar Sesión
-              </button>
-            </div>
-          )}
-          <button
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                <button
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="w-full text-left px-4 py-3 text-sm text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Cerrar Sesión
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <motion.button
+            onClick={() => setShowUserMenu((v) => !v)}
+            className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
+            whileTap={{ scale: 0.98 }}
           >
-            <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 border border-gray-200 dark:border-gray-700">
+            <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-gray-200 dark:ring-gray-700 bg-gray-100">
               {session?.user?.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={session.user.image}
-                  alt={session.user.name || "User"}
+                  alt={session.user.name ?? "User"}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-brand-void-light to-brand-void flex items-center justify-center text-white font-bold text-xs">
-                  {session?.user?.name?.charAt(0).toUpperCase() || "U"}
+                <div className="w-full h-full bg-gradient-to-br from-brand-copper/70 to-brand-copper flex items-center justify-center text-white font-bold text-xs">
+                  {initials}
                 </div>
               )}
+              <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border-2 border-white dark:border-neutral-900" />
             </div>
             <div className="flex flex-col items-start overflow-hidden flex-1">
-              <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                {session?.user?.name || "Usuario"}
+              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">
+                {session?.user?.name ?? "Usuario"}
               </p>
-              <p className="text-xs text-gray-500 truncate">
-                {session?.user?.email || "Cuenta"}
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">
+                {session?.user?.email ?? "Cuenta"}
               </p>
             </div>
-            <MoreVertical className="w-5 h-5 text-gray-400" />
-          </button>
+            <motion.div animate={{ rotate: showUserMenu ? 90 : 0 }} transition={{ duration: 0.18 }}>
+              <MoreVertical className="w-4 h-4 text-gray-400" />
+            </motion.div>
+          </motion.button>
         </div>
       </div>
     </aside>

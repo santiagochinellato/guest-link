@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { reservations, properties } from "@/db/schema";
+import { reservations, properties, automationLogs } from "@/db/schema";
 import { eq, and, gte, lte, or, ilike } from "drizzle-orm";
 import type { Reservation } from "@/components/admin/ReservationDetailCard/types";
 
@@ -210,6 +210,17 @@ export async function updateReservationPayment(id: number, amountPaid: number | 
     return { success: true as const };
   } catch (err) {
     console.error("[updateReservationPayment]", err);
+    return { success: false as const, error: (err as Error).message };
+  }
+}
+
+export async function deleteReservation(id: number) {
+  try {
+    await db.delete(automationLogs).where(eq(automationLogs.reservationId, id));
+    await db.delete(reservations).where(eq(reservations.id, id));
+    return { success: true as const };
+  } catch (err) {
+    console.error("[deleteReservation]", err);
     return { success: false as const, error: (err as Error).message };
   }
 }

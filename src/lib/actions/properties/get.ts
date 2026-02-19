@@ -8,7 +8,7 @@ import {
   emergencyContacts,
   transportInfo,
 } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { safeJsonParse } from "./helpers";
 import { mapPropertyToGuestDTO } from "@/lib/mappers";
 import type { PropertyFormData } from "@/lib/schemas";
@@ -128,7 +128,10 @@ export async function getProperties() {
         status: properties.status,
         coverImageUrl: properties.coverImageUrl,
         wifiSsid: properties.wifiSsid,
+        wifiPassword: properties.wifiPassword,
         houseRules: properties.houseRules,
+        checkInTime: properties.checkInTime,
+        checkOutTime: properties.checkOutTime,
       })
       .from(properties)
       .orderBy(properties.name);
