@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { authenticate, register } from "@/lib/actions/auth";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
@@ -12,6 +13,8 @@ export function LoginForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  const pathname = usePathname();
+  const lang = pathname?.startsWith("/en") ? "en" : "es";
   const [loginError, loginDispatch, isLoginPending] = useActionState(
     authenticate,
     undefined,
@@ -32,6 +35,13 @@ export function LoginForm() {
       return () => clearTimeout(timer);
     }
   }, [registerState]);
+
+  // Login correcto: la server action devuelve __SUCCESS__ y redirigimos desde el cliente
+  useEffect(() => {
+    if (loginError === "__SUCCESS__") {
+      window.location.href = `/${lang}/dashboard`;
+    }
+  }, [loginError, lang]);
 
   const toggleView = (login: boolean) => {
     setIsLogin(login);
@@ -54,6 +64,7 @@ export function LoginForm() {
               src="/hostlyVertical.webp"
               alt="Hostly Logo"
               fill
+              sizes="(max-width: 160px) 160px, 160px"
               className="object-contain dark:hidden"
               priority
             />
@@ -172,7 +183,7 @@ export function LoginForm() {
               </div>
             </div>
 
-            {loginError && (
+            {loginError && loginError !== "__SUCCESS__" && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}

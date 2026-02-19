@@ -33,16 +33,31 @@ export async function authenticate(
   prevState: string | undefined,
   formData: FormData,
 ) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "").trim();
+  if (!email || !password) {
+    return "El email y la contraseña son requeridos.";
+  }
+  // Validar credenciales contra la DB aquí para devolver error claro sin depender del redirect de NextAuth
+  const [user] = await db.select().from(users).where(eq(users.email, email));
+  if (!user?.password) {
+    return "Credenciales inválidas.";
+  }
+  const ok = await bcrypt.compare(password, user.password);
+  if (!ok) {
+    return "Credenciales inválidas.";
+  }
   try {
-    await signIn("credentials", formData);
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+      redirectTo: "/es/dashboard",
+    });
+    return "__SUCCESS__";
   } catch (error) {
     if (error instanceof AuthError) {
-      switch (error.type) {
-        case "CredentialsSignin":
-          return "Credenciales inválidas.";
-        default:
-          return "Algo salió mal.";
-      }
+      return "Credenciales inválidas.";
     }
     throw error;
   }

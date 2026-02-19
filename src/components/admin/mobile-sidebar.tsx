@@ -37,6 +37,8 @@ export function MobileSidebar({
   } | null>(null);
   const pathname = usePathname();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const segment = pathname?.split("/")[1];
+  const effectiveLocale = segment === "en" || segment === "es" ? segment : locale;
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -87,7 +89,7 @@ export function MobileSidebar({
           Menú
         </p>
         {NAV_ITEMS.map((item, idx) => {
-          const href = `/${locale}${item.href}`;
+          const href = `/${effectiveLocale}${item.href}`;
           const isActive = item.exact ? pathname === href : pathname.startsWith(href);
           return (
             <motion.div
@@ -148,7 +150,7 @@ export function MobileSidebar({
                 className="absolute bottom-[calc(100%+0.5rem)] left-0 right-0 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl shadow-xl overflow-hidden py-1 z-50"
               >
                 <button
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  onClick={() => signOut({ callbackUrl: `/${effectiveLocale}/login` })}
                   className="w-full text-left px-4 py-3 text-sm text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />

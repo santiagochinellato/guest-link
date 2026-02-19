@@ -273,7 +273,7 @@ export function Sidebar({
               className="mb-1 bg-white dark:bg-brand-void-light border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden py-1"
             >
               <button
-                onClick={() => signOut({ callbackUrl: "/login" })}
+                onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
                 className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2.5 transition-colors font-medium"
               >
                 <LogOut className="w-4 h-4 flex-shrink-0" />

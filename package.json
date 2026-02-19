@@ -13,7 +13,7 @@
     "test:coverage": "vitest --coverage",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:seed": "npx tsx src/db/seed-demo.ts",
+    "db:seed": "node scripts/run-seed.mjs",
     "db:seed-migrations": "node scripts/seed-migration-history.mjs"
   },
   "dependencies": {
