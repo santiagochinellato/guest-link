@@ -160,7 +160,17 @@ export async function getPropertyBySlug(slug: string) {
     if (!prop) return { success: false as const, error: "Property not found" };
     const out = await loadPropertyWithRelations(prop.id);
     if (!out) return { success: false as const, error: "Property not found" };
-    return { success: true as const, data: out.formData };
+    const guestDto = mapPropertyToGuestDTO(
+      out.prop,
+      out.recs.map((r) => ({
+        ...r,
+        categoryName: out.cats.find((c) => c.id === r.categoryId)?.name ?? "Other",
+        categoryType: out.cats.find((c) => c.id === r.categoryId)?.type ?? "other",
+      })),
+      out.emergency,
+      out.transport
+    );
+    return { success: true as const, data: guestDto };
   } catch (err) {
     console.error("[getPropertyBySlug]", err);
     return { success: false as const, error: (err as Error).message };
