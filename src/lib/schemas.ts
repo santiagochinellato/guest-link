@@ -10,6 +10,7 @@ export const RecommendationSchema = z.object({
   description: z.string().optional(),
   
   // Auto-Discovery Fields
+  isAutoSuggested: z.boolean().optional(),
   rating: z.number().optional(),
   userRatingsTotal: z.number().optional(),
   googlePlaceId: z.string().optional(),

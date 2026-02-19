@@ -18,10 +18,14 @@ import {
   Image as ImageIcon,
   Clock3,
   Pencil,
+  Power,
+  PowerOff,
+  EyeOff,
+  CalendarX,
 } from "lucide-react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
 import { format, parseISO, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
@@ -42,10 +46,18 @@ import {
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updatePropertyQuick } from "@/lib/actions/properties";
+import { updatePropertyQuick, updatePropertyStatus } from "@/lib/actions/properties";
+import type { PropertyStatusMode } from "@/lib/actions/properties";
 import { parseGuestInfo } from "@/lib/utils/guest-info";
 import type { PropertyAnalytics } from "@/types/analytics";
 import type { ReservationsOverviewByPropertyItem } from "@/lib/actions/reservations";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface Property {
   id: number;
@@ -128,7 +140,7 @@ function ReservationSnippet({
 
   if (!current && !next) {
     return (
-      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/40 text-sm text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/40 text-sm text-gray-500 dark:text-gray-400 min-h-[55px]">
         <span className="text-xs">Sin reservas próximas</span>
         <Link
           href={`/${lang}/dashboard/reservations/properties/${propertyId}`}
@@ -260,16 +272,218 @@ function QuickEditPopover({
             />
           </div>
         </div>
-        <Button
+        {/* <Button
           onClick={handleSave}
           disabled={saving}
           size="sm"
           className="w-full bg-brand-copper hover:bg-brand-copper/90 text-white"
         >
           {saving ? "Guardando..." : "Guardar cambios"}
-        </Button>
+        </Button> */}
       </PopoverContent>
     </Popover>
+  );
+}
+
+type DeactivateMode = Extract<
+  PropertyStatusMode,
+  "deactivate_all" | "deactivate_guest" | "deactivate_reservations"
+>;
+
+const DEACTIVATE_OPTIONS: {
+  mode: DeactivateMode;
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  border: string;
+  selectedBg: string;
+  iconColor: string;
+}[] = [
+  {
+    mode: "deactivate_all",
+    icon: PowerOff,
+    title: "Desactivar todo",
+    description:
+      "La propiedad dejará de mostrarse en la guía del huésped y en el gestor de reservas. No se enviarán automatizaciones.",
+    border: "border-red-200 dark:border-red-800",
+    selectedBg: "bg-red-50 dark:bg-red-900/20 ring-2 ring-red-300 dark:ring-red-700",
+    iconColor: "text-red-500",
+  },
+  {
+    mode: "deactivate_guest",
+    icon: EyeOff,
+    title: "Desactivar guía del huésped",
+    description:
+      "Los huéspedes no podrán acceder a la guía digital. El gestor de reservas y las automatizaciones continúan funcionando.",
+    border: "border-amber-200 dark:border-amber-800",
+    selectedBg: "bg-amber-50 dark:bg-amber-900/20 ring-2 ring-amber-300 dark:ring-amber-700",
+    iconColor: "text-amber-500",
+  },
+  {
+    mode: "deactivate_reservations",
+    icon: CalendarX,
+    title: "Desactivar gestor de reservas",
+    description:
+      "Se detienen las sincronizaciones y el envío de mensajes automáticos. La guía del huésped permanece activa.",
+    border: "border-blue-200 dark:border-blue-800",
+    selectedBg: "bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-300 dark:ring-blue-700",
+    iconColor: "text-blue-500",
+  },
+];
+
+function PropertyStatusModal({
+  open,
+  onClose,
+  propertyId,
+  propertyName,
+  isActive,
+}: {
+  open: boolean;
+  onClose: () => void;
+  propertyId: number;
+  propertyName: string;
+  isActive: boolean;
+}) {
+  const [selected, setSelected] = useState<DeactivateMode | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  async function handleConfirmDeactivate() {
+    if (!selected) return;
+    setSaving(true);
+    const result = await updatePropertyStatus(propertyId, selected);
+    setSaving(false);
+    if (result.success) {
+      toast.success("Estado de la propiedad actualizado");
+      onClose();
+    } else {
+      toast.error(result.error ?? "Error al actualizar");
+    }
+  }
+
+  async function handleActivate() {
+    setSaving(true);
+    const result = await updatePropertyStatus(propertyId, "activate");
+    setSaving(false);
+    if (result.success) {
+      toast.success(`"${propertyName}" activada`);
+      onClose();
+    } else {
+      toast.error(result.error ?? "Error al activar");
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          setSelected(null);
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {isActive ? (
+              <PowerOff className="w-4 h-4 text-red-500" />
+            ) : (
+              <Power className="w-4 h-4 text-emerald-500" />
+            )}
+            {isActive ? "Desactivar propiedad" : "Activar propiedad"}
+          </DialogTitle>
+          <DialogDescription>
+            {isActive
+              ? `Elegí cómo desactivar "${propertyName}". Podés revertir el cambio en cualquier momento.`
+              : `Activar "${propertyName}" restaurará el acceso completo: guía del huésped, gestor de reservas y automatizaciones.`}
+          </DialogDescription>
+        </DialogHeader>
+
+        {isActive ? (
+          <div className="space-y-2.5 mt-1">
+            {DEACTIVATE_OPTIONS.map((opt) => {
+              const Icon = opt.icon;
+              const isSelected = selected === opt.mode;
+              return (
+                <button
+                  key={opt.mode}
+                  type="button"
+                  onClick={() => setSelected(opt.mode)}
+                  className={`w-full text-left rounded-xl border p-3 transition-all ${opt.border} ${
+                    isSelected ? opt.selectedBg : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                        isSelected ? "bg-white dark:bg-gray-900/60 shadow-sm" : "bg-gray-100 dark:bg-gray-800"
+                      }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 ${opt.iconColor}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-tight">
+                        {opt.title}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
+                        {opt.description}
+                      </p>
+                    </div>
+                    <div
+                      className={`mt-1 w-4 h-4 rounded-full border-2 shrink-0 transition-colors ${
+                        isSelected
+                          ? "border-brand-copper bg-brand-copper"
+                          : "border-gray-300 dark:border-gray-600"
+                      }`}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => { setSelected(null); onClose(); }}
+                disabled={saving}
+              >
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+                disabled={!selected || saving}
+                onClick={handleConfirmDeactivate}
+              >
+                {saving ? "Guardando..." : "Confirmar"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-2 mt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={onClose}
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
+              disabled={saving}
+              onClick={handleActivate}
+            >
+              {saving ? "Activando..." : "Activar propiedad"}
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -282,6 +496,7 @@ export function PropertyCardWithMetrics({
 }: PropertyCardWithMetricsProps) {
   const [copied, setCopied] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
   const stayUrl = `/${lang}/stay/${property.slug}`;
   const fullUrl =
     typeof window !== "undefined" ? `${window.location.origin}${stayUrl}` : stayUrl;
@@ -456,7 +671,7 @@ export function PropertyCardWithMetrics({
               <Smartphone className="w-3.5 h-3.5 mx-auto mb-0.5 text-emerald-600 dark:text-emerald-400" />
               <p className="text-[10px] text-gray-500 dark:text-gray-400">Mobile</p>
               <p className="text-base font-bold text-brand-void dark:text-white">
-                {analytics.mobilePercent ?? 0}%
+                {(analytics.mobilePercent ?? 0) > 0 ? `${analytics.mobilePercent}%` : "—"}
               </p>
             </div>
           </div>
@@ -478,14 +693,38 @@ export function PropertyCardWithMetrics({
           </Button>
         </div>
 
-        {/* Quick-edit popover trigger */}
-        <div className="flex justify-start border-t border-gray-100 dark:border-gray-800 pt-2">
+        {/* Quick-edit + status toggle */}
+        <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-2">
           <QuickEditPopover
             key={refreshKey}
             property={property}
             onSaved={() => setRefreshKey((k) => k + 1)}
           />
+          <button
+            type="button"
+            onClick={() => setStatusModalOpen(true)}
+            className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors ${
+              property.status === "active"
+                ? "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
+                : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10"
+            }`}
+          >
+            {property.status === "active" ? (
+              <PowerOff className="w-3.5 h-3.5" />
+            ) : (
+              <Power className="w-3.5 h-3.5" />
+            )}
+            {property.status === "active" ? "Desactivar" : "Activar"}
+          </button>
         </div>
+
+        <PropertyStatusModal
+          open={statusModalOpen}
+          onClose={() => setStatusModalOpen(false)}
+          propertyId={property.id}
+          propertyName={property.name}
+          isActive={property.status === "active"}
+        />
       </CardContent>
     </Card>
   );

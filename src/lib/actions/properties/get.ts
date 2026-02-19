@@ -87,6 +87,7 @@ async function loadPropertyWithRelations(propertyId: number) {
       formattedAddress: r.formattedAddress || "",
       googleMapsLink: r.googleMapsLink || "",
       categoryType: catMap.get(r.categoryId!)?.type || "other",
+      isAutoSuggested: r.isAutoSuggested ?? false,
       rating: r.rating ?? undefined,
       userRatingsTotal: r.userRatingsTotal ?? undefined,
       googlePlaceId: r.googlePlaceId || undefined,

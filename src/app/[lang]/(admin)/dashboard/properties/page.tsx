@@ -1,9 +1,11 @@
-import { Plus, Home, CalendarCheck, Eye } from "lucide-react";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { getProperties } from "@/lib/actions/properties";
 import { getPropertyAnalytics } from "@/lib/actions/analytics";
 import { getReservationsOverviewByProperty } from "@/lib/actions/reservations";
 import { PropertyCardWithMetrics } from "@/components/admin/PropertyCardWithMetrics";
+import { BannerCarousel } from "@/components/admin/BannerCarousel";
+import { DashboardKPIBar } from "@/components/admin/DashboardKPIBar";
 import type { ReservationsOverviewByPropertyItem } from "@/lib/actions/reservations";
 
 interface Property {
@@ -43,12 +45,27 @@ export default async function PropertiesPage({
   }
 
   const totalViews = analyticsList.reduce((acc, a) => acc + (a?.totalViews ?? 0), 0);
-  const activeNow = reservationsOverviewResult.success
-    ? reservationsOverviewResult.data.filter((item) => item.currentReservation !== null).length
-    : 0;
+
+  const occupiedProperties = reservationsOverviewResult.success
+    ? reservationsOverviewResult.data
+        .filter((item) => item.currentReservation !== null)
+        .map((item) => ({
+          propertyName: item.property.name,
+          guestName: item.currentReservation!.guestName,
+          checkOut: item.currentReservation!.checkOut,
+        }))
+    : [];
+
+  const nextCheckIn = reservationsOverviewResult.success
+    ? reservationsOverviewResult.data
+        .filter((item) => item.nextReservation)
+        .sort((a, b) =>
+          a.nextReservation!.checkIn > b.nextReservation!.checkIn ? 1 : -1
+        )[0]?.nextReservation ?? null
+    : null;
 
   return (
-    <div className="space-y-6 px-8 pb-16">
+    <div className="space-y-5 sm:space-y-6 px-4 sm:px-8 pb-16">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4">
         <div>
@@ -66,11 +83,14 @@ export default async function PropertiesPage({
         </Link>
       </div>
 
+      {/* Banner carousel — always visible */}
+      <BannerCarousel lang={lang} />
+
       {properties.length === 0 ? (
         /* Empty state / onboarding */
         <div className="flex flex-col items-center justify-center py-24 text-center gap-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-brand-void/30">
           <div className="w-16 h-16 rounded-2xl bg-brand-copper/10 flex items-center justify-center">
-            <Home className="w-8 h-8 text-brand-copper" />
+            <Plus className="w-8 h-8 text-brand-copper" />
           </div>
           <div className="space-y-2 max-w-sm">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -90,42 +110,17 @@ export default async function PropertiesPage({
         </div>
       ) : (
         <>
-          {/* Summary bar */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-brand-void border border-gray-100 dark:border-gray-800">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
-                <Home className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Propiedades</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
-                  {properties.length}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-brand-void border border-gray-100 dark:border-gray-800">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0">
-                <CalendarCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Ocupadas hoy</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
-                  {activeNow}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-brand-void border border-gray-100 dark:border-gray-800">
-              <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
-                <Eye className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Vistas totales</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
-                  {totalViews}
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* KPI bar — replaces the old grid-cols-3 summary */}
+          <DashboardKPIBar
+            propertiesCount={properties.length}
+            occupiedProperties={occupiedProperties}
+            nextCheckIn={
+              nextCheckIn
+                ? { guestName: nextCheckIn.guestName, checkIn: nextCheckIn.checkIn }
+                : null
+            }
+            totalViews={totalViews}
+          />
 
           {/* Grid de cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

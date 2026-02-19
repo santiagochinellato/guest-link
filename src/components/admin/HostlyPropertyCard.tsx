@@ -6,18 +6,18 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   CheckCircle2,
-  AlertCircle,
   Edit3,
   Link as LinkIcon,
   BarChart3,
   CalendarDays,
-  ChevronDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { PropertyGuestUsage } from "@/types/analytics";
+import { GuideSectionsGrid } from "@/components/admin/GuideSectionsGrid";
+import { GuestUsageInline } from "@/components/admin/GuestUsageInline";
 
 export interface HostlySectionStatus {
   key: string;
@@ -54,8 +54,6 @@ export function HostlyPropertyCard({
   usage,
 }: HostlyPropertyCardProps) {
   const [copied, setCopied] = useState(false);
-  const [showSections, setShowSections] = useState(false);
-  const [showUsage, setShowUsage] = useState(false);
   const guestUrl = `/${lang}/stay/${propertyId}`;
   const fullGuestUrl =
     typeof window !== "undefined"
@@ -65,15 +63,6 @@ export function HostlyPropertyCard({
   const completed = sections.filter((s) => s.complete).length;
   const total = sections.length || 1;
   const completionPercent = Math.round((completed / total) * 100);
-
-  const peakHour = usage?.peakUsageHour ?? null;
-  const peakHourLabel =
-    peakHour !== null
-      ? `${String(peakHour).padStart(2, "0")}:00`
-      : "Sin datos todavía";
-
-  const topSections = (usage?.topSections ?? []).slice(0, 3);
-  const topRecommendations = (usage?.topRecommendations ?? []).slice(0, 3);
 
   async function handleCopyGuestLink() {
     try {
@@ -159,170 +148,42 @@ export function HostlyPropertyCard({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Secciones / checklist (plegable) */}
+        {/* Secciones de la guía — siempre visible */}
         <section className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setShowSections((v) => !v)}
-            className="w-full flex items-center justify-between gap-2 text-left"
-          >
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
-                Secciones de la guía
-              </p>
-              <span className="text-[11px] text-gray-500">
-                {completionPercent}% completo
-              </span>
-            </div>
-            <ChevronDown
-              className={`w-4 h-4 text-gray-400 transition-transform ${
-                showSections ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-          {showSections && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {sections.map((section) => (
-                <Link
-                  key={section.key}
-                  href={section.href}
-                  className="group flex items-center justify-between gap-2 rounded-lg border border-gray-100 dark:border-gray-800 px-3 py-2 hover:border-brand-copper/60 hover:bg-brand-copper/5 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    {section.complete ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-amber-500" />
-                    )}
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
-                      {section.label}
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-gray-400 group-hover:text-brand-copper font-medium">
-                    {section.complete ? "Listo" : "Completar"}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
+              Secciones de la guía
+            </p>
+            <span className="text-[11px] text-gray-500">{completionPercent}% completo</span>
+          </div>
+          <GuideSectionsGrid sections={sections} lang={lang} />
         </section>
 
-        {/* Estadísticas de uso huésped (plegable) */}
-        <section className="space-y-3">
-          <button
-            type="button"
-            onClick={() => setShowUsage((v) => !v)}
-            className="w-full flex items-center justify-between gap-2 text-left"
-          >
+        {/* Uso de la app del huésped — siempre visible */}
+        <section className="space-y-2 border-t border-gray-100 dark:border-gray-800 pt-4">
+          <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
               Uso de la app del huésped
             </p>
-            <ChevronDown
-              className={`w-4 h-4 text-gray-400 transition-transform ${
-                showUsage ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {showUsage && (
-            <>
-              {(usage?.topSections?.length ?? 0) === 0 &&
-              (usage?.topRecommendations?.length ?? 0) === 0 ? (
-                <div className="text-xs text-gray-500 dark:text-gray-400 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5">
-                  Aún no hay suficientes datos de uso. Cuando tus huéspedes usen
-                  la guía, verás aquí las secciones más consultadas y las
-                  recomendaciones destacadas.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* Secciones más consultadas */}
-                  <div className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/40 px-3 py-2.5">
-                    <p className="text-[11px] font-semibold text-gray-500 mb-1.5">
-                      Secciones más consultadas
-                    </p>
-                    <div className="space-y-1.5">
-                      {topSections.map((s) => (
-                        <div
-                          key={s.sectionKey}
-                          className="flex items-center justify-between gap-2 text-[11px]"
-                        >
-                          <span className="text-gray-700 dark:text-gray-200">
-                            {s.label}
-                          </span>
-                          <span className="text-gray-500">
-                            {s.percentage}% ({s.count})
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Horario promedio */}
-                  <div className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/40 px-3 py-2.5 flex flex-col justify-between">
-                    <div>
-                      <p className="text-[11px] font-semibold text-gray-500 mb-1.5">
-                        Horario promedio de consulta
-                      </p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {peakHourLabel}
-                      </p>
-                    </div>
-                    <p className="mt-1 text-[11px] text-gray-500">
-                      Basado en las últimas visitas a la guía.
-                    </p>
-                  </div>
-
-                  {/* Recomendaciones TOP */}
-                  <div className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/40 px-3 py-2.5">
-                    <p className="text-[11px] font-semibold text-gray-500 mb-1.5">
-                      Recomendaciones más seleccionadas
-                    </p>
-                    {topRecommendations.length === 0 ? (
-                      <p className="text-[11px] text-gray-500">
-                        Aún no hay clics en recomendaciones.
-                      </p>
-                    ) : (
-                      <div className="space-y-1.5">
-                        {topRecommendations.map((r) => (
-                          <div
-                            key={`${r.id ?? r.name}`}
-                            className="flex items-center justify-between gap-2 text-[11px]"
-                          >
-                            <span className="truncate text-gray-700 dark:text-gray-200">
-                              {r.name}
-                            </span>
-                            <span className="text-gray-500 whitespace-nowrap">
-                              {r.clicks} clics
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Resumen general de vistas / reservas (por ahora solo vistas) */}
-              <div className="flex items-center gap-3 text-[11px] text-gray-500 mt-1">
-                <BarChart3 className="w-3.5 h-3.5 text-brand-copper" />
-                <span>
-                  Esta propiedad suma{" "}
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">
-                    {totalViews}
-                  </span>{" "}
-                  vistas en total.
-                </span>
-              </div>
-            </>
-          )}
+            <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
+              <BarChart3 className="w-3.5 h-3.5 text-brand-copper" />
+              <span>
+                <span className="font-semibold text-gray-700 dark:text-gray-200">
+                  {totalViews}
+                </span>{" "}
+                vistas
+              </span>
+            </div>
+          </div>
+          <GuestUsageInline usage={usage} />
         </section>
 
         {/* Acciones principales */}
-        <section className="flex flex-col sm:flex-row gap-2 pt-1 border-t border-gray-100 dark:border-gray-800 mt-2 pt-3">
+        <section className="flex flex-col sm:flex-row gap-2 border-t border-gray-100 dark:border-gray-800 pt-3">
           <Button
             asChild
             size="sm"
-            className="flex-1 bg-brand-copper hover:bg-brand-copper/90 text-white"
+            className="flex-1 bg-brand-copper hover:bg-brand-copper/90 text-white px-4 py-2"
           >
             <Link href={`/${lang}/dashboard/properties/${propertyId}/edit`}>
               <Edit3 className="w-4 h-4 mr-2" />
@@ -332,7 +193,7 @@ export function HostlyPropertyCard({
           <Button
             variant="outline"
             size="sm"
-            className="flex-1"
+            className="flex-1 px-4 py-2"
             onClick={handleCopyGuestLink}
           >
             <LinkIcon className="w-4 h-4 mr-2" />
@@ -342,7 +203,7 @@ export function HostlyPropertyCard({
             asChild
             variant="outline"
             size="sm"
-            className="flex-1"
+            className="flex-1 px-4 py-2"
           >
             <Link
               href={`/${lang}/dashboard/reservations/properties/${propertyId}`}
@@ -356,4 +217,3 @@ export function HostlyPropertyCard({
     </Card>
   );
 }
-

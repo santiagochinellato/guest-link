@@ -202,7 +202,7 @@ Al compartir el proyecto con Claude para revisar diseño o rediseño de estas pa
 | `src/components/ui/card.tsx` | Componente Card usado en las cards. |
 | `src/components/ui/button.tsx` | Botones. |
 | `src/components/ui/badge.tsx` | Badges de estado. |
-| `tailwind.config.ts` o `tailwind.config.mjs` | Si existe; variables de marca (brand-void, brand-copper) para colores. |
+| `src/app/globals.css` | Tema Tailwind v4 (`@theme`): variables de marca (brand-void, brand-copper, brand-void-light) y colores base. |
 
 ---
 

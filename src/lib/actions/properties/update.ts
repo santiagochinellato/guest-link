@@ -219,3 +219,52 @@ export async function updatePropertyQuick(
     return { success: false as const, error: (err as Error).message };
   }
 }
+
+export type PropertyStatusMode =
+  | "activate"
+  | "deactivate_all"
+  | "deactivate_guest"
+  | "deactivate_reservations";
+
+/**
+ * Cambia el estado operativo de una propiedad:
+ * - activate: restaura status "active" y todas las automatizaciones
+ * - deactivate_all: status "archived" — invisible para huéspedes y sin gestor
+ * - deactivate_guest: status "draft" — guía inactiva, reservas siguen funcionando
+ * - deactivate_reservations: desactiva automatizaciones, guía sigue activa
+ */
+export async function updatePropertyStatus(id: number, mode: PropertyStatusMode) {
+  try {
+    type UpdateFields = {
+      status?: string;
+      autoSendGuide?: boolean;
+      autoCheckoutReminder?: boolean;
+      autoReviewRequest?: boolean;
+      updatedAt: Date;
+    };
+
+    const updates: UpdateFields = { updatedAt: new Date() };
+
+    if (mode === "activate") {
+      updates.status = "active";
+      updates.autoSendGuide = true;
+      updates.autoCheckoutReminder = true;
+      updates.autoReviewRequest = true;
+    } else if (mode === "deactivate_all") {
+      updates.status = "archived";
+    } else if (mode === "deactivate_guest") {
+      updates.status = "draft";
+    } else if (mode === "deactivate_reservations") {
+      updates.autoSendGuide = false;
+      updates.autoCheckoutReminder = false;
+      updates.autoReviewRequest = false;
+    }
+
+    await db.update(properties).set(updates).where(eq(properties.id, id));
+    revalidatePath("/[lang]/(admin)/dashboard/properties", "page");
+    return { success: true as const };
+  } catch (err) {
+    console.error("[updatePropertyStatus]", err);
+    return { success: false as const, error: (err as Error).message };
+  }
+}

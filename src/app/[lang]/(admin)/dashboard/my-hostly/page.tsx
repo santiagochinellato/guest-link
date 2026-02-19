@@ -77,7 +77,7 @@ export default async function MyHostlyPage({
         {
           key: "recommendations",
           label: "Recomendaciones",
-          complete: (p.recommendations?.length ?? 0) > 0,
+          complete: (p.recommendations?.filter((r: { isAutoSuggested?: boolean }) => !r.isAutoSuggested).length ?? 0) > 0,
           href: `/${lang}/dashboard/properties/${bp.id}/edit?tab=recommendations`,
         },
         {

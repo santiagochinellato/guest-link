@@ -16,6 +16,8 @@ export { createProperty } from "./properties/create";
 // Update
 export { updateProperty } from "./properties/update";
 export { updatePropertyQuick } from "./properties/update";
+export { updatePropertyStatus } from "./properties/update";
+export type { PropertyStatusMode } from "./properties/update";
 
 // Get
 export { getProperties } from "./properties/get";

@@ -35,6 +35,19 @@ export default async function ReservationsPage({
   ]);
 
   const rawOverview = overviewResult.success ? overviewResult.data : [];
+
+  const totalConfirmed = rawOverview.reduce(
+    (acc, item) =>
+      acc +
+      (item.currentReservation ? 1 : 0) +
+      item.nextReservations.length +
+      (item.nextReservation ? 1 : 0),
+    0
+  );
+  const activePropCount = rawOverview.filter(
+    (item) => item.currentReservation || item.nextReservation
+  ).length;
+
   const overviewItems = [...rawOverview].sort((a, b) => {
     const hasReservationsA = !!a.currentReservation || a.nextReservations.length > 0;
     const hasReservationsB = !!b.currentReservation || b.nextReservations.length > 0;
@@ -48,12 +61,12 @@ export default async function ReservationsPage({
   const reservations = reservationsResult.success ? reservationsResult.data : [];
 
   return (
-    <div className="space-y-8 px-8 pb-16">
+    <div className="space-y-6 sm:space-y-8 px-4 sm:px-8 pb-16">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Reservas</h1>
-          <p className="text-white dark:text-white">
-            Próximas reservas, tus propiedades y calendario.
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            {totalConfirmed} reserva(s) confirmada(s) · {activePropCount} propiedad(es) activa(s)
           </p>
         </div>
         <ExportReservationsButton />

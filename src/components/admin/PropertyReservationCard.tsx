@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { format, parseISO, isValid } from "date-fns";
+import { format, parseISO, isValid, differenceInDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,39 +36,60 @@ function formatPrice(price: number | null, currency: string | null): string {
   }
 }
 
+function daysRemaining(checkOut: string): number | null {
+  try {
+    const d = parseISO(checkOut);
+    if (!isValid(d)) return null;
+    const diff = differenceInDays(d, new Date());
+    return diff >= 0 ? diff : null;
+  } catch {
+    return null;
+  }
+}
+
 function ReservationLine({
   r,
-  className = "",
 }: {
   r: ReservationOverviewItem;
-  className?: string;
 }) {
   const { name, guestCountText } = parseGuestInfo(r.guestName);
-  return (
-    <div className={`text-gray-600 dark:text-gray-400 flex gap-2 items-center ${className}`}>
-      <span className="inline-flex shrink-0" aria-label={r.platform}>
-        {r.platform.toLowerCase() === "booking" ? (
-          <Image src="/Booking.svg" alt="Booking" width={16} height={16} />
-        ) : r.platform.toLowerCase() === "airbnb" ? (
-          <Image src="/airbnb.svg" alt="Airbnb" width={16} height={16} />
-        ) : (
-          <span className="capitalize">{r.platform}</span>
-        )}
-      </span>
-      <div className="font-bold text-brand-void dark:text-white text-gray-500">{name}</div>
-      <div className=" opacity-90">
+  const platformIcon =
+    r.platform.toLowerCase() === "booking" ? (
+      <Image src="/Booking.svg" alt="Booking" width={14} height={14} />
+    ) : r.platform.toLowerCase() === "airbnb" ? (
+      <Image src="/airbnb.svg" alt="Airbnb" width={14} height={14} />
+    ) : (
+      <span className="text-[10px] capitalize text-gray-400">{r.platform}</span>
+    );
 
-        <span className="font-bold opacity-90">{formatDateSafe(r.checkIn)} – {formatDateSafe(r.checkOut)}</span>
- 
-      </div>
-      {guestCountText && (
-        <div className="text-gray-500 dark:text-gray-400 opacity-90">{guestCountText}</div>
-      )}
-      {r.totalPrice != null && (
-          <>
-            <span className="text-green-700 font-bold dark:text-gray-400 opacity-90">{formatPrice(r.totalPrice, r.currency)}</span>
-          </>
+  return (
+    <div className="flex flex-col gap-0.5">
+      {/* Fila 1: plataforma + nombre + precio */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="inline-flex shrink-0" aria-label={r.platform}>{platformIcon}</span>
+          <span className="font-semibold text-brand-void dark:text-white text-[12px] truncate">
+            {name}
+          </span>
+          {guestCountText && (
+            <span className="text-[11px] text-gray-400 shrink-0 hidden sm:inline">
+              · {guestCountText}
+            </span>
+          )}
+        </div>
+        {r.totalPrice != null && (
+          <span className="text-green-700 dark:text-green-400 font-semibold text-[11px] shrink-0">
+            {formatPrice(r.totalPrice, r.currency)}
+          </span>
         )}
+      </div>
+      {/* Fila 2: fechas + huéspedes (en mobile) */}
+      <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+        <span>{formatDateSafe(r.checkIn)} – {formatDateSafe(r.checkOut)}</span>
+        {guestCountText && (
+          <span className="sm:hidden">· {guestCountText}</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -80,7 +101,7 @@ interface PropertyReservationCardProps {
 
 export function PropertyReservationCard({ lang, item }: PropertyReservationCardProps) {
   const { property, currentReservation, nextReservation, nextReservations, platforms } = item;
-  const hasAnyReservation = currentReservation ?? nextReservations.length > 0;
+  const hasAnyReservation = !!(currentReservation ?? nextReservations.length > 0);
   const isSynced = hasAnyReservation;
   const [syncHovered, setSyncHovered] = useState(false);
 
@@ -88,11 +109,14 @@ export function PropertyReservationCard({ lang, item }: PropertyReservationCardP
     toast.info("Sincronización no disponible en esta versión.");
   };
 
+  const hasNoReservations =
+    !currentReservation && !nextReservation && nextReservations.length === 0;
+
   return (
     <Card className="overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-800">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-0 md:divide-x md:divide-slate-100 dark:md:divide-slate-800">
         {/* Foto propiedad */}
-        <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[200px] bg-slate-100 dark:bg-slate-900">
+        <div className="relative aspect-[16/9] md:aspect-auto md:min-h-[220px] bg-slate-100 dark:bg-slate-900">
           {property.coverImageUrl ? (
             <Image
               src={property.coverImageUrl}
@@ -109,8 +133,8 @@ export function PropertyReservationCard({ lang, item }: PropertyReservationCardP
         </div>
 
         {/* Contenido */}
-        <div className="md:col-span-2 flex flex-col p-4 md:p-5 gap-4">
-          {/* Cabecera: nombre, dirección/slug, iconos */}
+        <div className="md:col-span-2 flex flex-col p-4 gap-3">
+          {/* Cabecera */}
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
               <h3 className="text-lg font-bold text-brand-void dark:text-white truncate">
@@ -153,7 +177,13 @@ export function PropertyReservationCard({ lang, item }: PropertyReservationCardP
                 </Link>
               </Button>
             ) : (
-              <Button variant="outline" size="sm" disabled aria-label="Generar check-in (sin reservas)">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled
+                aria-label="Generar check-in (sin reservas)"
+                title="Disponible cuando hay una reserva confirmada"
+              >
                 <KeyRound className="w-4 h-4 mr-1.5" aria-hidden />
                 Generar check-in
               </Button>
@@ -181,47 +211,64 @@ export function PropertyReservationCard({ lang, item }: PropertyReservationCardP
             </Button>
           </div>
 
-          {/* Reserva actual: bg verde muy claro, texto 14px */}
-          <div className="rounded-lg bg-green-50 dark:bg-green-950/30 p-3 text-[14px]">
-            <h4 className="font-semibold text-brand-void dark:text-white mb-1.5 text-[12px]">
-              Reserva actual
-            </h4>
-            {currentReservation ? (
-              <ReservationLine r={currentReservation} className="text-[12px]" />
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-[12px]">No hay reserva en curso.</p>
-            )}
-          </div>
+          {hasNoReservations ? (
+            /* Estado vacío unificado */
+            <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 p-4 text-center">
+              <p className="text-sm text-gray-500 mb-2">Sin reservas próximas</p>
+              <p className="text-xs text-gray-400">
+                Sincroniza con Booking o Airbnb para ver tus reservas aquí.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Reserva actual */}
+              <div className="rounded-lg bg-green-50 dark:bg-green-950/30 px-3 py-2.5">
+                <h4 className="font-semibold text-brand-void dark:text-white mb-1.5 text-[11px] uppercase tracking-wide">
+                  Reserva actual
+                </h4>
+                {currentReservation ? (
+                  <>
+                    <ReservationLine r={currentReservation} />
+                    {daysRemaining(currentReservation.checkOut) !== null && (
+                      <span className="text-[11px] text-emerald-600 font-medium mt-1 block">
+                        Quedan {daysRemaining(currentReservation.checkOut)} noche(s)
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-[12px]">No hay reserva en curso.</p>
+                )}
+              </div>
 
-          {/* Próxima reserva: bg amarillo suave, texto 12px */}
-          <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 p-3 text-[12px]">
-            <h4 className="font-semibold text-brand-void dark:text-white mb-1.5 text-[12px]">
-              Próxima reserva
-            </h4>
-            {nextReservation ? (
-              <ReservationLine r={nextReservation} className="text-[12px]" />
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-[12px]">No hay próxima reserva.</p>
-            )}
-          </div>
+              {/* Próxima reserva */}
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 px-3 py-2.5">
+                <h4 className="font-semibold text-brand-void dark:text-white mb-1.5 text-[11px] uppercase tracking-wide">
+                  Próxima reserva
+                </h4>
+                {nextReservation ? (
+                  <ReservationLine r={nextReservation} />
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-[12px]">No hay próxima reserva.</p>
+                )}
+              </div>
 
-          {/* Siguientes reservas: bg gris claro, texto 12px, todas juntas */}
-          <div className="rounded-lg bg-slate-100 dark:bg-slate-800/50 p-3 text-[12px]">
-            <h4 className="font-medium text-gray-600 dark:text-gray-300 mb-1.5 text-[12px]">
-              Siguientes reservas
-            </h4>
-            {nextReservations.length > 0 ? (
-              <ul className="space-y-2">
-                {nextReservations.map((r) => (
-                  <li key={r.id}>
-                    <ReservationLine r={r} className="text-[12px]" />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-[12px]">No hay más reservas.</p>
-            )}
-          </div>
+              {/* Siguientes reservas */}
+              {nextReservations.length > 0 && (
+                <div className="border-t border-gray-100 dark:border-gray-700 pt-2.5">
+                  <h4 className="font-medium text-gray-500 dark:text-gray-400 mb-2 text-[11px] uppercase tracking-wide">
+                    Siguientes reservas
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {nextReservations.map((r) => (
+                      <li key={r.id}>
+                        <ReservationLine r={r} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </Card>
