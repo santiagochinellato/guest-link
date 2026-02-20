@@ -119,7 +119,7 @@ export function ReservationDetailCard({
       <Header
         reservation={reservation}
         guestName={guestName}
-        guestCountText={guestCountText}
+        guestCountText={guestCountText ?? undefined}
         active={active}
         backHref={backHref}
       />

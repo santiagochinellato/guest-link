@@ -30,6 +30,9 @@ export const LANGUAGE_LABELS: Record<(typeof GUEST_LANGUAGES)[number], string> =
   es: "Español",
   en: "English",
   pt: "Português",
+  fr: "Français",
+  de: "Deutsch",
+  it: "Italiano",
 };
 
 /**
@@ -145,6 +148,24 @@ Check-in: #checkin | Check-out: #checkout
 Seu CÓDIGO DE ACESSO é #codigo
 
 🔗 Acesse sua guia: [link a la web]`,
+    },
+  ],
+  fr: [
+    {
+      name: "Bonjour",
+      text: `Bonjour ! Merci d'avoir choisi #nombrepropiedad. Votre code d'accès est #codigo. [link a la web]`,
+    },
+  ],
+  de: [
+    {
+      name: "Guten Tag",
+      text: `Guten Tag! Danke, dass Sie #nombrepropiedad gewählt haben. Ihr Zugangscode ist #codigo. [link a la web]`,
+    },
+  ],
+  it: [
+    {
+      name: "Buongiorno",
+      text: `Buongiorno! Grazie per aver scelto #nombrepropiedad. Il tuo codice di accesso è #codigo. [link a la web]`,
     },
   ],
 };

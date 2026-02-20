@@ -41,5 +41,8 @@ export const LANGUAGE_LABELS: Record<(typeof GUEST_LANGUAGES)[number], string> =
   es: "Español",
   en: "English",
   pt: "Português",
+  fr: "Français",
+  de: "Deutsch",
+  it: "Italiano",
 };
 

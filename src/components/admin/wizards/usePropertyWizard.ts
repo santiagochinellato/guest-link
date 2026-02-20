@@ -245,12 +245,12 @@ export function usePropertyWizard() {
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       const result = await createProperty(data);
-      if (result.success && result.id) {
+      if (result.success && result.data?.id) {
         toast.success("¡Propiedad creada con éxito!");
         // Clear storage on success
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(STEP_KEY);
-        setCreatedPropertyId(result.id);
+        setCreatedPropertyId(result.data.id);
       } else {
         toast.error(`Error al crear: ${result.error}`);
       }

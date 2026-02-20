@@ -118,7 +118,7 @@ async function main() {
     const rows = Array.isArray(inserted) ? inserted : (inserted as { rows?: unknown[] }).rows ?? [];
     const row = rows[0] as { id: number | string; name: string | null; email: string; password: string | null; role: string | null; created_at: Date | null } | undefined;
     if (!row) throw new Error("Insert user demo falló");
-    demoUser = { id: row.id as number, name: row.name, email: row.email, password: row.password, role: row.role, createdAt: row.created_at };
+    demoUser = { id: row.id as number, name: row.name, email: row.email, emailVerified: null, image: null, password: row.password, role: row.role, createdAt: row.created_at };
     console.log(`✅ Usuario demo creado: ${DEMO_EMAIL}`);
   } else {
     await db
