@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { handlers } from "@/auth";
 
 const { GET: AuthGET, POST: AuthPOST } = handlers;
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     return await AuthGET(req);
   } catch (e) {
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     return await AuthPOST(req);
   } catch (e) {
