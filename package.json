@@ -16,7 +16,8 @@
     "db:seed": "node scripts/run-seed.mjs",
     "db:seed-migrations": "node scripts/seed-migration-history.mjs",
     "db:compare": "node scripts/compare-databases.mjs",
-    "db:sync-from-production": "node scripts/sync-production-to-local.mjs"
+    "db:sync-from-production": "node scripts/sync-production-to-local.mjs",
+    "db:sync-to-supabase": "node scripts/sync-local-to-remote.mjs"
   },
   "dependencies": {
     "@auth/core": "0.41.1",

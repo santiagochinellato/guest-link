@@ -64,14 +64,14 @@ export function RulesSection() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* HEADER */}
-      <div className="border-b border-zinc-100 dark:border-zinc-800 pb-6">
+      {/* <div className="border-b border-zinc-100 dark:border-zinc-800 pb-6">
         <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Reglas de Convivencia
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
           Define claramente qué se puede hacer y qué no en tu propiedad.
         </p>
-      </div>
+      </div> */}
 
       {/* GRID DE DOS COLUMNAS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

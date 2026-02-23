@@ -210,16 +210,17 @@ function RecommendationsContent() {
   const editingItem = editingIndex !== null ? recFields[editingIndex] : null;
 
   return (
-    <div className="flex flex-col h-[700px] bg-white dark:bg-neutral-950 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden animate-in fade-in relative">
-      <div className="flex flex-row justify-between items-start p-4 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-950 gap-4">
-        <div className="flex flex-col">
+    <div className="flex flex-col h-[500px] bg-white dark:bg-neutral-950 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden animate-in fade-in relative">
+      <div className="flex flex-row justify-between items-start 
+       bg-white dark:bg-neutral-950 gap-4">
+        {/* <div className="flex flex-col">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Recomendaciones
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Agrega lugares cercanos.
           </p>
-        </div>
+        </div> */}
 
         {/* Mobile View Toggle (Header Version) */}
         <button
@@ -286,7 +287,7 @@ function RecommendationsContent() {
         {/* RIGHT: MAP AREA */}
         <div
           className={cn(
-            "flex-1 relative bg-gray-100 min-w-0",
+            "flex-1 relative min-w-0 overflow-hidden",
             viewMode === "list" ? "hidden lg:block" : "block",
           )}
         >

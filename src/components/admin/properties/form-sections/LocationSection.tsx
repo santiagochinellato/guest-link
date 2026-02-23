@@ -80,7 +80,7 @@ export function LocationSection() {
   return (
     <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={["places"]}>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="border-b border-gray-100 dark:border-neutral-800 pb-4 flex justify-between items-center">
+        {/* <div className="border-b border-gray-100 dark:border-neutral-800 pb-4 flex justify-between items-center">
           <div>
             <h3 className="text-xl font-semibold flex items-center gap-2">
               <MapPin className="w-5 h-5 text-brand-copper" />
@@ -91,11 +91,11 @@ export function LocationSection() {
               lleguen sin problemas.
             </p>
           </div>
-        </div>
+        </div> */}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start ">
           {/* Left Panel: Inputs */}
-          <div className="space-y-6 bg-gray-50 dark:bg-neutral-800/20 md:p-6 p-2 rounded-2xl border border-gray-100 dark:border-neutral-800/50">
+          <div className="space-y-6 bg-gray-50 dark:bg-neutral-800/20 md:py-6 py-2 rounded-2xl b">
             {/* Main Google Search */}
             <div className="relative z-20">
               <label className="text-sm font-bold text-gray-900 dark:text-white mb-2 block">

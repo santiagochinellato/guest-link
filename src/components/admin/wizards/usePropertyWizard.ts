@@ -14,6 +14,8 @@ export type WizardStep = {
   id: string;
   title: string;
   subtitle?: string;
+  description?: string;
+  tips?: string[];
   category:
     | "Intro"
     | "General"
@@ -33,64 +35,127 @@ export const WIZARD_STEPS: WizardStep[] = [
   },
   {
     id: "identity",
-    title: "Identidad",
-    subtitle: "¿Cómo se llama tu alojamiento?",
+    title: "Información de la propiedad",
+    subtitle: "La primera impresión de tu alojamiento",
+    description:
+      "Define el nombre, la URL pública y la imagen de portada que verán tus huéspedes antes de llegar.",
+    tips: [
+      "Pon un nombre claro y memorable para el alojamiento",
+      "El slug genera la URL que compartirás con tus huéspedes",
+      "La imagen de portada es lo primero que verán al abrir la guía",
+    ],
     category: "General",
     fields: ["name", "slug", "coverImageUrl"],
   },
   {
     id: "location",
     title: "Ubicación",
-    subtitle: "¿Dónde se encuentra?",
+    subtitle: "Que lleguen sin llamarte",
+    description:
+      "Busca la dirección en Google Maps y confirma los datos. Tus huéspedes verán el mapa directamente en la guía.",
+    tips: [
+      "Busca la dirección con el autocompletado para mayor precisión",
+      "La ciudad y el país se rellenan solos al seleccionar",
+      "El mapa aparecerá en la guía del huésped con un pin exacto",
+    ],
     category: "General",
     fields: ["address", "city", "country"],
   },
   {
     id: "wifi",
     title: "Conectividad",
-    subtitle: "Facilita la conexión a internet",
+    subtitle: "Conexión sin fricciones desde el primer minuto",
+    description:
+      "Tus huéspedes podrán conectarse al instante. Generamos un QR para que no tengan que escribir la contraseña.",
+    tips: [
+      "Escribe la red exactamente como aparece en el router",
+      "La contraseña queda oculta y el huésped la puede revelar",
+      "El QR se genera automáticamente para escanear y conectar",
+    ],
     category: "Conectividad",
     fields: ["wifiSsid", "wifiPassword"],
   },
   {
     id: "recommendations",
     title: "Guía Local",
-    subtitle: "Tus mejores recomendaciones",
+    subtitle: "Tus mejores recomendaciones, en su bolsillo",
+    description:
+      "Recomienda los lugares que tú usarías. Una guía personal marca la diferencia entre una estancia buena y una memorable.",
+    tips: [
+      "Agrupa por categorías: desayuno, cena, actividades…",
+      "Añade el horario y la ubicación de cada lugar",
+      "Las valoraciones dan confianza al huésped",
+    ],
     category: "Guía",
     fields: ["recommendations"],
   },
   {
     id: "transport",
     title: "Movilidad",
-    subtitle: "Ayuda a tus huéspedes a moverse",
+    subtitle: "Que se muevan sin perderse",
+    description:
+      "Indica paradas de bus, metro o cómo llegar desde el aeropuerto. Menos preguntas para ti, más autonomía para ellos.",
+    tips: [
+      "Indica el bus o metro más cercano al alojamiento",
+      "Explica cómo llegar desde el aeropuerto o la estación",
+      "Añade apps de taxi o ridesharing que uses en la ciudad",
+    ],
     category: "Guía",
     fields: ["transport"],
   },
   {
     id: "access",
     title: "Acceso",
-    subtitle: "¿Cómo entran los huéspedes?",
+    subtitle: "Entrar sin llamarte a las 11 de la noche",
+    description:
+      "Instrucciones paso a paso para que el check-in sea fluido. Código de cerradura, llaves físicas o caja de seguridad.",
+    tips: [
+      "Detalla cada paso para entrar al edificio y al piso",
+      "Si hay código de acceso, indícalo aquí de forma segura",
+      "Explica dónde dejar las llaves al hacer el check-out",
+    ],
     category: "Operativo",
     fields: ["accessSteps", "accessCode"],
   },
   {
     id: "rules",
     title: "Reglas",
-    subtitle: "Normas de convivencia",
+    subtitle: "Convivencia sin malentendidos",
+    description:
+      "Lo que está permitido y lo que no. Cuanto más claro seas aquí, menos incidencias tendrás durante la estancia.",
+    tips: [
+      "Especifica los horarios de silencio o de entrada de visitas",
+      "Indica si se admiten mascotas, niños o fumadores",
+      "Explica las normas de limpieza y separación de basura",
+    ],
     category: "Operativo",
     fields: ["rulesAllowed", "rulesProhibited", "houseRules"],
   },
   {
     id: "emergency",
     title: "Emergencia",
-    subtitle: "Contactos importantes",
+    subtitle: "Que siempre tengan a alguien a quien llamar",
+    description:
+      "Tu número, un contacto de respaldo y los servicios de urgencia de la zona. Pequeño detalle, gran tranquilidad.",
+    tips: [
+      "Añade tu número directo para cualquier imprevisto",
+      "Un contacto de respaldo es clave si no estás disponible",
+      "Incluye el número de urgencias de la ciudad o vecindario",
+    ],
     category: "Operativo",
     fields: ["emergencyContacts"],
   },
   {
     id: "flyer",
-    title: "Flyer & Final",
-    subtitle: "Tu guía está lista",
+    title: "¡Todo listo!",
+    subtitle: "Personaliza tu flyer antes de lanzar",
+    description:
+      "Antes de publicar, puedes ajustar el diseño del flyer imprimible que los huéspedes escanearán. Despliega cada sección para editar:",
+    tips: [
+      "Diseño & Layout: elige la plantilla, orientación y tipografía",
+      "Contenido: edita el título, el mensaje de bienvenida y la URL del QR",
+      "Branding: cambia el logo, los colores y el estilo del código QR",
+    ],
     category: "Final",
     fields: [],
   },

@@ -50,14 +50,14 @@ export function AccessSection() {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       {/* HEADER */}
-      <div className="border-b border-zinc-100 dark:border-zinc-800 pb-6">
+      {/* <div className="border-b border-zinc-100 dark:border-zinc-800 pb-6">
         <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Acceso y Seguridad
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
           Configura cómo entrarán tus huéspedes y los códigos necesarios.
         </p>
-      </div>
+      </div> */}
 
       {/* BLOQUE DE SEGURIDAD (GRID) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -164,9 +164,61 @@ export function AccessSection() {
           }}
         />
       </div>
+   {/* PARKING */}
+   <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm overflow-hidden">
+        <CardContent className="p-0">
+          <div className="p-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-600 dark:text-zinc-400">
+                <Car className="w-6 h-6" />
+              </div>
+              <div>
+                <Label className="text-base font-bold block text-zinc-900 dark:text-zinc-100">
+                  Estacionamiento
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  ¿La propiedad cuenta con cochera?
+                </p>
+              </div>
+            </div>
+            <Controller
+              name="hasParking"
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  checked={!!field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+          </div>
 
+          <AnimatePresence>
+            {hasParking && (
+              <motion.div
+                key="parking-details"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="bg-zinc-50/50 dark:bg-zinc-900/30 border-t border-zinc-100 dark:border-zinc-800"
+              >
+                <div className="p-6 pt-2">
+                  <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
+                    <MapPin className="w-3 h-3" /> Detalles de ubicación
+                  </Label>
+                  <Input
+                    {...register("parkingDetails")}
+                    placeholder="Ej: Cochera número 4, subsuelo. Control remoto en la mesa."
+                    className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-brand-copper/20 h-11"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </CardContent>
+      </Card>
       {/* GUÍA PASO A PASO (TIMELINE) */}
-      <div className="space-y-6">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-brand-copper/10 rounded-lg text-brand-copper">
@@ -195,7 +247,7 @@ export function AccessSection() {
             <div className="absolute left-[27px] top-4 bottom-10 w-px bg-gradient-to-b from-zinc-200 via-zinc-200 to-transparent dark:from-zinc-800 dark:via-zinc-800" />
           )}
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <AnimatePresence mode="popLayout">
               {fields.map((field, index) => (
                 <motion.div
@@ -268,59 +320,7 @@ export function AccessSection() {
         />
       </div>
 
-      {/* PARKING */}
-      <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm overflow-hidden">
-        <CardContent className="p-0">
-          <div className="p-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-zinc-600 dark:text-zinc-400">
-                <Car className="w-6 h-6" />
-              </div>
-              <div>
-                <Label className="text-base font-bold block text-zinc-900 dark:text-zinc-100">
-                  Estacionamiento
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  ¿La propiedad cuenta con cochera?
-                </p>
-              </div>
-            </div>
-            <Controller
-              name="hasParking"
-              control={control}
-              render={({ field }) => (
-                <Switch
-                  checked={!!field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-          </div>
-
-          <AnimatePresence>
-            {hasParking && (
-              <motion.div
-                key="parking-details"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="bg-zinc-50/50 dark:bg-zinc-900/30 border-t border-zinc-100 dark:border-zinc-800"
-              >
-                <div className="p-6 pt-2">
-                  <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
-                    <MapPin className="w-3 h-3" /> Detalles de ubicación
-                  </Label>
-                  <Input
-                    {...register("parkingDetails")}
-                    placeholder="Ej: Cochera número 4, subsuelo. Control remoto en la mesa."
-                    className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-brand-copper/20 h-11"
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </CardContent>
-      </Card>
+   
     </div>
   );
 }

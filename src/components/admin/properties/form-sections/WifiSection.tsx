@@ -46,14 +46,14 @@ export function WifiSection() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
+      {/* <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
         <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
           Conectividad & Acceso
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Configura la red WiFi y el punto de acceso para tus huéspedes.
         </p>
-      </div>
+      </div> */}
 
       <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6">
         {/* Left Column: QR Card Preview (Bento Item) */}

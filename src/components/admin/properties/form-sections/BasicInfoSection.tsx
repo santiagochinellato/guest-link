@@ -87,18 +87,18 @@ export function BasicInfoSection() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* HEADER */}
-      <div className="border-b border-zinc-100 dark:border-zinc-800 pb-6">
+      {/* <div className="border-b border-zinc-100 dark:border-zinc-800 pb-6">
         <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Información General
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
           Define la identidad principal de tu propiedad y su portada.
         </p>
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* COLUMNA IZQUIERDA: DATOS Y LOGÍSTICA */}
-        <div className="xl:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-6 flex flex-col justify-center items-between">
           {/* CARD 1: IDENTIDAD */}
           <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-950">
             <CardContent className="p-6 space-y-6">

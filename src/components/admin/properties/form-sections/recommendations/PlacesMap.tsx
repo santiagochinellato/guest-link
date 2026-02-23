@@ -2,17 +2,94 @@
 
 import {
   Map,
-  AdvancedMarker,
   InfoWindow,
   useMapsLibrary,
-  Pin,
   MapControl,
   ControlPosition,
   useMap,
+  Marker,
 } from "@vis.gl/react-google-maps";
 import { Button } from "@/components/ui/button";
-import { Plus, Star, Navigation, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Clean minimal style — same visual language as the Carto Positron used in MapCN
+const MINIMAL_MAP_STYLE: google.maps.MapTypeStyle[] = [
+  { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
+  {
+    featureType: "administrative.land_parcel",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#bdbdbd" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "geometry",
+    stylers: [{ color: "#eeeeee" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#757575" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: "#e5e5e5" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9e9e9e" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#ffffff" }],
+  },
+  {
+    featureType: "road.arterial",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#757575" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#dadada" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#616161" }],
+  },
+  {
+    featureType: "road.local",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9e9e9e" }],
+  },
+  {
+    featureType: "transit.line",
+    elementType: "geometry",
+    stylers: [{ color: "#e5e5e5" }],
+  },
+  {
+    featureType: "transit.station",
+    elementType: "geometry",
+    stylers: [{ color: "#eeeeee" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#c9c9c9" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9e9e9e" }],
+  },
+];
 
 interface PlacesMapProps {
   center: google.maps.LatLngLiteral;
@@ -53,19 +130,18 @@ export function PlacesMap({
   onCloseInfoWindow,
   OmniboxComponent,
 }: PlacesMapProps) {
+  const map = useMap();
+  const placesLibrary = useMapsLibrary("places");
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleMapClick = (ev: any) => {
-    // Check if it was a POI click
-    if (ev.detail.placeId && placesLibrary) {
-      // Stop the default InfoWindow from showing
-      ev.stop();
-
+    if (ev.detail?.placeId && placesLibrary && map) {
+      ev.stop?.();
       const placeId = ev.detail.placeId;
-
-      const service = new placesLibrary.PlacesService(map!);
+      const service = new placesLibrary.PlacesService(map);
       service.getDetails(
         {
-          placeId: placeId,
+          placeId,
           fields: [
             "name",
             "formatted_address",
@@ -78,7 +154,7 @@ export function PlacesMap({
         },
         (place, status) => {
           if (status === placesLibrary.PlacesServiceStatus.OK && place) {
-            const placeLikeObject = {
+            onSelectPlace({
               displayName: place.name || "",
               formattedAddress: place.formatted_address || "",
               location: place.geometry?.location,
@@ -87,28 +163,61 @@ export function PlacesMap({
               rating: place.rating,
               userRatingCount: place.user_ratings_total,
               googleMapsURI: place.url,
-            };
-
-            onSelectPlace(placeLikeObject);
+            });
           }
         },
       );
     }
   };
 
-  const map = useMap();
-  const placesLibrary = useMapsLibrary("places");
+  // Circle symbols — constructed at render time (google is loaded by APIProvider)
+  const propertyIcon: google.maps.Symbol = {
+    path: google.maps.SymbolPath.CIRCLE,
+    fillColor: "#0f172a",
+    fillOpacity: 1,
+    strokeColor: "#ffffff",
+    strokeWeight: 3,
+    scale: 10,
+  };
+
+  const suggestedIcon: google.maps.Symbol = {
+    path: google.maps.SymbolPath.CIRCLE,
+    fillColor: "#94a3b8",
+    fillOpacity: 1,
+    strokeColor: "#ffffff",
+    strokeWeight: 2,
+    scale: 7,
+  };
+
+  const addedCurrentIcon: google.maps.Symbol = {
+    path: google.maps.SymbolPath.CIRCLE,
+    fillColor: "#D97706",
+    fillOpacity: 1,
+    strokeColor: "#ffffff",
+    strokeWeight: 2.5,
+    scale: 9,
+  };
+
+  const addedOtherIcon: google.maps.Symbol = {
+    path: google.maps.SymbolPath.CIRCLE,
+    fillColor: "#9ca3af",
+    fillOpacity: 1,
+    strokeColor: "#ffffff",
+    strokeWeight: 2,
+    scale: 7,
+  };
 
   return (
-    <div className="inset-0 w-full h-full">
+    <div className="absolute inset-0 w-full h-full">
       <Map
-        mapId="DEMO_MAP_ID"
         defaultCenter={center}
         defaultZoom={14}
         gestureHandling={"greedy"}
         disableDefaultUI={true}
         className="w-full h-full"
         onClick={handleMapClick}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        styles={MINIMAL_MAP_STYLE as any}
       >
         {/* OMNIBOX CONTROL */}
         <MapControl position={ControlPosition.TOP_CENTER}>
@@ -134,67 +243,42 @@ export function PlacesMap({
         </div>
 
         {/* Property Pin */}
-        <AdvancedMarker position={center}>
-          <div className="relative">
-            <div className="w-10 h-10 bg-brand-void border-2 border-white dark:border-neutral-900 rounded-full flex items-center justify-center shadow-xl z-20">
-              <Star className="w-5 h-5 text-brand-copper fill-current" />
-            </div>
-          </div>
-        </AdvancedMarker>
+        <Marker position={center} icon={propertyIcon} title="Tu propiedad" />
 
-        {/* Suggested Pins (Gray) */}
+        {/* Suggested Pins (Gray — not yet added) */}
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {suggestedPlaces.map((place: any) => {
           if (!place.location && !place.geometry?.location) return null;
           const location = place.location || place.geometry?.location;
           const placeId = place.place_id || place.id;
-
-          const isSelected = selectedPlaceIds.has(placeId);
-          if (isSelected) return null;
+          if (selectedPlaceIds.has(placeId)) return null;
 
           return (
-            <AdvancedMarker
+            <Marker
               key={placeId}
               position={location}
+              icon={suggestedIcon}
+              title={place.displayName || place.name}
               onClick={() => onSelectPlace(place)}
-            >
-              <Pin
-                background={"#94a3b8"}
-                borderColor={"#475569"}
-                glyphColor={"#f1f5f9"}
-                scale={0.8}
-              />
-            </AdvancedMarker>
+            />
           );
         })}
 
-        {/* Selected Pins (Colored) */}
+        {/* Added/Selected Pins */}
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {recFields.map((field: any) => {
           if (!field.latitude || !field.longitude) return null;
-
           const isCurrentCat = field.categoryType === activeCategory?.type;
-
           return (
-            <AdvancedMarker
+            <Marker
               key={field.googlePlaceId || field.id}
               position={{
                 lat: parseFloat(field.latitude),
                 lng: parseFloat(field.longitude),
               }}
+              icon={isCurrentCat ? addedCurrentIcon : addedOtherIcon}
               zIndex={isCurrentCat ? 20 : 10}
-            >
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-white shadow-lg transition-all border-2 border-white dark:border-neutral-900 transform",
-                  isCurrentCat
-                    ? "bg-brand-copper scale-110"
-                    : "bg-gray-400 scale-90 opacity-70",
-                )}
-              >
-                <Navigation className="w-3.5 h-3.5" />
-              </div>
-            </AdvancedMarker>
+            />
           );
         })}
 
@@ -214,7 +298,7 @@ export function PlacesMap({
                 </span>
               }
             >
-              <div className="p-2 min-w-[200px]">
+              <div className={cn("p-2 min-w-[200px]")}>
                 <p className="text-xs text-gray-500 mb-2 truncate">
                   {selectedPlaceInfo.formattedAddress ||
                     selectedPlaceInfo.formatted_address}

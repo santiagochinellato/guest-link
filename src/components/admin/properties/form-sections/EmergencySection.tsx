@@ -120,7 +120,7 @@ export function EmergencySection() {
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header con Info de Contexto */}
       <div className="flex flex-col md:flex-row justify-between gap-6 items-start">
-        <div className="space-y-1">
+        {/* <div className="space-y-1">
           <h3 className="text-2xl font-bold tracking-tight">
             Smart Emergency Hub
           </h3>
@@ -128,7 +128,7 @@ export function EmergencySection() {
             Gestiona los contactos críticos para tus huéspedes. Sugerimos
             números basados en la ubicación.
           </p>
-        </div>
+        </div> */}
 
         <div className="flex flex-wrap gap-2">
           {hasPresets && (

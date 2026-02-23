@@ -62,9 +62,9 @@ export const PropertyFormSchema = z.object({
   coverImageUrl: z.string().optional(),
   
   // Location
-  address: z.string().min(5, "Address must be valid"),
-  city: z.string().min(2, "City is required"),
-  country: z.string().min(2, "Country is required"),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
   

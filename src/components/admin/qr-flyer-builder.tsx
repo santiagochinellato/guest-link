@@ -19,9 +19,10 @@ interface QrFlyerBuilderProps {
     slug?: string;
     coverImageUrl?: string;
   };
+  tips?: string[];
 }
 
-export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
+export function QrFlyerBuilder({ initialData, tips }: QrFlyerBuilderProps) {
   const [scale, setScale] = useState(0.5);
   const [activeTab, setActiveTab] = useState("design");
   const { setValue } = useFormContext<PropertyFormData>();
@@ -78,7 +79,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
         secondaryColor: "#1e293b",
         backgroundColor: "#ffffff",
         font: "inter",
-        layout: "gradient",
+        layout: "minimal",
         orientation: "vertical",
       },
     };
@@ -174,6 +175,7 @@ export function QrFlyerBuilder({ initialData }: QrFlyerBuilderProps) {
             updateConfig={updateConfig}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
+            tips={tips}
           />
         </div>
       </div>

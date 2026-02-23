@@ -265,7 +265,9 @@ export function PropertyForm({
               {activeTab === "emergency" && <EmergencySection />}
               {activeTab === "rules" && <RulesSection />}
 
-              {activeTab === "flyer" && <FlyerSection />}
+              {activeTab === "flyer" && (
+                <FlyerSection propertyId={initialData.id} />
+              )}
             </form>
           </FormProvider>
         </div>

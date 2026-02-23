@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { getProperties, getProperty } from "@/lib/actions/properties";
 import { getPropertyAnalytics } from "@/lib/actions/analytics";
 import { getPropertyGuestUsage } from "@/lib/analytics/posthog";
@@ -12,7 +11,18 @@ export default async function MyHostlyPage({
   const { lang } = await params;
   const listResult = await getProperties();
   if (!listResult.success) {
-    return notFound();
+    return (
+      <div className="px-6 md:px-8 py-6 pb-20 max-w-4xl mx-auto space-y-6">
+        <header className="space-y-2">
+          <h1 className="text-3xl font-serif font-bold text-gray-900 dark:text-white">
+            My Hostly
+          </h1>
+          <p className="text-sm text-amber-600 dark:text-amber-400">
+            No se pudieron cargar las propiedades. Comprueba la conexión a la base de datos (variables de entorno en Vercel).
+          </p>
+        </header>
+      </div>
+    );
   }
   const baseProperties = listResult.data as {
     id: number;

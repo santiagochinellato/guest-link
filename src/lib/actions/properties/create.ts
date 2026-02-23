@@ -140,9 +140,22 @@ export async function createProperty(data: PropertyFormData) {
     return { success: true, data: { id: inserted!.id } };
   } catch (err) {
     console.error("[createProperty]", err);
+    // postgres.js expone code, constraint y detail como propiedades del error
+    const pgErr = err as { code?: string; detail?: string; constraint?: string } & Error;
+    if (pgErr.code === "23505") {
+      // Unique constraint violation
+      if (pgErr.constraint?.includes("slug")) {
+        return { success: false, error: "Ya existe una propiedad con ese slug. Usa otro nombre o edita el link personalizado." };
+      }
+      return { success: false, error: `Datos duplicados: ${pgErr.detail ?? pgErr.constraint ?? "unique constraint"}` };
+    }
+    if (pgErr.code === "23503") {
+      return { success: false, error: `Referencia inválida: ${pgErr.detail ?? pgErr.message}` };
+    }
+    // Para cualquier otro error de postgres, mostrar detail si existe
     return {
       success: false,
-      error: (err as Error).message,
+      error: pgErr.detail ?? pgErr.message,
     };
   }
 }

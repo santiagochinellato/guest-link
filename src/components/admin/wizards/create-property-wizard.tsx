@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { FormProvider } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,6 +11,16 @@ import {
   CheckCircle2,
   Sparkles,
   Home,
+  Building2,
+  Wifi,
+  MapPin,
+  Navigation,
+  Bus,
+  KeyRound,
+  ScrollText,
+  PhoneCall,
+  Check,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -25,30 +36,97 @@ import { RulesSection } from "../properties/form-sections/RulesSection";
 import { TransportSection } from "../properties/form-sections/TransportSection";
 
 // Hook & Constants
-import { usePropertyWizard, WIZARD_STEPS } from "./usePropertyWizard";
+import { usePropertyWizard, WIZARD_STEPS, type WizardStep } from "./usePropertyWizard";
+
+// --- STEP META (iconos y colores por paso) ---
+const STEP_META: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
+  identity:       { icon: Building2,  color: "text-brand-copper",       bg: "bg-brand-copper/10 dark:bg-brand-copper/20" },
+  location:       { icon: Navigation, color: "text-teal-500",           bg: "bg-teal-500/10 dark:bg-teal-500/20" },
+  wifi:           { icon: Wifi,        color: "text-sky-500",            bg: "bg-sky-500/10 dark:bg-sky-500/20" },
+  recommendations:{ icon: MapPin,      color: "text-emerald-500",        bg: "bg-emerald-500/10 dark:bg-emerald-500/20" },
+  transport:      { icon: Bus,         color: "text-violet-500",         bg: "bg-violet-500/10 dark:bg-violet-500/20" },
+  access:         { icon: KeyRound,    color: "text-amber-500",          bg: "bg-amber-500/10 dark:bg-amber-500/20" },
+  rules:          { icon: ScrollText,  color: "text-rose-500",           bg: "bg-rose-500/10 dark:bg-rose-500/20" },
+  emergency:      { icon: PhoneCall,   color: "text-red-500",            bg: "bg-red-500/10 dark:bg-red-500/20" },
+  flyer:          { icon: Rocket,      color: "text-brand-copper",       bg: "bg-brand-copper/10 dark:bg-brand-copper/20" },
+};
+
+// --- PANEL DERECHO: contexto y ayuda del paso ---
+function StepInfoPanel({ step }: { step: WizardStep }) {
+  const meta = STEP_META[step.id];
+  const Icon = meta?.icon ?? Sparkles;
+
+  return (
+    <div className="hidden lg:flex lg:flex-col justify-center items-center lg:min-w-[300px] lg:max-w-[380px] shrink-0 gap-6">
+      {/* Tips */}
+      {step.tips && step.tips.length > 0 && (
+        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-4 flex flex-col gap-3">
+          <p className="text-[14px] text-center font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+            A tener en cuenta
+          </p>
+          <ul className="flex flex-col gap-2.5">
+            {step.tips.map((tip, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <span className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${meta?.bg ?? "bg-zinc-100 dark:bg-zinc-800"}`}>
+                  <Check className={`w-2.5 h-2.5 ${meta?.color ?? "text-zinc-500"}`} />
+                </span>
+                <span className="text-sm text-zinc-600 dark:text-zinc-400 leading-snug">{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Mock */}
+      <div className="flex-shrink-0">
+        <Image
+          src="/mock.png"
+          alt="Vista previa de la guía para huéspedes"
+          width={400}
+          height={400}
+          className="object-contain max-h-[40vh] w-auto"
+        />
+      </div>
+    </div>
+  );
+}
 
 // --- SUB-COMPONENTS ---
 
 function IntroView({ onStart }: { onStart: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center h-[60vh] animate-in fade-in zoom-in duration-500">
-      <div className="w-24 h-24 bg-brand-void/5 dark:bg-white/10 rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-brand-copper/10">
-        <Sparkles className="w-10 h-10 text-brand-copper animate-pulse" />
+    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-10 lg:gap-12 h-[60vh] animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto my-auto">
+      <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+        <div className="w-24 h-24 bg-brand-void/5 dark:bg-white/10 rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-brand-copper/10">
+          <Sparkles className="w-10 h-10 text-brand-copper animate-pulse" />
+        </div>
+        <h1 className="text-4xl md:text-6xl font-black tracking-tight text-brand-void dark:text-white mb-6">
+          Vamos a configurar <br /> tu propiedad
+        </h1>
+        <p className="text-xl text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+          Esta guía te ayudará a ofrecer una experiencia inolvidable a tus huéspedes.
+        </p>
+        <p className="text-xl text-gray-500 dark:text-gray-400 mb-10 leading-relaxed">
+          Sigue los paso y en unos minutos tendrás una guía digital profesional lista para
+          compartir con tus huéspedes.
+        </p>
+        <Button
+          size="lg"
+          onClick={onStart}
+          className="rounded-full px-10 py-7 text-lg shadow-xl shadow-brand-copper/20 bg-brand-void hover:bg-brand-void/90 text-white dark:bg-white dark:text-brand-void transition-all hover:scale-105 text-md md:text-lg"
+        >
+          Comenzar configuración <ChevronRight className="ml-2 w-5 h-5" />
+        </Button>
       </div>
-      <h1 className="text-4xl md:text-5xl font-black tracking-tight text-brand-void dark:text-white mb-6">
-        Vamos a configurar <br /> tu propiedad
-      </h1>
-      <p className="text-xl text-gray-500 dark:text-gray-400 max-w-lg mb-10 leading-relaxed">
-        En unos minutos tendrás una guía digital profesional lista para
-        compartir con tus huéspedes.
-      </p>
-      <Button
-        size="lg"
-        onClick={onStart}
-        className="rounded-full px-10 py-7 text-lg shadow-xl shadow-brand-copper/20 bg-brand-void hover:bg-brand-void/90 text-white dark:bg-white dark:text-brand-void transition-all hover:scale-105 text-md md:text-lg"
-      >
-        Comenzar configuración <ChevronRight className="ml-2 w-5 h-5" />
-      </Button>
+      <div className="hidden lg:block flex-shrink-0">
+        <Image
+          src="/mock.png"
+          alt="Property Wizard Intro"
+          width={400}
+          height={400}
+          className="object-contain max-h-[60vh] w-auto"
+        />
+      </div>
     </div>
   );
 }
@@ -118,7 +196,12 @@ export function CreatePropertyWizard() {
       case "emergency":
         return <EmergencySection />;
       case "flyer":
-        return <FlyerSection />;
+        return (
+          <FlyerSection
+            propertyId={createdPropertyId ?? undefined}
+            tips={currentStep.tips}
+          />
+        );
       default:
         return null;
     }
@@ -254,7 +337,7 @@ export function CreatePropertyWizard() {
           )}
 
           {/* MAIN CONTENT AREA */}
-          <div className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 relative">
+          <div className="flex-1 flex flex-col w-full  mx-auto px-4 md:px-16 py-8 md:py-8 relative">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={currentStep.id}
@@ -264,24 +347,91 @@ export function CreatePropertyWizard() {
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.3, ease: "anticipate" }}
-                className="flex-1"
+                className="flex-1 flex flex-col w-full"
               >
-                {/* Step Title (Except Intro/Flyer which have their own headers) */}
                 {currentStep.id !== "intro" && currentStep.id !== "flyer" && (
-                  <div className="mb-8">
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                      {currentStep.title}
-                    </h2>
-                    {currentStep.subtitle && (
-                      <p className="text-zinc-500 dark:text-zinc-400 mt-1 text-lg">
-                        {currentStep.subtitle}
-                      </p>
-                    )}
+                  <div className="flex flex-col lg:flex-row lg:gap-10 xl:gap-14 w-full">
+                    {/* Columna izquierda: encabezado + formulario (todas las pantallas) */}
+                    <div className="flex-1 min-w-0 flex flex-col gap-4">
+                      {/* Encabezado del paso */}
+                      {(() => {
+                        const meta = STEP_META[currentStep.id];
+                        const Icon = meta?.icon ?? Sparkles;
+                        return (
+                          <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${meta?.bg ?? "bg-zinc-100 dark:bg-zinc-800"}`}>
+                                <Icon className={`w-5 h-5 ${meta?.color ?? "text-zinc-500"}`} />
+                              </div>
+                              {/* <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                                {currentStep.category}
+                              </span> */}
+                               <h2 className="text-2xl md:text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight">
+                                {currentStep.title}
+                              </h2>
+                            </div>
+                            <div>
+                             
+                              {currentStep.subtitle && (
+                                <p className={`mt-1 text-base font-medium ${meta?.color ?? "text-zinc-500"}`}>
+                                  {currentStep.subtitle}
+                                </p>
+                              )}
+                            </div>
+                            {currentStep.description && (
+                              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-prose">
+                                {currentStep.description}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      {/* Formulario */}
+                      {renderStepContent()}
+                    </div>
+                    {/* Columna derecha: tips + mock (solo desktop) */}
+                    <StepInfoPanel step={currentStep} />
                   </div>
                 )}
-
-                {/* Render Section */}
-                {renderStepContent()}
+                {/* Flyer: encabezado igual al resto + contenido a ancho completo (sin panel derecho ni mock) */}
+                {currentStep.id === "flyer" && (
+                  <div className="w-full flex flex-col gap-6">
+                    {(() => {
+                      const meta = STEP_META[currentStep.id];
+                      const Icon = meta?.icon ?? Sparkles;
+                      return (
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${meta?.bg ?? "bg-zinc-100 dark:bg-zinc-800"}`}>
+                              <Icon className={`w-5 h-5 ${meta?.color ?? "text-zinc-500"}`} />
+                            </div>
+                            <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                              {currentStep.category}
+                            </span>
+                          </div>
+                          <div>
+                            <h2 className="text-2xl md:text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight">
+                              {currentStep.title}
+                            </h2>
+                            {currentStep.subtitle && (
+                              <p className={`mt-1 text-base font-medium ${meta?.color ?? "text-zinc-500"}`}>
+                                {currentStep.subtitle}
+                              </p>
+                            )}
+                          </div>
+                          {currentStep.description && (
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-prose">
+                              {currentStep.description}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    {renderStepContent()}
+                  </div>
+                )}
+                {/* Intro: solo su propio contenido */}
+                {currentStep.id === "intro" && renderStepContent()}
               </motion.div>
             </AnimatePresence>
           </div>

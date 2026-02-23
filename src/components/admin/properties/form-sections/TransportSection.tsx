@@ -32,7 +32,7 @@ export function TransportSection({
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-6">
+      {/* <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-6">
         <div>
           <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             Movilidad
@@ -41,7 +41,7 @@ export function TransportSection({
             Ayuda a tus huéspedes a moverse como locales.
           </p>
         </div>
-      </div>
+      </div> */}
 
       <Tabs defaultValue="public" className="w-full">
         <TabsList className="bg-zinc-100/80 dark:bg-zinc-900/80 p-1 rounded-xl w-full sm:w-auto flex flex-wrap h-auto">
