@@ -41,9 +41,13 @@ export function MobileSidebar({
   const effectiveLocale = segment === "en" || segment === "es" ? segment : locale;
 
   useEffect(() => {
-    fetch("/api/auth/session")
-      .then((res) => res.json())
-      .then(setSession);
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), 8000);
+    fetch("/api/auth/session", { signal: ac.signal })
+      .then((res) => (res.ok ? res.json() : { user: null }))
+      .then(setSession)
+      .catch(() => setSession(null))
+      .finally(() => clearTimeout(t));
   }, []);
 
   const initials = session?.user?.name?.charAt(0).toUpperCase() ?? "U";

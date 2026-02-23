@@ -143,9 +143,13 @@ export function Sidebar({
   const pathname = usePathname();
 
   useEffect(() => {
-    fetch("/api/auth/session")
-      .then((r) => r.json())
-      .then(setSession);
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), 8000);
+    fetch("/api/auth/session", { signal: ac.signal })
+      .then((r) => (r.ok ? r.json() : { user: null }))
+      .then(setSession)
+      .catch(() => setSession(null))
+      .finally(() => clearTimeout(t));
   }, []);
 
   const initials = session?.user?.name?.charAt(0).toUpperCase() ?? "U";

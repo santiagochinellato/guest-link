@@ -22,6 +22,17 @@ function formatDateSafe(dateStr: string | null | undefined): string {
 
 export const dynamic = "force-dynamic";
 
+const DATA_TIMEOUT_MS = 25_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} no respondió en ${ms / 1000}s. Comprueba la conexión a la base de datos.`)), ms)
+    ),
+  ]);
+}
+
 export default async function ReservationsPage({
   params,
 }: {
@@ -30,8 +41,8 @@ export default async function ReservationsPage({
   const { lang } = await params;
 
   const [overviewResult, reservationsResult] = await Promise.all([
-    getReservationsOverviewByProperty(),
-    getReservations(),
+    withTimeout(getReservationsOverviewByProperty(), DATA_TIMEOUT_MS, "Reservas"),
+    withTimeout(getReservations(), DATA_TIMEOUT_MS, "Reservas"),
   ]);
 
   const rawOverview = overviewResult.success ? overviewResult.data : [];

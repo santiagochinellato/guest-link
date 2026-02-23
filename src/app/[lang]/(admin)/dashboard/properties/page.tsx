@@ -8,6 +8,25 @@ import { BannerCarousel } from "@/components/admin/BannerCarousel";
 import { DashboardKPIBar } from "@/components/admin/DashboardKPIBar";
 import type { ReservationsOverviewByPropertyItem } from "@/lib/actions/reservations";
 
+const DATA_TIMEOUT_MS = 15_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              `${label} no respondió a tiempo. Comprueba la conexión a la base de datos (POSTGRES_URL).`
+            )
+          ),
+        ms
+      )
+    ),
+  ]);
+}
+
 interface Property {
   id: number;
   name: string;
@@ -29,40 +48,48 @@ export default async function PropertiesPage({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
-  const result = await getProperties();
+
+  const result = await withTimeout(getProperties(), DATA_TIMEOUT_MS, "Propiedades");
   const properties = (result.success ? result.data : []) as Property[];
 
   const [analyticsList, reservationsOverviewResult] = await Promise.all([
-    Promise.all(properties.map((p) => getPropertyAnalytics(p.id))),
-    getReservationsOverviewByProperty(),
+    Promise.all(
+      properties.map((p) =>
+        withTimeout(getPropertyAnalytics(p.id), DATA_TIMEOUT_MS, "Analíticas").catch(() => null)
+      )
+    ),
+    withTimeout(getReservationsOverviewByProperty(), DATA_TIMEOUT_MS, "Reservas").catch(() => ({
+      success: false as const,
+      error: "timeout",
+      data: [] as ReservationsOverviewByPropertyItem[],
+    })),
   ]);
 
+  const reservationsOverview = reservationsOverviewResult.success
+    ? reservationsOverviewResult
+    : { success: false as const, data: [] as ReservationsOverviewByPropertyItem[] };
+  const overviewData = reservationsOverview.success ? reservationsOverview.data : [];
+
   const overviewByPropertyId = new Map<number, ReservationsOverviewByPropertyItem>();
-  if (reservationsOverviewResult.success) {
-    for (const item of reservationsOverviewResult.data) {
-      overviewByPropertyId.set(item.property.id, item);
-    }
+  for (const item of overviewData) {
+    overviewByPropertyId.set(item.property.id, item);
   }
 
   const totalViews = analyticsList.reduce((acc, a) => acc + (a?.totalViews ?? 0), 0);
 
-  const occupiedProperties = reservationsOverviewResult.success
-    ? reservationsOverviewResult.data
-        .filter((item) => item.currentReservation !== null)
-        .map((item) => ({
-          propertyName: item.property.name,
-          guestName: item.currentReservation!.guestName,
-          checkOut: item.currentReservation!.checkOut,
-        }))
-    : [];
+  const occupiedProperties = overviewData
+    .filter((item) => item.currentReservation !== null)
+    .map((item) => ({
+      propertyName: item.property.name,
+      guestName: item.currentReservation!.guestName,
+      checkOut: item.currentReservation!.checkOut,
+    }));
 
-  const nextCheckIn = reservationsOverviewResult.success
-    ? reservationsOverviewResult.data
-        .filter((item) => item.nextReservation)
-        .sort((a, b) =>
-          a.nextReservation!.checkIn > b.nextReservation!.checkIn ? 1 : -1
-        )[0]?.nextReservation ?? null
-    : null;
+  const nextCheckIn = overviewData
+    .filter((item) => item.nextReservation)
+    .sort((a, b) =>
+      (a.nextReservation!.checkIn ?? "") > (b.nextReservation!.checkIn ?? "") ? 1 : -1
+    )[0]?.nextReservation ?? null;
 
   return (
     <div className="space-y-5 sm:space-y-6 px-4 sm:px-8 pb-16">
