@@ -1,44 +1,37 @@
 /**
- * SEED USUARIO DEMO — Hostly
+ * SEED USUARIOS DEMO + REVISOR — Hostly
  *
- * Crea (o re-crea) un usuario demo con 2 propiedades completamente configuradas,
- * reservas con fechas relativas a hoy y métricas hardcodeadas para mostrar casos de uso.
+ * Crea (o re-crea) dos usuarios con las mismas 2 propiedades cada uno:
+ * - demo@hostly.app: para demo con el cliente
+ * - revisor@hostly.app: para tu compañero que revisa
  *
  * Ejecutar: npm run db:seed
  *
  * Usa la misma DB que la app en dev: carga .env.local (igual que next dev y drizzle.config).
- * Si no existe .env.local, usa .env.
  *
  * CREDENCIALES:
- *   Email:    demo@hostly.app
- *   Password: hostly2024
+ *   Demo:    demo@hostly.app    / hostly2024
+ *   Revisor: revisor@hostly.app / revisor2024
  *
- * ESCENARIO:
- *   - 2 propiedades ACTIVAS con reservas actuales → "Ocupadas hoy: 2" en el KPI bar
- *   - Prop 1 (Buenos Aires): 8/8 secciones completas, 5 recomendaciones, 312 vistas
- *   - Prop 2 (Córdoba): 5/8 secciones completas (sin emergencias, sin acceso, sin transporte), 189 vistas
- *   - Reservas de Airbnb + Booking en distintos estados (actual, próxima, futuras, pasadas)
+ * Cada usuario ve 2 propiedades con los mismos datos (slugs distintos: -demo y -revisor).
  */
 
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
 
-// Misma prioridad que Next.js en dev: .env como base, .env.local sobreescribe
 const envPath = path.resolve(process.cwd(), ".env");
 const envLocalPath = path.resolve(process.cwd(), ".env.local");
 dotenv.config({ path: envPath });
 dotenv.config({ path: envLocalPath });
 
-// Comprobar env antes de importar db (db/index.ts exige la URL)
 if (!process.env.POSTGRES_URL_NON_POOLING && !process.env.POSTGRES_URL && !process.env.DATABASE_URL) {
   console.error("❌ Falta POSTGRES_URL_NON_POOLING, POSTGRES_URL o DATABASE_URL.");
-  console.error("   Asegúrate de tener .env o .env.local en la raíz del proyecto (misma que para npm run dev).");
   process.exit(1);
 }
 
 import bcrypt from "bcryptjs";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "./index";
 import {
   users,
@@ -94,71 +87,47 @@ function houseRulesJson(opts: {
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const DEMO_EMAIL = "demo@hostly.app";
 const DEMO_PASSWORD = "hostly2024";
+const REVISOR_EMAIL = "revisor@hostly.app";
+const REVISOR_PASSWORD = "revisor2024";
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-async function main() {
-  const dbUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL || process.env.DATABASE_URL!;
-  const envUsed = fs.existsSync(envLocalPath) ? ".env.local" : ".env";
-  const dbHost = dbUrl.replace(/^[^@]+@/, "").split("/")[0].split("?")[0];
-  console.log("🌱 Iniciando seed de usuario demo...");
-  console.log(`   Env: ${envUsed} | DB: ${dbHost}\n`);
-
-  // 1. Crear / recuperar usuario demo
-  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
-  let [demoUser] = await db.select().from(users).where(eq(users.email, DEMO_EMAIL));
-
-  if (!demoUser) {
-    // Insert con SQL crudo: en Supabase la columna id puede ser UUID (no serial).
-    // Usamos gen_random_uuid() para compatibilidad con ambos (integer o uuid).
-    const inserted = await db.execute(sql`
-      INSERT INTO "user" (id, name, email, password)
-      VALUES (gen_random_uuid(), ${"Demo Hostly"}, ${DEMO_EMAIL}, ${passwordHash})
-      RETURNING id, name, email, password, role, created_at
-    `);
-    const rows = Array.isArray(inserted) ? inserted : (inserted as { rows?: unknown[] }).rows ?? [];
-    const row = rows[0] as { id: number | string; name: string | null; email: string; password: string | null; role: string | null; created_at: Date | null } | undefined;
-    if (!row) throw new Error("Insert user demo falló");
-    demoUser = { id: row.id as number, name: row.name, email: row.email, emailVerified: null, image: null, password: row.password, role: row.role, createdAt: row.created_at };
-    console.log(`✅ Usuario demo creado: ${DEMO_EMAIL}`);
-  } else {
-    await db
-      .update(users)
-      .set({ password: passwordHash, name: "Demo Hostly" })
-      .where(eq(users.id, demoUser.id));
-    console.log(`♻️  Usuario demo ya existe (id=${demoUser.id}) — contraseña actualizada, re-creando propiedades...`);
+async function ensureUser(
+  email: string,
+  password: string,
+  name: string,
+): Promise<{ id: number; name: string | null; email: string; password: string | null; role: string | null; createdAt: Date | null }> {
+  const hash = await bcrypt.hash(password, 10);
+  const [existing] = await db.select().from(users).where(eq(users.email, email));
+  if (existing) {
+    await db.update(users).set({ password: hash, name }).where(eq(users.id, existing.id));
+    return existing;
   }
+  const [inserted] = await db.insert(users).values({ name, email, password: hash }).returning();
+  if (!inserted) throw new Error(`Insert user ${email} falló`);
+  return inserted;
+}
 
-  const ownerId = demoUser.id;
+function deleteOwnerProperties(ownerId: number) {
+  return db.transaction(async (tx) => {
+    const list = await tx.select({ id: properties.id }).from(properties).where(eq(properties.ownerId, ownerId));
+    for (const p of list) {
+      await tx.delete(reservations).where(eq(reservations.propertyId, p.id));
+      await tx.delete(recommendations).where(eq(recommendations.propertyId, p.id));
+      await tx.delete(categories).where(eq(categories.propertyId, p.id));
+      await tx.delete(emergencyContacts).where(eq(emergencyContacts.propertyId, p.id));
+      await tx.delete(transportInfo).where(eq(transportInfo.propertyId, p.id));
+    }
+    if (list.length > 0) await tx.delete(properties).where(eq(properties.ownerId, ownerId));
+    return list.length;
+  });
+}
 
-  // 2. Limpiar propiedades existentes del demo (solo las suyas)
-  const existingProps = await db
-    .select({ id: properties.id })
-    .from(properties)
-    .where(eq(properties.ownerId, ownerId));
-
-  for (const p of existingProps) {
-    await db.delete(reservations).where(eq(reservations.propertyId, p.id));
-    await db.delete(recommendations).where(eq(recommendations.propertyId, p.id));
-    await db.delete(categories).where(eq(categories.propertyId, p.id));
-    await db.delete(emergencyContacts).where(eq(emergencyContacts.propertyId, p.id));
-    await db.delete(transportInfo).where(eq(transportInfo.propertyId, p.id));
-  }
-  if (existingProps.length > 0) {
-    await db.delete(properties).where(eq(properties.ownerId, ownerId));
-    console.log(`🧹 ${existingProps.length} propiedad(es) anteriores eliminadas\n`);
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // PROPIEDAD 1 — Casa Loft · Palermo  (Buenos Aires)
-  // 8/8 secciones completas — ocupada HOY — 5 recomendaciones — 312 vistas
-  // ══════════════════════════════════════════════════════════════════════════
-  console.log("🏠 Creando Propiedad 1: Casa Loft · Palermo...");
-
+async function createTwoPropertiesForOwner(ownerId: number, slugSuffix: string) {
+  // ═══ PROPIEDAD 1 — Casa Loft · Palermo ═══
   const [prop1] = await db
     .insert(properties)
     .values({
       name: "Casa Loft · Palermo",
-      slug: "casa-loft-palermo-demo",
+      slug: `casa-loft-palermo-demo${slugSuffix}`,
       address: "Gurruchaga 1580",
       city: "Buenos Aires",
       country: "Argentina",
@@ -250,7 +219,7 @@ async function main() {
     .insert(properties)
     .values({
       name: "Dpto. Céntrico · Córdoba",
-      slug: "dpto-centrico-cordoba-demo",
+      slug: `dpto-centrico-cordoba-demo${slugSuffix}`,
       address: "Av. General Paz 255",
       city: "Córdoba",
       country: "Argentina",
@@ -309,27 +278,44 @@ async function main() {
 
   console.log(`   ✔ 2 recomendaciones · sin emergencias · sin transporte · 3 reservas`);
   console.log(`   ⚠ Secciones incompletas: emergencias, transporte, acceso`);
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+async function main() {
+  const dbUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL || process.env.DATABASE_URL!;
+  const envUsed = fs.existsSync(envLocalPath) ? ".env.local" : ".env";
+  const dbHost = dbUrl.replace(/^[^@]+@/, "").split("/")[0].split("?")[0];
+  console.log("🌱 Iniciando seed demo + revisor...");
+  console.log(`   Env: ${envUsed} | DB: ${dbHost}\n`);
+
+  // 1. Usuarios demo y revisor
+  const demoUser = await ensureUser(DEMO_EMAIL, DEMO_PASSWORD, "Demo Cliente");
+  console.log(`✅ Usuario demo: ${DEMO_EMAIL}`);
+  const revisorUser = await ensureUser(REVISOR_EMAIL, REVISOR_PASSWORD, "Revisor");
+  console.log(`✅ Usuario revisor: ${REVISOR_EMAIL}\n`);
+
+  // 2. Limpiar y crear propiedades para demo
+  const deletedDemo = await deleteOwnerProperties(demoUser.id);
+  if (deletedDemo > 0) console.log(`🧹 ${deletedDemo} propiedad(es) demo anteriores eliminadas`);
+  console.log("🏠 Creando 2 propiedades para demo...");
+  await createTwoPropertiesForOwner(demoUser.id, "");
+
+  // 3. Limpiar y crear propiedades para revisor (mismos datos, slugs con -revisor)
+  const deletedRev = await deleteOwnerProperties(revisorUser.id);
+  if (deletedRev > 0) console.log(`🧹 ${deletedRev} propiedad(es) revisor anteriores eliminadas`);
+  console.log("🏠 Creando 2 propiedades para revisor...");
+  await createTwoPropertiesForOwner(revisorUser.id, "-revisor");
 
   // ─── Resumen ───────────────────────────────────────────────────────────────
   console.log("\n");
   console.log("═══════════════════════════════════════════════════════════════");
-  console.log("  🎉  DEMO SEED COMPLETADO");
+  console.log("  🎉  SEED DEMO + REVISOR COMPLETADO");
   console.log("═══════════════════════════════════════════════════════════════");
-  console.log(`  📧  Email:    ${DEMO_EMAIL}`);
-  console.log(`  🔑  Password: ${DEMO_PASSWORD}`);
+  console.log(`  Demo:    ${DEMO_EMAIL}    / ${DEMO_PASSWORD}`);
+  console.log(`  Revisor: ${REVISOR_EMAIL} / ${REVISOR_PASSWORD}`);
   console.log("───────────────────────────────────────────────────────────────");
-  console.log(`  📊  KPI bar al iniciar sesión:`);
-  console.log(`      • Propiedades:     2`);
-  console.log(`      • Ocupadas hoy:    2  (ambas propiedades con reserva activa)`);
-  console.log(`      • Próximo check-in: en 8 días (Carlos Rodríguez · Prop 1)`);
-  console.log(`      • Vistas totales:   501`);
-  console.log("───────────────────────────────────────────────────────────────");
-  console.log(`  🏠  Prop 1 — Casa Loft · Palermo`);
-  console.log(`      slug: ${prop1.slug}`);
-  console.log(`      Secciones: 8/8 ✅ · Vistas: 312 · 5 reservas`);
-  console.log(`  🏠  Prop 2 — Dpto. Céntrico · Córdoba`);
-  console.log(`      slug: ${prop2.slug}`);
-  console.log(`      Secciones: 5/8 ⚠️  · Vistas: 189 · 3 reservas`);
+  console.log(`  Cada usuario tiene 2 propiedades (Casa Loft · Palermo, Dpto. Céntrico · Córdoba).`);
+  console.log("  Dashboard protegido: solo acceso con usuario y contraseña.");
   console.log("═══════════════════════════════════════════════════════════════\n");
 
   process.exit(0);

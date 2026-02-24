@@ -9,21 +9,14 @@ export const authConfig = {
   trustHost: true, // Required for OAuth providers in development
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      
-      // Guest token page does NOT require auth (guests access via link)
-      const isGuestTokenPage = nextUrl.pathname.includes("/stay/token/");
-      if (isGuestTokenPage) return true;
+      const pathname = nextUrl.pathname;
 
-      // Dashboard requires auth
-      const isOnDashboard = nextUrl.pathname.includes("/dashboard");
-      const isOnGuestView = nextUrl.pathname.includes("/stay");
+      // Public: all stay pages (guest guides)
+      if (pathname.includes("/stay")) return true;
 
-      if (isOnDashboard || isOnGuestView) {
-        if (isLoggedIn) return true;
-        return false; // Redirect unauthenticated users to login page
-      }
-      
+      // Dashboard: allow request through; middleware will redirect to /[lang]/login if not logged in
+      if (pathname.includes("/dashboard")) return true;
+
       return true;
     },
   },
