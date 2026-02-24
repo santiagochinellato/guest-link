@@ -105,7 +105,7 @@ export function EmergencySection() {
   }, []); // Solo ejecutar una vez al montar
 
   const applyCountryPresets = () => {
-    const presets = COUNTRY_PRESETS[country] || [];
+    const presets = (country ? COUNTRY_PRESETS[country] : null) || [];
     presets.forEach((preset) => {
       // Evitar duplicados por teléfono
       if (!currentContacts.some((c) => c.phone === preset.phone)) {
@@ -114,7 +114,7 @@ export function EmergencySection() {
     });
   };
 
-  const hasPresets = COUNTRY_PRESETS[country];
+  const hasPresets = country ? COUNTRY_PRESETS[country] : undefined;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

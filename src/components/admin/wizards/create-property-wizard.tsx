@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useParams } from "next/navigation";
 import { FormProvider } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -173,6 +174,8 @@ export function CreatePropertyWizard() {
   } = usePropertyWizard();
 
   const { handleSubmit } = form;
+  const params = useParams();
+  const lang = (params?.lang as string) || "es";
 
   // --- RENDER CONTENT BY ID ---
   const renderStepContent = () => {
@@ -299,7 +302,7 @@ export function CreatePropertyWizard() {
                       size="lg"
                       className="w-full rounded-xl"
                       onClick={() => {
-                        router.push("/dashboard/properties");
+                        router.push(`/${lang}/dashboard/properties`);
                         router.refresh();
                       }}
                     >

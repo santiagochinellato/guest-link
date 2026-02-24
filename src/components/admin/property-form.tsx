@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm, SubmitHandler, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import {
   ArrowLeft,
   Save,
@@ -46,6 +46,8 @@ export function PropertyForm({
 }: PropertyFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams();
+  const lang = (params?.lang as string) || "es";
   const [activeTab, setActiveTab] = useState(
     searchParams.get("tab") || "basic",
   );
@@ -135,7 +137,7 @@ export function PropertyForm({
 
   const handleFinish = () => {
     setShowSuccessModal(false);
-    router.push("/dashboard/properties");
+    router.push(`/${lang}/dashboard/properties`);
     router.refresh();
   };
 

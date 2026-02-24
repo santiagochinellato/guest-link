@@ -210,68 +210,72 @@ function RecommendationsContent() {
   const editingItem = editingIndex !== null ? recFields[editingIndex] : null;
 
   return (
-    <div className="flex flex-col h-[500px] bg-white dark:bg-neutral-950 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden animate-in fade-in relative">
-      <div className="flex flex-row justify-between items-start 
-       bg-white dark:bg-neutral-950 gap-4">
-        {/* <div className="flex flex-col">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Recomendaciones
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Agrega lugares cercanos.
-          </p>
-        </div> */}
+    <div className="flex flex-col h-[560px] md:h-[500px] bg-white dark:bg-neutral-950 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 overflow-hidden animate-in fade-in relative">
 
-        {/* Mobile View Toggle (Header Version) */}
-        <button
-          onClick={() => setViewMode(viewMode === "map" ? "list" : "map")}
-          className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors shrink-0"
-        >
-          {viewMode === "map" ? (
-            <>
-              <ListIcon className="w-3.5 h-3.5" />
-              Lista
-            </>
-          ) : (
-            <>
-              <MapIcon className="w-3.5 h-3.5" />
-              Mapa
-            </>
-          )}
-        </button>
-      </div>
-      {/* 1. TOP BAR: CATEGORY TABS */}
-      <div className="min-h-14 flex items-center p-4 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-950 overflow-x-auto no-scrollbar gap-2 flex-wrap">
-        {categoryFields.map((cat, idx) => {
-          const Icon = ICONS_MAP[cat.icon || "Star"] || Star;
-          const isActive = idx === activeCategoryIndex;
-          return (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategoryIndex(idx)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap border",
-                isActive
-                  ? "bg-brand-void text-white border-brand-void shadow-md"
-                  : "bg-gray-50 dark:bg-neutral-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-neutral-800 hover:bg-gray-100",
-              )}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {cat.name}
-            </button>
-          );
-        })}
+      {/* TOP BAR: Categories + Lista/Mapa toggle */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+        {/* Category chips — scrollable */}
+        <div className="flex-1 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-2 whitespace-nowrap py-1">
+            {categoryFields.map((cat, idx) => {
+              const Icon = ICONS_MAP[cat.icon || "Star"] || Star;
+              const isActive = idx === activeCategoryIndex;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategoryIndex(idx)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap border shrink-0",
+                    isActive
+                      ? "bg-brand-void text-white border-brand-void shadow-md"
+                      : "bg-gray-50 dark:bg-neutral-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-neutral-800 hover:bg-gray-100",
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {cat.name}
+                </button>
+              );
+            })}
 
-        {/* New Category Button */}
-        <AddCategoryDialog onAdd={(newCat) => appendCategory(newCat)}>
-          <button className="flex items-center justify-center w-fit px-3 py-1.5 bg-brand-copper text-white rounded-full border border-thin border-brand-copper hover:bg-brand-void/80 hover:border-brand-void transition-colors shrink-0">
-            <Plus className="w-4 h-4" />
-            <p className="text-xs font-medium">Nueva categoría</p>
+            <AddCategoryDialog onAdd={(newCat) => appendCategory(newCat)}>
+              <button className="flex items-center gap-1 px-3 py-1.5 bg-brand-copper text-white rounded-full border border-brand-copper hover:bg-brand-void/80 hover:border-brand-void transition-colors shrink-0">
+                <Plus className="w-3.5 h-3.5" />
+                <span className="text-xs font-medium">Nueva</span>
+              </button>
+            </AddCategoryDialog>
+          </div>
+        </div>
+
+        {/* Lista / Mapa segmented control — visible only on mobile */}
+        <div className="lg:hidden flex-shrink-0 flex items-center rounded-lg border border-gray-200 dark:border-neutral-700 overflow-hidden bg-gray-50 dark:bg-neutral-900 p-0.5 gap-0.5">
+          <button
+            onClick={() => setViewMode("list")}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all",
+              viewMode === "list"
+                ? "bg-white dark:bg-neutral-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700",
+            )}
+          >
+            <ListIcon className="w-3.5 h-3.5" />
+            Lista
           </button>
-        </AddCategoryDialog>
+          <button
+            onClick={() => setViewMode("map")}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all",
+              viewMode === "map"
+                ? "bg-white dark:bg-neutral-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700",
+            )}
+          >
+            <MapIcon className="w-3.5 h-3.5" />
+            Mapa
+          </button>
+        </div>
       </div>
 
-      {/* 2. MAIN CONTENT: SPLIT VIEW */}
+      {/* MAIN CONTENT: SPLIT VIEW */}
       <div className="flex-1 flex overflow-hidden relative">
         <RecommendationList
           recFields={recFields}
