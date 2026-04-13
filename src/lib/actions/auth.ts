@@ -33,6 +33,11 @@ export async function authenticate(
   prevState: string | undefined,
   formData: FormData,
 ) {
+  /** Solo para QA: pantalla de login real, sin validar credenciales ni sesión. Activar con AUTH_QA_BYPASS=true */
+  if (process.env.AUTH_QA_BYPASS === "true") {
+    return "__SUCCESS__";
+  }
+
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "").trim();
   if (!email || !password) {

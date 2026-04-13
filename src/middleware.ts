@@ -11,10 +11,11 @@ function getLangFromPath(pathname: string): string {
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const pathname = req.nextUrl.pathname;
+  const qaAuthBypass = process.env.AUTH_QA_BYPASS === "true";
 
   // Only protect dashboard routes
   if (pathname.includes("/dashboard")) {
-    if (!isLoggedIn) {
+    if (!isLoggedIn && !qaAuthBypass) {
       const lang = getLangFromPath(pathname);
       const loginUrl = new URL(`/${lang}/login`, req.nextUrl.origin);
       loginUrl.searchParams.set("callbackUrl", pathname);
