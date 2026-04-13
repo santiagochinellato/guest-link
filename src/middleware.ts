@@ -3,6 +3,14 @@ import { auth } from "@/auth";
 
 const LOCALES = ["es", "en"];
 
+/** QA: Edge a veces no inyecta vars sin NEXT_PUBLIC_; aceptamos ambas (mismo valor en Vercel). */
+function isQaAuthBypass(): boolean {
+  return (
+    process.env.AUTH_QA_BYPASS === "true" ||
+    process.env.NEXT_PUBLIC_AUTH_QA_BYPASS === "true"
+  );
+}
+
 function getLangFromPath(pathname: string): string {
   const segment = pathname.split("/").filter(Boolean)[0];
   return segment && LOCALES.includes(segment) ? segment : "es";
@@ -11,7 +19,7 @@ function getLangFromPath(pathname: string): string {
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const pathname = req.nextUrl.pathname;
-  const qaAuthBypass = process.env.AUTH_QA_BYPASS === "true";
+  const qaAuthBypass = isQaAuthBypass();
 
   // Only protect dashboard routes
   if (pathname.includes("/dashboard")) {

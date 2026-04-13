@@ -49,8 +49,20 @@ export default async function PropertiesPage({
 }) {
   const { lang } = await params;
 
-  const result = await withTimeout(getProperties(), DATA_TIMEOUT_MS, "Propiedades");
-  const properties = (result.success ? result.data : []) as Property[];
+  let properties: Property[] = [];
+  let propertiesLoadError: string | null = null;
+
+  try {
+    const result = await withTimeout(getProperties(), DATA_TIMEOUT_MS, "Propiedades");
+    if (result.success) {
+      properties = result.data as Property[];
+    } else {
+      propertiesLoadError = result.error ?? "No se pudieron cargar las propiedades.";
+    }
+  } catch (e) {
+    propertiesLoadError =
+      e instanceof Error ? e.message : "Error de conexión con la base de datos (timeout o red).";
+  }
 
   const [analyticsList, reservationsOverviewResult] = await Promise.all([
     Promise.all(
@@ -113,7 +125,21 @@ export default async function PropertiesPage({
       {/* Banner carousel — always visible */}
       <BannerCarousel lang={lang} />
 
-      {properties.length === 0 ? (
+      {propertiesLoadError ? (
+        <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-4 py-4 text-sm text-amber-900 dark:text-amber-100 space-y-2">
+          <p className="font-semibold">No se pudieron cargar las propiedades</p>
+          <p className="text-amber-800/90 dark:text-amber-200/90 font-mono text-xs break-all">
+            {propertiesLoadError}
+          </p>
+          <p className="text-amber-800/80 dark:text-amber-200/80">
+            Revisa en Vercel que <code className="rounded bg-amber-100 dark:bg-amber-900/50 px-1">POSTGRES_URL</code> o{" "}
+            <code className="rounded bg-amber-100 dark:bg-amber-900/50 px-1">POSTGRES_URL_NON_POOLING</code> apunten al
+            mismo Supabase que usas y que el esquema esté aplicado (<code className="rounded px-1">npm run db:push</code>).
+          </p>
+        </div>
+      ) : null}
+
+      {!propertiesLoadError && properties.length === 0 ? (
         /* Empty state / onboarding */
         <div className="flex flex-col items-center justify-center py-24 text-center gap-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-brand-void/30">
           <div className="w-16 h-16 rounded-2xl bg-brand-copper/10 flex items-center justify-center">
@@ -124,7 +150,10 @@ export default async function PropertiesPage({
               Todavía no tienes propiedades
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Crea tu primera propiedad para empezar a gestionar guías digitales para huéspedes, reservas y analíticas.
+              En producción la base (Supabase) suele estar vacía si no copiaste datos desde local. Crea una propiedad
+              aquí o sincroniza con <code className="text-xs rounded bg-gray-100 dark:bg-gray-800 px-1">npm run db:sync-to-supabase</code>{" "}
+              desde tu máquina con <code className="text-xs rounded bg-gray-100 dark:bg-gray-800 px-1">POSTGRES_URL</code> en{" "}
+              <code className="text-xs rounded bg-gray-100 dark:bg-gray-800 px-1">.env.local</code>.
             </p>
           </div>
           <Link
@@ -135,7 +164,7 @@ export default async function PropertiesPage({
             Agregar primera propiedad
           </Link>
         </div>
-      ) : (
+      ) : !propertiesLoadError ? (
         <>
           {/* KPI bar — replaces the old grid-cols-3 summary */}
           <DashboardKPIBar
@@ -162,7 +191,7 @@ export default async function PropertiesPage({
             ))}
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

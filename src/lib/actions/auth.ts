@@ -33,8 +33,11 @@ export async function authenticate(
   prevState: string | undefined,
   formData: FormData,
 ) {
-  /** Solo para QA: pantalla de login real, sin validar credenciales ni sesión. Activar con AUTH_QA_BYPASS=true */
-  if (process.env.AUTH_QA_BYPASS === "true") {
+  /** Solo para QA: sin validar credenciales. Vercel: AUTH_QA_BYPASS=true y/o NEXT_PUBLIC_AUTH_QA_BYPASS=true + redeploy */
+  if (
+    process.env.AUTH_QA_BYPASS === "true" ||
+    process.env.NEXT_PUBLIC_AUTH_QA_BYPASS === "true"
+  ) {
     return "__SUCCESS__";
   }
 
